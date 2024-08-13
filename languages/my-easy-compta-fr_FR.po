@@ -1,0 +1,1570 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: myEasyCompta\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-05-28 11:22+0000\n"
+"PO-Revision-Date: 2024-08-07 08:34+0000\n"
+"Last-Translator: \n"
+"Language-Team: Français\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: fr_FR\n"
+"Plural-Forms: nplurals=2; plural=n > 1;\n"
+"X-Generator: Loco https://localise.biz/\n"
+"X-Loco-Version: 2.6.9; wp-6.5.3"
+
+#. Description of the plugin
+msgid ""
+"A comprehensive accounting plugin using Vue.js and TailwindCSS. Manage your "
+"quotes, invoices, expenses, and more with ease."
+msgstr ""
+"Un plugin de comptabilité complet utilisant Vue.js et TailwindCSS. Gérez vos "
+"devis, vos factures, vos dépenses et bien plus encore en toute simplicité."
+
+#: languages/my-easy-compta-translations.php:236
+msgid "Account"
+msgstr "Mon compte"
+
+#: languages/my-easy-compta-translations.php:189
+msgid "Account settings"
+msgstr "Paramètres des utilisateurs"
+
+#: languages/my-easy-compta-translations.php:37
+msgid "Actions"
+msgstr "Actions"
+
+#: languages/my-easy-compta-translations.php:197
+msgid "Activate email logs"
+msgstr "Activer les logs des emails"
+
+#: languages/my-easy-compta-translations.php:153 includes/Modules/Setup.php:229
+msgid "Activate Vat"
+msgstr "Activer la TVA"
+
+#: languages/my-easy-compta-translations.php:231
+msgid "Activation date"
+msgstr "Date d'activation"
+
+#: languages/my-easy-compta-translations.php:16
+msgid "Add"
+msgstr "Ajouter"
+
+#: languages/my-easy-compta-translations.php:180
+msgid "Add category"
+msgstr "Ajouter une catégorie"
+
+#: languages/my-easy-compta-translations.php:171
+msgid "Add currency"
+msgstr "Ajouter une devise"
+
+#: languages/my-easy-compta-translations.php:177
+msgid "Add method"
+msgstr "Ajouter une méthode"
+
+#: languages/my-easy-compta-translations.php:175
+msgid "Add VAT"
+msgstr "Ajouter la TVA"
+
+#: languages/my-easy-compta-translations.php:228
+msgid "Addon name"
+msgstr "Nom de l'addon"
+
+#: includes/Modules/Addons.php:19 includes/Modules/Addons.php:20
+msgid "Addons"
+msgstr "Addons"
+
+#: languages/my-easy-compta-translations.php:28 includes/Modules/Setup.php:163
+msgid "Address"
+msgstr "Adresse"
+
+#: languages/my-easy-compta-translations.php:107
+msgid "After amount"
+msgstr "Après le montant"
+
+#: languages/my-easy-compta-translations.php:92
+#: includes/Modules/PDFGenerator.php:572
+msgid "Agreement & signature"
+msgstr "Mention \"Bon pour accord\" et signature"
+
+#: languages/my-easy-compta-translations.php:121
+msgid "All Earnings"
+msgstr "Tous les revenus"
+
+#: languages/my-easy-compta-translations.php:105
+msgid "Amount"
+msgstr "Montant"
+
+#: languages/my-easy-compta-translations.php:118
+msgid "Annual Payments Overview"
+msgstr "Aperçu des paiements annuels"
+
+#: includes/Modules/Invoices.php:193 includes/Modules/Invoices.php:265
+#: includes/Modules/Quotes.php:197 includes/Modules/Quotes.php:496
+msgid "API access error"
+msgstr "Erreur d'accès à l'API"
+
+#: languages/my-easy-compta-translations.php:53
+msgid "Approved"
+msgstr "Approuvé"
+
+#: languages/my-easy-compta-translations.php:63 includes/Modules/App.php:336
+msgid "April"
+msgstr "Avril"
+
+#: languages/my-easy-compta-translations.php:181
+msgid "Are you sure?"
+msgstr "Êtes-vous sûr ?"
+
+#: languages/my-easy-compta-translations.php:143
+msgid "Articles settings"
+msgstr "Paramètres des articles"
+
+#: languages/my-easy-compta-translations.php:137
+msgid "Attached file"
+msgstr "Fichier joint"
+
+#: languages/my-easy-compta-translations.php:116
+msgid "Attachment"
+msgstr "Pièce jointe"
+
+#: languages/my-easy-compta-translations.php:67 includes/Modules/App.php:340
+msgid "August"
+msgstr "Août"
+
+#: languages/my-easy-compta-translations.php:58
+msgid "Back"
+msgstr "Retour"
+
+#: languages/my-easy-compta-translations.php:168
+msgid "Background"
+msgstr "Arrière plan"
+
+#: languages/my-easy-compta-translations.php:210
+msgid "Backup"
+msgstr "Sauvegarder"
+
+#: languages/my-easy-compta-translations.php:214
+msgid "Backup date"
+msgstr "Date de sauvegarde"
+
+#: languages/my-easy-compta-translations.php:213
+msgid "Backup list"
+msgstr "Liste des sauvegardes"
+
+#: languages/my-easy-compta-translations.php:108
+msgid "Before amount"
+msgstr "Avant le montant"
+
+#: languages/my-easy-compta-translations.php:47
+msgid "Bill to"
+msgstr "Destinataire"
+
+#: languages/my-easy-compta-translations.php:59
+msgid "Cancel"
+msgstr "Annuler"
+
+#: languages/my-easy-compta-translations.php:85
+msgid "Cancelled"
+msgstr "Annulé"
+
+#: languages/my-easy-compta-translations.php:144
+msgid "Categories"
+msgstr "Catégories"
+
+#: languages/my-easy-compta-translations.php:114
+msgid "Category"
+msgstr "Catégorie"
+
+#: languages/my-easy-compta-translations.php:227
+msgid "Check update"
+msgstr "Vérifier la mise à jour"
+
+#: languages/my-easy-compta-translations.php:29 includes/Modules/Setup.php:175
+msgid "City"
+msgstr "Ville"
+
+#: languages/my-easy-compta-translations.php:93
+msgid "Clear"
+msgstr "Supprimer"
+
+#: languages/my-easy-compta-translations.php:101
+msgid "Client"
+msgstr "Client"
+
+#: includes/Modules/Clients.php:276
+msgid "Client added successfully"
+msgstr "Client ajouté avec succès"
+
+#: includes/Modules/Clients.php:231
+msgid "Client already exists"
+msgstr "Le client existe déjà"
+
+#: includes/Modules/Clients.php:358
+msgid "Client deleted successfully"
+msgstr "Client supprimé avec succès"
+
+#: languages/my-easy-compta-translations.php:102
+msgid "Client details"
+msgstr "Détails du client"
+
+#: includes/Modules/Clients.php:307
+msgid "Client edited successfully"
+msgstr "Client édité avec succès"
+
+#: includes/Modules/Clients.php:171
+msgid "Client not found."
+msgstr "Client introuvable."
+
+#: languages/my-easy-compta-translations.php:10 includes/Modules/Clients.php:31
+#: includes/Modules/Clients.php:32
+msgid "Clients"
+msgstr "Clients"
+
+#: languages/my-easy-compta-translations.php:166
+msgid "Code"
+msgstr "Code"
+
+#: languages/my-easy-compta-translations.php:167
+msgid "Color"
+msgstr "Couleur"
+
+#: languages/my-easy-compta-translations.php:196
+msgid "Coming soon"
+msgstr "Bientôt disponible"
+
+#: languages/my-easy-compta-translations.php:21
+msgid "Company Code"
+msgstr "SIRET"
+
+#: languages/my-easy-compta-translations.php:150
+msgid "Company logo"
+msgstr "Logo de l'entreprise"
+
+#: languages/my-easy-compta-translations.php:26 includes/Modules/Setup.php:157
+msgid "Company name"
+msgstr "Nom de l'entreprise"
+
+#: includes/Modules/PDFGenerator.php:562
+msgid "Conditions terms"
+msgstr "Conditions générales"
+
+#: languages/my-easy-compta-translations.php:188
+msgid "Confirm new password"
+msgstr "Confirmer le nouveau mot de passe"
+
+#: languages/my-easy-compta-translations.php:99
+msgid "Content"
+msgstr "Contenu"
+
+#: languages/my-easy-compta-translations.php:78
+msgid "Convert to invoice"
+msgstr "Convertir en facture"
+
+#: includes/Modules/Invoices.php:236 includes/Modules/Invoices.php:246
+msgid "Could not insert invoice into database"
+msgstr "Impossible d'insérer une facture dans la base de données"
+
+#: includes/Modules/Quotes.php:224 includes/Modules/Quotes.php:235
+msgid "Could not insert quote into database"
+msgstr "Impossible d'insérer un devis dans la base de données"
+
+#: languages/my-easy-compta-translations.php:31 includes/Modules/Setup.php:180
+msgid "Country"
+msgstr "Pays"
+
+#: languages/my-easy-compta-translations.php:211
+msgid "Create backup"
+msgstr "Créer une sauvegarde"
+
+#: includes/Modules/Addons.php:61
+msgid ""
+"Create secure access for your customers. Allow them to view quotes, invoices,"
+" payments, and statistics, and update their information and passwords "
+"through a dedicated dashboard."
+msgstr ""
+"Créez un accès sécurisé pour vos clients. Permettez-leur de consulter les "
+"devis, factures, paiements et statistiques, et de mettre à jour leurs "
+"informations et mots de passe via un tableau de bord dédié."
+
+#: languages/my-easy-compta-translations.php:185
+msgid "Create user"
+msgstr "Créer un utilisateur"
+
+#: languages/my-easy-compta-translations.php:46
+#: includes/Modules/PDFGenerator.php:322
+msgid "Created at"
+msgstr "Créé le"
+
+#: languages/my-easy-compta-translations.php:170
+msgid "Currencies"
+msgstr "Devises"
+
+#: languages/my-easy-compta-translations.php:141
+msgid "Currencies & VAT settings"
+msgstr "Paramètres Devises et TVA "
+
+#: languages/my-easy-compta-translations.php:124
+msgid "Currency"
+msgstr "Devise"
+
+#: includes/Modules/Clients.php:239
+msgid "Currency ID is invalid"
+msgstr "L'ID de la devise n'est pas valide"
+
+#: languages/my-easy-compta-translations.php:123
+msgid "Currency position"
+msgstr "Position de la devise"
+
+#: languages/my-easy-compta-translations.php:120
+msgid "Current month"
+msgstr "Mois en cours"
+
+#: languages/my-easy-compta-translations.php:235 includes/Modules/App.php:33
+#: includes/Modules/App.php:34
+msgid "Dashboard"
+msgstr "Tableau de bord"
+
+#: includes/Modules/Setup.php:349
+msgid "Data settings already exist"
+msgstr "Les paramètres des données existent déjà"
+
+#: includes/Modules/Setup.php:353 includes/Modules/Setup.php:374
+msgid "Data settings created successfully"
+msgstr "Paramètres de données créés avec succès"
+
+#: includes/Modules/Expenses.php:198
+msgid "Database error when inserting attachment:"
+msgstr "Erreur de base de données lors de l'insertion d'une pièce jointe :"
+
+#: includes/Modules/PDFGenerator.php:315
+msgid "Date planned"
+msgstr "Date prévue"
+
+#: languages/my-easy-compta-translations.php:200
+msgid "Date sent"
+msgstr "Date d'envoi"
+
+#: languages/my-easy-compta-translations.php:71 includes/Modules/App.php:344
+msgid "December"
+msgstr "Décembre"
+
+#: languages/my-easy-compta-translations.php:122 includes/Modules/Setup.php:210
+msgid "Default currency"
+msgstr "Devise par défaut"
+
+#: languages/my-easy-compta-translations.php:154 includes/Modules/Setup.php:235
+msgid "Default Vat"
+msgstr "TVA par défaut"
+
+#: languages/my-easy-compta-translations.php:18
+msgid "Delete"
+msgstr "Supprimer"
+
+#: languages/my-easy-compta-translations.php:219
+msgid "Deleted successfully"
+msgstr "Suppression réussie"
+
+#: languages/my-easy-compta-translations.php:131
+msgid "Description"
+msgstr "Description"
+
+#: languages/my-easy-compta-translations.php:135
+#: includes/Modules/PDFGenerator.php:462
+msgid "Discount"
+msgstr "Réduction"
+
+#: languages/my-easy-compta-translations.php:84
+msgid "Display per page"
+msgstr "Affichage par page"
+
+#: languages/my-easy-compta-translations.php:232
+msgid "Domain"
+msgstr "Domaine"
+
+#: languages/my-easy-compta-translations.php:208
+msgid "Done"
+msgstr "Terminé"
+
+#: languages/my-easy-compta-translations.php:215
+msgid "Download"
+msgstr "Télécharger"
+
+#: languages/my-easy-compta-translations.php:51
+msgid "Draft"
+msgstr "Brouillon"
+
+#: languages/my-easy-compta-translations.php:49
+#: includes/Modules/PDFGenerator.php:314
+msgid "Due date"
+msgstr "Date de validité"
+
+#: languages/my-easy-compta-translations.php:20
+msgid "Duplicate"
+msgstr "Dupliquer"
+
+#: languages/my-easy-compta-translations.php:117
+msgid "Earnings"
+msgstr "Revenus"
+
+#: languages/my-easy-compta-translations.php:19
+msgid "Edit"
+msgstr "Editer"
+
+#: languages/my-easy-compta-translations.php:103
+msgid "Edit client"
+msgstr "Éditer le client"
+
+#: languages/my-easy-compta-translations.php:111
+msgid "Edit expense"
+msgstr "Éditer la dépense"
+
+#: languages/my-easy-compta-translations.php:95
+msgid "Edit invoice"
+msgstr "Éditer la facture"
+
+#: languages/my-easy-compta-translations.php:113
+msgid "Edit item"
+msgstr "Modifier l'article"
+
+#: languages/my-easy-compta-translations.php:112
+msgid "Edit payment"
+msgstr "Éditer le paiement"
+
+#: languages/my-easy-compta-translations.php:87
+msgid "Edit quote"
+msgstr "Éditer le devis"
+
+#: languages/my-easy-compta-translations.php:32 includes/Modules/Setup.php:185
+msgid "Email"
+msgstr "E-mail"
+
+#: languages/my-easy-compta-translations.php:192
+msgid "Emails Invoices"
+msgstr "E-mails des factures"
+
+#: languages/my-easy-compta-translations.php:198
+msgid "Emails logs"
+msgstr "E-mails des logs"
+
+#: languages/my-easy-compta-translations.php:193
+msgid "Emails Quotes"
+msgstr "E-mails des devis"
+
+#: languages/my-easy-compta-translations.php:191
+msgid "Emails settings"
+msgstr "Paramètres des e-mails"
+
+#: includes/Modules/Addons.php:56
+msgid ""
+"Enhance myEasyCompta with email notification functionalities. Customize "
+"email templates, send estimates or invoices directly, and log sent emails. "
+"Ideal for maintaining smooth email communication with clients."
+msgstr ""
+"Améliorez myEasyCompta avec des fonctionnalités de notification par e-mail. "
+"Personnalisez les modèles d'e-mail, envoyez des devis ou des factures "
+"directement, et enregistrez les e-mails envoyés. Idéal pour maintenir une "
+"communication fluide avec les clients."
+
+#: languages/my-easy-compta-translations.php:209
+msgid "Error"
+msgstr "Erreur"
+
+#: includes/Modules/Clients.php:194 includes/Modules/Invoices.php:608
+#: includes/Modules/Quotes.php:254 includes/Modules/Quotes.php:616
+msgid "Error API access"
+msgstr "Erreur d'accès à l'API"
+
+#: languages/my-easy-compta-translations.php:202
+msgid "Event category"
+msgstr "Catégorie d'événement"
+
+#: languages/my-easy-compta-translations.php:205
+#: languages/my-easy-compta-translations.php:206
+msgid "Event end time"
+msgstr "Heure de fin de l'événement"
+
+#: languages/my-easy-compta-translations.php:203
+#: languages/my-easy-compta-translations.php:204
+msgid "Event start date"
+msgstr "Date de début de l'événement"
+
+#: languages/my-easy-compta-translations.php:201
+msgid "Event title"
+msgstr "Titre de l'événement"
+
+#: languages/my-easy-compta-translations.php:125
+msgid "Exchange rate"
+msgstr "Taux de change"
+
+#: languages/my-easy-compta-translations.php:110
+msgid "Expense date"
+msgstr "Date de la dépense"
+
+#: includes/Modules/Expenses.php:331
+msgid "Expense deleted successfully"
+msgstr "Dépense supprimée avec succès"
+
+#: includes/Modules/Expenses.php:315
+msgid "Expense edited successfully"
+msgstr "Dépense éditée avec succès"
+
+#: includes/Modules/Expenses.php:273
+msgid "Expense not found."
+msgstr "Dépense introuvable."
+
+#: languages/my-easy-compta-translations.php:13
+#: includes/Modules/Expenses.php:25 includes/Modules/Expenses.php:26
+msgid "Expenses"
+msgstr "Dépenses"
+
+#: languages/my-easy-compta-translations.php:179
+msgid "Expenses categories"
+msgstr "Catégories de dépenses"
+
+#: languages/my-easy-compta-translations.php:139
+msgid "Expenses settings"
+msgstr "Paramètres des dépenses"
+
+#: languages/my-easy-compta-translations.php:230
+msgid "Expiry date"
+msgstr "Date d'expiration"
+
+#: languages/my-easy-compta-translations.php:83
+msgid "Export"
+msgstr "Exporter"
+
+#: languages/my-easy-compta-translations.php:81
+msgid "Export to PDF"
+msgstr "Exporter en PDF"
+
+#: includes/Modules/Addons.php:57
+msgid ""
+"Export your financial data in various formats such as CSV and Excel. "
+"Customize export fields to include customers, quotes, invoices, payments, "
+"expenses, and statistics."
+msgstr ""
+"Exportez vos données financières dans divers formats tels que CSV et Excel. "
+"Personnalisez les champs d'exportation pour inclure les clients, devis, "
+"factures, paiements, dépenses et statistiques."
+
+#: includes/Modules/Clients.php:271
+msgid "Failed to add client"
+msgstr "Échec de l'ajout d'un client"
+
+#: includes/Modules/Invoices.php:347
+msgid "Failed to add invoice item"
+msgstr "Échec de l'ajout d'un élément de facture"
+
+#: includes/Modules/Invoices.php:749
+msgid "Failed to add payment to database"
+msgstr "Échec de l'ajout d'un paiement à la base de données"
+
+#: includes/Modules/Quotes.php:320
+msgid "Failed to add quote item"
+msgstr "Échec de l'ajout d'un élément de devis"
+
+#: languages/my-easy-compta-translations.php:226
+msgid "Failed to check for updates."
+msgstr "Échec de la vérification des mises à jour."
+
+#: includes/Modules/Quotes.php:744
+msgid "Failed to create invoice"
+msgstr "Échec de la création de la facture"
+
+#: includes/Modules/Clients.php:360
+msgid "Failed to delete client"
+msgstr "Échec de la suppression du client"
+
+#: includes/Modules/Expenses.php:333
+msgid "Failed to delete expense"
+msgstr "Échec de la suppression de la dépense"
+
+#: includes/Modules/Invoices.php:626
+msgid "Failed to delete invoice item."
+msgstr "Échec de la suppression de l'élément de la facture."
+
+#: includes/Modules/Payments.php:205
+msgid "Failed to delete payment"
+msgstr "Échec de la suppression du paiement"
+
+#: includes/Modules/Clients.php:305
+msgid "Failed to edit client"
+msgstr "Échec de l'édition du client"
+
+#: includes/Modules/Expenses.php:313
+msgid "Failed to edit expense"
+msgstr "Échec de l'édition de la dépense"
+
+#: includes/Modules/Quotes.php:580
+msgid "Failed to edit Item"
+msgstr "Échec de l'édition de l'élément"
+
+#: includes/Modules/Invoices.php:571
+msgid "Failed to edit item"
+msgstr ""
+
+#: includes/Modules/Payments.php:181
+msgid "Failed to edit payment"
+msgstr "Échec de l'édition du paiement"
+
+#: includes/Modules/Invoices.php:721
+msgid "Failed to retrieve exchange rate for client currency"
+msgstr "Échec de la récupération du taux de change pour la devise du client"
+
+#: includes/Modules/Invoices.php:386
+msgid "Failed to update invoice"
+msgstr ""
+
+#: includes/Modules/Invoices.php:705
+msgid "Failed to update invoice status in database"
+msgstr ""
+"Échec de la mise à jour du statut de la facture dans la base de données"
+
+#: includes/Modules/Quotes.php:699
+msgid "Failed to update quote status"
+msgstr "Échec de la mise à jour du statut du devis"
+
+#: includes/Modules/Invoices.php:420
+msgid "Failure to delete invoice and/or associated items"
+msgstr "Impossible de supprimer la facture et/ou des éléments associés"
+
+#: includes/Modules/Quotes.php:419
+msgid "Failure to delete Quote and/or associated items"
+msgstr "Impossible de supprimer le devis et/ou des éléments associés"
+
+#: languages/my-easy-compta-translations.php:35 includes/Modules/Setup.php:203
+msgid "Fax"
+msgstr "Fax"
+
+#: languages/my-easy-compta-translations.php:61 includes/Modules/App.php:334
+msgid "February"
+msgstr "Février"
+
+#: languages/my-easy-compta-translations.php:212
+msgid "File name"
+msgstr "Nom du fichier"
+
+#: includes/Modules/Expenses.php:201
+msgid "File upload failed:"
+msgstr "Le téléchargement du fichier a échoué :"
+
+#: languages/my-easy-compta-translations.php:155
+msgid "Format date"
+msgstr "Format de la date"
+
+#: languages/my-easy-compta-translations.php:147
+msgid "General settings"
+msgstr "Paramètres généraux"
+
+#: includes/Modules/Addons.php:59
+msgid ""
+"Get detailed statistical analysis of your financial data. Generate various "
+"reports on income, expenses, and profitability with graphical "
+"representations for easier interpretation."
+msgstr ""
+"Obtenez une analyse statistique détaillée de vos données financières. "
+"Générez divers rapports sur les revenus, les dépenses et la rentabilité avec "
+"des représentations graphiques pour une interprétation plus facile."
+
+#: includes/Modules/Setup.php:296
+msgid "Go to the dashboard"
+msgstr "Accéder au tableau de bord"
+
+#. Author URI of the plugin
+msgid "https://myeasycompta.com"
+msgstr ""
+
+#: languages/my-easy-compta-translations.php:178
+msgid "ID"
+msgstr "ID"
+
+#: languages/my-easy-compta-translations.php:40
+msgid "ID Client"
+msgstr "ID Client"
+
+#: includes/Modules/Setup.php:279 includes/Modules/Setup.php:284
+msgid "Import demo data"
+msgstr "Importer des données de démonstration"
+
+#: includes/Modules/Setup.php:271
+msgid "Install configuration settings"
+msgstr "Installer les paramètres de configuration"
+
+#: includes/Modules/Setup.php:125
+msgid "Install database tables"
+msgstr "Installation des tables de la base de données"
+
+#: includes/Modules/Setup.php:138
+msgid "Install settings datas"
+msgstr "Installer les données de configuration"
+
+#: languages/my-easy-compta-translations.php:223
+msgid "Installed"
+msgstr "Installé"
+
+#: includes/Modules/Addons.php:58
+msgid ""
+"Integrate a planning module to manage your schedule. Create and assign tasks "
+"with specific categories, and track project deadlines and workloads "
+"efficiently."
+msgstr ""
+"Intégrez un module de planification pour gérer votre emploi du temps. Créez "
+"et assignez des tâches avec des catégories spécifiques, et suivez les "
+"échéances et les charges de travail des projets efficacement."
+
+#: includes/Modules/Addons.php:63
+msgid ""
+"Integrate myEasyCompta with WooCommerce to automatically generate invoices "
+"for each new order. Sync WooCommerce sales data, manage transactions, track "
+"sales, and handle customer invoicing seamlessly."
+msgstr ""
+"Intégrez myEasyCompta avec WooCommerce pour générer automatiquement des "
+"factures pour chaque nouvelle commande. Synchronisez les données de vente de "
+"WooCommerce, gérez les transactions, suivez les ventes et gérez la "
+"facturation des clients sans interruption."
+
+#: includes/Modules/Expenses.php:263
+msgid "Invalid expense ID."
+msgstr "ID de dépense non valide."
+
+#: includes/Modules/Invoices.php:688
+msgid "Invalid ID provided"
+msgstr ""
+
+#: includes/Modules/Invoices.php:359
+msgid "Invalid invoice ID"
+msgstr ""
+
+#: includes/Modules/Invoices.php:407
+msgid "Invalid invoice ID."
+msgstr "ID de la facture non valide."
+
+#: includes/Modules/Invoices.php:520
+msgid "Invalid item ID."
+msgstr ""
+
+#: includes/Modules/Clients.php:320 includes/Modules/Expenses.php:144
+#: includes/Modules/Expenses.php:323 includes/Modules/Invoices.php:188
+#: includes/Modules/Invoices.php:260 includes/Modules/Invoices.php:401
+#: includes/Modules/Quotes.php:192 includes/Modules/Quotes.php:249
+#: includes/Modules/Quotes.php:400 includes/Modules/Quotes.php:491
+#: includes/Modules/Quotes.php:711
+msgid "Invalid nonce"
+msgstr "Nonce non valide"
+
+#: includes/Modules/Invoices.php:659 includes/Modules/Quotes.php:659
+msgid "Invalid order data"
+msgstr "Données d'ordre non valides"
+
+#: includes/Modules/Payments.php:111
+msgid "Invalid payment ID."
+msgstr "ID de paiement non valide."
+
+#: includes/Modules/Quotes.php:405
+msgid "Invalid quote ID."
+msgstr "ID de devis non valide."
+
+#: includes/Modules/PDFGenerator.php:320
+msgid "Invoice"
+msgstr "Facture"
+
+#: includes/Modules/Invoices.php:243
+msgid "Invoice added successfully"
+msgstr "Facture ajoutée avec succès"
+
+#: includes/Modules/Invoices.php:417
+msgid "Invoice and related items successfully deleted"
+msgstr "La facture et ces éléments ont été supprimés avec succès"
+
+#: languages/my-easy-compta-translations.php:156
+msgid "Invoice color"
+msgstr "Couleur de la facture"
+
+#: languages/my-easy-compta-translations.php:158
+msgid "Invoice footer"
+msgstr "Pied de page de la facture"
+
+#: languages/my-easy-compta-translations.php:126
+msgid "Invoice in"
+msgstr "Facture en"
+
+#: includes/Modules/Invoices.php:643
+msgid "Invoice item deleted."
+msgstr "Élément de facture supprimé."
+
+#: includes/Modules/Invoices.php:345
+msgid "Invoice item successfully added"
+msgstr "Élément de facture ajouté avec succès"
+
+#: includes/Modules/Invoices.php:672
+msgid "Invoice items order updated successfully"
+msgstr "Mise à jour réussie de l'ordre des éléments de la facture"
+
+#: includes/Modules/Invoices.php:693
+msgid "Invoice not found"
+msgstr ""
+
+#: includes/Modules/Invoices.php:165
+msgid "Invoice not found."
+msgstr ""
+
+#: languages/my-easy-compta-translations.php:39
+msgid "Invoice number"
+msgstr "Numéro de facture"
+
+#: languages/my-easy-compta-translations.php:157 includes/Modules/Setup.php:259
+msgid "Invoice prefix"
+msgstr "Préfixe de la facture"
+
+#: languages/my-easy-compta-translations.php:194
+msgid "Invoice reminder"
+msgstr "Rappel de facture"
+
+#: includes/Modules/Invoices.php:753
+msgid "Invoice status updated successfully"
+msgstr "Le statut de la facture a été mis à jour avec succès"
+
+#: languages/my-easy-compta-translations.php:159
+msgid "Invoice terms"
+msgstr "Conditions de facture"
+
+#: includes/Modules/Invoices.php:391
+msgid "Invoice updated successfully"
+msgstr ""
+
+# Exemple de chaînes de caractères à traduire pour le plugin myEasyCompta
+# Les commentaires commencent par le symbole '#'
+#: languages/my-easy-compta-translations.php:9 includes/Modules/Invoices.php:27
+#: includes/Modules/Invoices.php:28
+msgid "Invoices"
+msgstr "Factures"
+
+#: languages/my-easy-compta-translations.php:145
+msgid "Invoices settings"
+msgstr "Paramètres des factures"
+
+#: includes/Modules/Invoices.php:592 includes/Modules/Quotes.php:601
+msgid "Item edited successfully"
+msgstr "Article édité avec succès"
+
+#: languages/my-easy-compta-translations.php:129
+#: includes/Modules/PDFGenerator.php:458
+msgid "Item name"
+msgstr "Nom de l'article"
+
+#: languages/my-easy-compta-translations.php:60 includes/Modules/App.php:333
+msgid "January"
+msgstr "Janvier"
+
+#: languages/my-easy-compta-translations.php:66 includes/Modules/App.php:339
+msgid "July"
+msgstr "Juillet"
+
+#: languages/my-easy-compta-translations.php:65 includes/Modules/App.php:338
+msgid "June"
+msgstr "Juin"
+
+#: languages/my-easy-compta-translations.php:186
+msgid "Last invoices"
+msgstr "Dernières factures"
+
+#: includes/Modules/Setup.php:130
+msgid "Let's GO"
+msgstr "Allons-y"
+
+#: languages/my-easy-compta-translations.php:149
+msgid "License Addons"
+msgstr "Licence Addons"
+
+#: includes/Modules/Settings.php:921
+msgid "License data deleted successfully."
+msgstr "Les données de licence ont été supprimées avec succès."
+
+#: languages/my-easy-compta-translations.php:220
+msgid "License key"
+msgstr "Clé de licence"
+
+#: languages/my-easy-compta-translations.php:151
+msgid "Logo mentions"
+msgstr "Mentions du logo"
+
+#: languages/my-easy-compta-translations.php:237
+msgid "Logout"
+msgstr "Déconnexion"
+
+#: languages/my-easy-compta-translations.php:27
+msgid "Manager name"
+msgstr "Contact"
+
+#: languages/my-easy-compta-translations.php:62 includes/Modules/App.php:335
+msgid "March"
+msgstr "Mars"
+
+#: languages/my-easy-compta-translations.php:76
+msgid "Mark as accepted"
+msgstr "Marquer comme accepté"
+
+#: languages/my-easy-compta-translations.php:75
+msgid "Mark as cancelled"
+msgstr "Marquer comme annulé"
+
+#: languages/my-easy-compta-translations.php:74
+msgid "Mark as paid"
+msgstr "Marquer comme payé"
+
+#: languages/my-easy-compta-translations.php:77
+msgid "Mark as rejected"
+msgstr "Marquer comme rejeté"
+
+#: languages/my-easy-compta-translations.php:64 includes/Modules/App.php:337
+msgid "May"
+msgstr "Mai"
+
+#: languages/my-easy-compta-translations.php:34 includes/Modules/Setup.php:197
+msgid "Mobile"
+msgstr "Mobile"
+
+#. Author of the plugin
+msgid "Moez"
+msgstr "Moez"
+
+#. Name of the plugin
+#: includes/Modules/App.php:25 includes/Modules/App.php:26
+msgid "myEasyCompta"
+msgstr "myEasyCompta"
+
+#: includes/Modules/Setup.php:97
+msgid "myEasyCompta - Setup Process"
+msgstr "myEasyCompta - Processus d'installation"
+
+#: includes/Modules/Addons.php:54
+msgid "myEasyCompta Addons"
+msgstr "myEasyCompta Addons"
+
+#: includes/Modules/Addons.php:64
+msgid "myEasyCompta Backup"
+msgstr "myEasyCompta Backup"
+
+#: includes/Modules/Addons.php:64
+msgid ""
+"myEasyCompta Backup plugin provides integrated solutions for securely "
+"backing up, restoring, and managing financial data."
+msgstr ""
+"Le plugin myEasyCompta Backup offre des solutions intégrées pour sauvegarder,"
+" restaurer et gérer les données financières de manière sécurisée."
+
+#: includes/Modules/Addons.php:56
+msgid "myEasyCompta Email"
+msgstr "myEasyCompta Email"
+
+#: includes/Modules/Addons.php:57
+msgid "myEasyCompta Export"
+msgstr "myEasyCompta Export"
+
+#: includes/Modules/Setup.php:294
+msgid "myEasyCompta is ready to use."
+msgstr "myEasyCompta est prêt à l'emploi."
+
+#: includes/Modules/Addons.php:58
+msgid "myEasyCompta Planning"
+msgstr "myEasyCompta Planning"
+
+#: includes/Modules/Addons.php:65
+msgid "myEasyCompta Signature"
+msgstr "myEasyCompta Signature"
+
+#: includes/Modules/Addons.php:65
+#| msgid ""
+#| "myEasyCompta Signature allows myEasyCompta users to easily collect "
+#| "digital signatures on quotes and invoices, ensuring secure and efficient "
+#| "document approval."
+msgid ""
+"myEasyCompta Signature allows myEasyCompta users to easily collect digital "
+"signatures on quotes, ensuring secure and efficient document approval."
+msgstr ""
+"myEasyCompta Signature permet aux utilisateurs d'myEasyCompta de collecter "
+"facilement des signatures numériques sur les devis, garantissant ainsi une "
+"approbation des documents sécurisée et efficace."
+
+#: includes/Modules/Addons.php:62
+msgid "myEasyCompta SIRET Search"
+msgstr "myEasyCompta SIRET Search"
+
+#: includes/Modules/Addons.php:59
+msgid "myEasyCompta Stats"
+msgstr "myEasyCompta Stats"
+
+#: includes/Modules/Addons.php:61
+msgid "myEasyCompta User"
+msgstr "myEasyCompta User"
+
+#: includes/Modules/Addons.php:63
+msgid "myEasyCompta Woo"
+msgstr "myEasyCompta Woo"
+
+#: languages/my-easy-compta-translations.php:164
+msgid "Name"
+msgstr "Nom"
+
+#: languages/my-easy-compta-translations.php:41
+msgid "New client"
+msgstr "Nouveau client"
+
+#: languages/my-easy-compta-translations.php:94
+msgid "New invoice"
+msgstr "Nouvelle facture"
+
+#: languages/my-easy-compta-translations.php:187
+msgid "New password"
+msgstr "Nouveau mot de passe"
+
+#: languages/my-easy-compta-translations.php:86
+msgid "New quote"
+msgstr "Nouveau devis"
+
+#: languages/my-easy-compta-translations.php:138
+msgid "No data for the moment"
+msgstr "Pas de données pour le moment"
+
+#: includes/Modules/Invoices.php:576 includes/Modules/Invoices.php:616
+msgid "No invoice found for the given item."
+msgstr "Aucune facture n'a été trouvée pour l'article en question."
+
+#: includes/Modules/Invoices.php:496
+msgid "No item details found."
+msgstr ""
+
+#: includes/Modules/Invoices.php:463
+msgid "No items found for this invoice."
+msgstr "Aucun article n'a été trouvé pour cette facture."
+
+#: includes/Modules/Quotes.php:370 includes/Modules/Quotes.php:390
+msgid "No items found for this quote."
+msgstr "Aucun élément n'a été trouvé pour ce devis."
+
+#: includes/Modules/Quotes.php:585 includes/Modules/Quotes.php:623
+msgid "No quote found for the given item."
+msgstr "Aucun devis n'a été trouvé pour l'élément donné."
+
+#: languages/my-easy-compta-translations.php:224
+msgid "No update available."
+msgstr "Aucune mise à jour n'est disponible."
+
+#: includes/Modules/Clients.php:189 includes/Modules/Invoices.php:603
+#: includes/Modules/Quotes.php:612
+msgid "Nonce invalide"
+msgstr "Nonce invalide"
+
+#: includes/Modules/Invoices.php:355
+msgid "Nonce verification failed."
+msgstr ""
+
+#: languages/my-easy-compta-translations.php:222
+msgid "Not installed"
+msgstr "Non installé"
+
+#: languages/my-easy-compta-translations.php:127
+msgid "Note"
+msgstr "Note"
+
+#: languages/my-easy-compta-translations.php:70 includes/Modules/App.php:343
+msgid "November"
+msgstr "Novembre"
+
+#: languages/my-easy-compta-translations.php:69 includes/Modules/App.php:342
+msgid "October"
+msgstr "Octobre"
+
+#: languages/my-easy-compta-translations.php:73
+msgid "Paid"
+msgstr "Payé"
+
+#: languages/my-easy-compta-translations.php:104
+#: includes/Modules/PDFGenerator.php:321
+msgid "Payment date"
+msgstr "Date de paiement"
+
+#: includes/Modules/Payments.php:203
+msgid "Payment deleted successfully"
+msgstr "Paiement supprimé avec succès"
+
+#: includes/Modules/Payments.php:183
+msgid "Payment edited successfully"
+msgstr "Paiement édité avec succès"
+
+#: languages/my-easy-compta-translations.php:109
+msgid "Payment method"
+msgstr "Méthode de paiement"
+
+#: includes/Modules/Payments.php:128
+msgid "Payment not found."
+msgstr "Paiement introuvable."
+
+#: languages/my-easy-compta-translations.php:195
+msgid "Payment received"
+msgstr "Paiement reçu"
+
+#: languages/my-easy-compta-translations.php:12
+#: includes/Modules/Payments.php:25 includes/Modules/Payments.php:26
+msgid "Payments"
+msgstr "Paiements"
+
+#: languages/my-easy-compta-translations.php:176
+msgid "Payments methods"
+msgstr "Méthodes de paiement"
+
+#: languages/my-easy-compta-translations.php:140
+msgid "Payments settings"
+msgstr "Paramètres des paiements"
+
+#: languages/my-easy-compta-translations.php:52
+msgid "Pending"
+msgstr "En attente"
+
+#: languages/my-easy-compta-translations.php:33 includes/Modules/Setup.php:191
+msgid "Phone"
+msgstr "Téléphone"
+
+#: languages/my-easy-compta-translations.php:190
+msgid "Planning settings"
+msgstr "Paramètres du planning"
+
+#: my-easy-compta.php:254
+msgid "Plugin activation error"
+msgstr "Erreur d'activation du plugin"
+
+#: languages/my-easy-compta-translations.php:30 includes/Modules/Setup.php:169
+msgid "Postal code"
+msgstr "Code postal"
+
+#: languages/my-easy-compta-translations.php:82
+msgid "Preview PDF"
+msgstr "Prévisualiser la facture"
+
+#: languages/my-easy-compta-translations.php:50
+msgid "Provisional start date"
+msgstr "Date de début provisoire"
+
+#: languages/my-easy-compta-translations.php:133
+#: includes/Modules/PDFGenerator.php:459
+msgid "Qty"
+msgstr "Qté"
+
+#: languages/my-easy-compta-translations.php:132
+msgid "Quantity"
+msgstr "Quantité"
+
+#: includes/Modules/PDFGenerator.php:313
+msgid "Quote"
+msgstr "Devis"
+
+#: includes/Modules/Quotes.php:231
+msgid "Quote added successfully"
+msgstr "Devis ajouté avec succès"
+
+#: includes/Modules/Quotes.php:416
+msgid "Quote and related items successfully deleted"
+msgstr "Suppression réussie de devis et ces éléments"
+
+#: languages/my-easy-compta-translations.php:160
+msgid "Quote color"
+msgstr "Couleur de devis"
+
+#: includes/Modules/Quotes.php:781
+msgid "Quote converted to invoice successfully"
+msgstr "Devis converti en facture avec succès"
+
+#: languages/my-easy-compta-translations.php:162
+msgid "Quote footer"
+msgstr "Pied de page de devis"
+
+#: includes/Modules/Quotes.php:643
+msgid "Quote item deleted."
+msgstr "Élément de devis supprimé."
+
+#: includes/Modules/Quotes.php:318
+msgid "Quote item successfully added"
+msgstr "L'élément de devis a été ajouté avec succès"
+
+#: includes/Modules/Quotes.php:671
+msgid "Quote items order updated successfully"
+msgstr "Mise à jour réussie de l'ordre des éléments de devis"
+
+#: includes/Modules/Quotes.php:718
+msgid "Quote not found"
+msgstr "Devisintrouvable"
+
+#: includes/Modules/Quotes.php:178
+msgid "Quote not found."
+msgstr "Le devis n'a pas été trouvée."
+
+#: languages/my-easy-compta-translations.php:38
+msgid "Quote number"
+msgstr "Numéro de devis"
+
+#: languages/my-easy-compta-translations.php:161 includes/Modules/Setup.php:248
+msgid "Quote prefix"
+msgstr "Préfixe de devis"
+
+#: includes/Modules/Quotes.php:702
+msgid "Quote status updated successfully"
+msgstr "Le statut du devis a été mis à jour avec succès"
+
+#: languages/my-easy-compta-translations.php:163
+msgid "Quote terms"
+msgstr "Conditions du devis"
+
+#: languages/my-easy-compta-translations.php:11 includes/Modules/Quotes.php:29
+#: includes/Modules/Quotes.php:30
+msgid "Quotes"
+msgstr "Devis"
+
+#: languages/my-easy-compta-translations.php:142
+msgid "Quotes settings"
+msgstr "Paramètres de devis"
+
+#: languages/my-easy-compta-translations.php:172
+msgid "Rate"
+msgstr "Taux"
+
+#: includes/Modules/PDFGenerator.php:420
+msgid "Received From"
+msgstr "Reçu de"
+
+#: languages/my-easy-compta-translations.php:48
+msgid "Received from"
+msgstr "Reçu de"
+
+#: languages/my-easy-compta-translations.php:119
+msgid "Recently Paid Invoices"
+msgstr "Factures récemment payées"
+
+#: includes/Modules/PDFGenerator.php:422
+msgid "Recipient"
+msgstr "Destinataire"
+
+#: languages/my-easy-compta-translations.php:199
+msgid "Recipient email"
+msgstr "E-mail du destinataire"
+
+#: languages/my-easy-compta-translations.php:128
+#: includes/Modules/PDFGenerator.php:457
+msgid "Ref"
+msgstr "Réf"
+
+#: includes/Modules/PDFGenerator.php:398
+msgid "Reference No"
+msgstr "Réf. n°"
+
+#: languages/my-easy-compta-translations.php:54
+msgid "Rejected"
+msgstr "Rejeté"
+
+#: languages/my-easy-compta-translations.php:97
+msgid "Resend invoice"
+msgstr "Re-envoyer la facture"
+
+#: languages/my-easy-compta-translations.php:216
+msgid "Restore"
+msgstr "Restaurer"
+
+#: languages/my-easy-compta-translations.php:56
+msgid "Save"
+msgstr "Sauvegarder"
+
+#: languages/my-easy-compta-translations.php:25
+msgid "Search"
+msgstr "Recherche"
+
+#: languages/my-easy-compta-translations.php:152
+msgid "Select"
+msgstr "Sélectionner"
+
+#: languages/my-easy-compta-translations.php:207
+msgid "Select / Unselect All"
+msgstr "Sélectionner / désélectionner tout"
+
+#: languages/my-easy-compta-translations.php:115
+msgid "Select category"
+msgstr "Sélectionner une catégorie"
+
+#: languages/my-easy-compta-translations.php:136
+msgid "Select client"
+msgstr "Sélectionner un client"
+
+#: languages/my-easy-compta-translations.php:100
+msgid "Send"
+msgstr "Envoyer"
+
+#: languages/my-easy-compta-translations.php:96
+msgid "Send invoice"
+msgstr "Envoyer la facture"
+
+#: languages/my-easy-compta-translations.php:88
+msgid "Send quote"
+msgstr "Envoyer le devis"
+
+#: languages/my-easy-compta-translations.php:68 includes/Modules/App.php:341
+msgid "September"
+msgstr "Septembre"
+
+#: languages/my-easy-compta-translations.php:15
+#: includes/Modules/Settings.php:27 includes/Modules/Settings.php:28
+msgid "Settings"
+msgstr "Paramètres"
+
+#: includes/Modules/Settings.php:245
+msgid "Settings saved successfully"
+msgstr "Les paramètres ont été sauvegardés avec succès"
+
+#: includes/Modules/Setup.php:293
+msgid "Setup complete!"
+msgstr "Installation terminée !"
+
+#: languages/my-easy-compta-translations.php:90
+msgid "Sign"
+msgstr "Signer"
+
+#: languages/my-easy-compta-translations.php:89
+msgid "Sign quote"
+msgstr "Signer le devis"
+
+#: languages/my-easy-compta-translations.php:91
+msgid "Signed"
+msgstr "Signé"
+
+#: languages/my-easy-compta-translations.php:24
+msgid "SIREN n°"
+msgstr "N° de SIREN"
+
+#: languages/my-easy-compta-translations.php:23 includes/Modules/Setup.php:145
+msgid "SIRET n°"
+msgstr "N° de SIRET"
+
+#: includes/Modules/Setup.php:287
+msgid "Skip"
+msgstr "Pas de besoin"
+
+#: languages/my-easy-compta-translations.php:229
+msgid "Slug"
+msgstr "Slug"
+
+#: languages/my-easy-compta-translations.php:14
+msgid "Statistics"
+msgstr "Statistiques"
+
+#: languages/my-easy-compta-translations.php:45
+msgid "Status"
+msgstr "Statut"
+
+#: includes/Modules/Setup.php:124 includes/Modules/Setup.php:137
+#: includes/Modules/Setup.php:278
+msgid "Step"
+msgstr "Étape"
+
+#: languages/my-easy-compta-translations.php:43
+msgid "Sub total"
+msgstr "Sous-total"
+
+#: languages/my-easy-compta-translations.php:98
+msgid "Subject"
+msgstr "Sujet"
+
+#: languages/my-easy-compta-translations.php:55
+msgid "Submit"
+msgstr "Soumettre"
+
+#: includes/Modules/PDFGenerator.php:532 includes/Modules/PDFGenerator.php:539
+msgid "Subtotal"
+msgstr "Sous-total"
+
+#: languages/my-easy-compta-translations.php:234
+msgid "Success"
+msgstr "Succès"
+
+#: languages/my-easy-compta-translations.php:165
+msgid "Symbol"
+msgstr "Symbole"
+
+#: languages/my-easy-compta-translations.php:146
+msgid "System settings"
+msgstr "Paramètres du système"
+
+#: includes/Modules/Setup.php:312
+msgid "Tables already exist"
+msgstr "Les tables existent déjà"
+
+#: includes/Modules/Setup.php:316
+msgid "Tables created successfully"
+msgstr "Tables créées avec succès"
+
+#: languages/my-easy-compta-translations.php:44
+#: includes/Modules/PDFGenerator.php:548
+msgid "Tax"
+msgstr "TVA"
+
+#: languages/my-easy-compta-translations.php:22 includes/Modules/Setup.php:151
+msgid "Tax number"
+msgstr "Numéro de TVA"
+
+#: languages/my-easy-compta-translations.php:169
+msgid "Text Color"
+msgstr "Couleur du texte"
+
+#. %s is the minimum PHP version required
+#: my-easy-compta.php:248
+#, php-format
+msgid ""
+"The <strong>myEasyCompta</strong> plugin requires PHP version %s or higher."
+msgstr ""
+"Le plugin <strong>myEasyCompta</strong> nécessite la version PHP %s ou "
+"supérieure."
+
+#: includes/Modules/Addons.php:62
+#, fuzzy
+#| msgid ""
+#| "The Easy-Compta-SIRET plugin adds a field to quickly retrieve customer "
+#| "information using the French government business directory API (https:"
+#| "//api.gouv.fr). This enhances the efficiency of managing client data "
+#| "within the Easy-Compta system."
+msgid ""
+"The Easy-Compta SIRET plugin adds a field to quickly retrieve customer "
+"information using the French government business directory API (https://api."
+"gouv.fr). This enhances the efficiency of managing client data within the "
+"Easy-Compta system."
+msgstr ""
+"Le plugin Easy-Compta-SIRET ajoute un champ pour récupérer rapidement les "
+"informations des clients en utilisant l'API du répertoire des entreprises du "
+"gouvernement français (https://api.gouv.fr). Cela améliore l'efficacité de "
+"la gestion des données clients au sein du système Easy-Compta."
+
+#: includes/Modules/Clients.php:219
+msgid "The email address is invalid"
+msgstr "L'adresse e-mail n'est pas valide"
+
+#. %s is the placeholder for the field name.
+#. %s is the field name
+#: includes/Modules/Clients.php:206 includes/Modules/Invoices.php:277
+#: includes/Modules/Quotes.php:266
+#, php-format
+msgid "The field %s is required"
+msgstr "Le champ %s est obligatoire"
+
+#: languages/my-easy-compta-translations.php:184
+msgid "There's no turning back!"
+msgstr "Vous ne pourrez pas revenir en arrière!"
+
+#: languages/my-easy-compta-translations.php:217
+msgid ""
+"This will automatically create a backup and delete all data to restore the "
+"backup."
+msgstr ""
+"Cela va créer automatiquement une sauvegarde et supprimer toutes les données "
+"pour restaurer la sauvegarde."
+
+#: languages/my-easy-compta-translations.php:218
+msgid "Token api SIREN v 3.11"
+msgstr "Token api SIREN v 3.11"
+
+#: languages/my-easy-compta-translations.php:42
+#: includes/Modules/PDFGenerator.php:463 includes/Modules/PDFGenerator.php:556
+msgid "Total"
+msgstr "Total"
+
+#: languages/my-easy-compta-translations.php:106
+msgid "Total amount"
+msgstr "Montant total"
+
+#: languages/my-easy-compta-translations.php:239
+msgid "Total invoices"
+msgstr "Total des factures"
+
+#: languages/my-easy-compta-translations.php:240
+msgid "Total paid invoices"
+msgstr "Total des factures payées"
+
+#: languages/my-easy-compta-translations.php:238
+msgid "Total quotes"
+msgstr "Total des devis"
+
+#: languages/my-easy-compta-translations.php:130
+msgid "Type"
+msgstr "Type"
+
+#: includes/Modules/Invoices.php:653 includes/Modules/Quotes.php:653
+msgid "Unauthorized request"
+msgstr "Requête non autorisée"
+
+#: languages/my-easy-compta-translations.php:134
+#: includes/Modules/PDFGenerator.php:460
+msgid "Unit price"
+msgstr "Prix unitaire"
+
+#: languages/my-easy-compta-translations.php:72
+msgid "Unpaid"
+msgstr "Non payé"
+
+#: languages/my-easy-compta-translations.php:241
+msgid "Unpaid invoices"
+msgstr "Factures impayées"
+
+#: languages/my-easy-compta-translations.php:57
+msgid "Update"
+msgstr "Mise à jour"
+
+#: languages/my-easy-compta-translations.php:225
+msgid "Update available! New version"
+msgstr "Mise à jour disponible ! Nouvelle version"
+
+#: languages/my-easy-compta-translations.php:148
+msgid "Users settings"
+msgstr "Paramètres utilisateurs"
+
+#: languages/my-easy-compta-translations.php:221
+msgid "Validate"
+msgstr "Valider"
+
+#: languages/my-easy-compta-translations.php:79
+msgid "Validate invoice"
+msgstr "Valider la facture"
+
+#: languages/my-easy-compta-translations.php:80
+msgid "Validate quote"
+msgstr "Valider le devis"
+
+#: languages/my-easy-compta-translations.php:173
+msgid "VAT"
+msgstr "TVA"
+
+#: includes/Modules/PDFGenerator.php:461
+msgid "Vat"
+msgstr "Tva"
+
+#: languages/my-easy-compta-translations.php:174
+msgid "VAT Rates"
+msgstr "Taux de TVA"
+
+#: languages/my-easy-compta-translations.php:233
+msgid "Version"
+msgstr "Version"
+
+#: languages/my-easy-compta-translations.php:17
+msgid "View"
+msgstr "Voir"
+
+#: includes/Modules/Addons.php:80
+msgid "Voir plus"
+msgstr ""
+
+#: languages/my-easy-compta-translations.php:36
+msgid "Website"
+msgstr "Site web"
+
+#: languages/my-easy-compta-translations.php:183
+msgid "Yes, confirm it!"
+msgstr "Oui, confirmez !"
+
+#: languages/my-easy-compta-translations.php:182
+msgid "Yes, delete it!"
+msgstr "Oui, supprimez !"

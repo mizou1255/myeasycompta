@@ -1,0 +1,458 @@
+*:focus {
+    outline: none;
+}
+
+.text-base-content {
+    color: var(--fallback-bc, oklch(var(--bc)/var(--tw-text-opacity))) !important;
+}
+
+[data-theme="dark"] #wpcontent,
+[data-theme="dark"] div:where(.swal2-container) div:where(.swal2-popup),
+[data-theme="dark"] .ql-editor {
+    background-color: #1d232a !important;
+}
+
+[data-theme="dark"] * {
+    color: #ffffff;
+    fill: #ffffff;
+}
+
+[data-theme="dark"] input[type="text"],
+[data-theme="dark"] input[type="number"],
+[data-theme="dark"] input[type="date"],
+[data-theme="dark"] input[type="email"],
+[data-theme="dark"] input[type="tel"],
+[data-theme="dark"] input[type="url"],
+[data-theme="dark"] select {
+    color: #ffffff;
+    background-color: #1d232a;
+}
+
+[data-theme="dark"] .ecwp-group .ecwp-label {
+    color: #ffffff;
+    background-color: #1d232a;
+}
+
+.ecwp-swap {
+    position: absolute;
+    top: -37px;
+    right: 40px;
+    border-width: 1px 1px 0 1px;
+    border-color: #c3c4c7;
+    border-radius: 10px 10px 0px 0;
+}
+
+.ecwp-swap input[type="checkbox"] {
+    display: none !important;
+}
+
+.ecwp-content .card {
+    max-width: 100% !important;
+}
+
+#toplevel_page_my-easy-compta img,
+#toplevel_page_my-easy-compta-email img,
+#toplevel_page_my-easy-compta-support img,
+#toplevel_page_my-easy-compta-export img,
+#toplevel_page_my-easy-compta-stats img,
+#toplevel_page_my-easy-compta-backup img,
+#toplevel_page_my-easy-compta-planning img {
+    display: inline-block !important;
+}
+
+.content-box {
+    padding: 15px;
+    border: 1px solid #e1e2e4;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, .04);
+    border-radius: 1rem;
+}
+
+.iconSizeBig {
+    font-size: 2em;
+}
+
+.iconSizeMedium {
+    font-size: 1.2em;
+}
+
+.ecwp_pagination {
+    display: flex;
+    justify-content: center;
+}
+
+.ecwp-group {
+    position: relative;
+}
+
+.ecwp-group .ecwp-input {
+    margin-top: 20px
+}
+
+.ecwp-group select {
+    max-width: 100%;
+}
+
+.ecwp-group .ecwp-label {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    background: #fff;
+    padding: 0 8px;
+}
+
+.label {
+    font-weight: bold;
+}
+
+button .loading-xs {
+    width: .8rem !important;
+}
+
+.draggable-item {
+    cursor: move;
+}
+
+.ecwp-table-dash-invoice td {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+}
+
+#toplevel_page_my-easy-compta .wp-menu-image img {
+    margin: 0 auto;
+}
+
+.tabs-vertical {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 1rem;
+    gap: 0.5rem;
+}
+
+.tab-active {
+    @apply bg-blue-500 text-white;
+}
+
+.content-tabs .ecwp-group .ecwp-label {
+    border-radius: 30px;
+    border: 1px solid #ccc;
+}
+
+.ecwp-file-input {
+    height: 0;
+    padding: 0 !important;
+    overflow: hidden;
+    width: 0;
+}
+
+.ecwp-file-input+label {
+    background: oklch(var(--p));
+    border: none;
+    border-radius: 5px;
+    color: #fff;
+    cursor: pointer;
+    display: inline-block;
+    font-size: inherit;
+    font-weight: 500;
+    margin-bottom: 1rem;
+    outline: none;
+    padding: 1rem 50px;
+    border-radius: 30px;
+    position: relative;
+    transition: all 0.3s;
+    vertical-align: middle;
+}
+
+.ecwp-file-input+label span {
+    display: inline-block;
+    height: 100%;
+    transition: all 0.3s;
+    width: 100%;
+}
+
+
+.ecwp-file-input+label:hover {
+    background-color: oklch(var(--s));
+}
+
+input[type="checkbox"].wcpa-ui-toggle {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+
+    -webkit-tap-highlight-color: transparent;
+
+    width: auto;
+    height: auto;
+    vertical-align: middle;
+    position: relative;
+    border: 0;
+    outline: 0;
+    cursor: pointer;
+    margin: 0 4px;
+    background: none;
+    box-shadow: none;
+}
+
+input[type="checkbox"].wcpa-ui-toggle:focus {
+    box-shadow: none;
+}
+
+input[type="checkbox"].wcpa-ui-toggle:after {
+    content: '';
+    font-size: 8px;
+    font-weight: 400;
+    line-height: 18px;
+    text-indent: -14px;
+    color: #ffffff;
+    width: 36px;
+    height: 18px;
+    display: inline-block;
+    background-color: #a7aaad;
+    border-radius: 72px;
+    box-shadow: 0 0 12px rgb(0 0 0 / 15%) inset;
+}
+
+input[type="checkbox"].wcpa-ui-toggle:before {
+    content: '';
+    width: 14px;
+    height: 14px;
+    display: block;
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    margin: 0;
+    border-radius: 50%;
+    background-color: #ffffff;
+}
+
+input[type="checkbox"].wcpa-ui-toggle:checked:before {
+    left: 20px;
+    margin: 0;
+    background-color: #ffffff;
+}
+
+input[type="checkbox"].wcpa-ui-toggle,
+input[type="checkbox"].wcpa-ui-toggle:before,
+input[type="checkbox"].wcpa-ui-toggle:after,
+input[type="checkbox"].wcpa-ui-toggle:checked:before,
+input[type="checkbox"].wcpa-ui-toggle:checked:after {
+    transition: ease .15s;
+}
+
+input[type="checkbox"].wcpa-ui-toggle:checked:after {
+    content: 'ON';
+    background-color: oklch(var(--p));
+}
+
+.badge {
+    padding: .2em .6em .3em !important;
+}
+
+.table input {
+    border: none !important;
+}
+
+input[type="text"],
+input[type="number"] {
+    padding: 0.625rem !important;
+    border-radius: 0.375rem !important;
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type=number] {
+    appearance: textfield;
+    -moz-appearance: textfield;
+}
+
+textarea:focus,
+input:focus {
+    outline: none;
+}
+
+.ql-editor {
+    background-color: #fff;
+}
+
+.ecwp-group .color-input {
+    position: absolute !important;
+    top: 24px;
+    right: 5px;
+}
+
+.table :where(thead tr, tbody tr:not(:last-child), tbody tr:first-child:last-child) {
+    border-color: #ccc !important;
+}
+
+.stat-value {
+    font-size: 1.8rem !important;
+}
+
+.ecwp-switch {
+    position: relative !important;
+    height: 1.5rem !important;
+    width: 3rem !important;
+    cursor: pointer !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    border-radius: 9999px !important;
+    background-color: rgba(100, 116, 139, 0.377) !important;
+    transition: all .3s ease;
+}
+
+.ecwp-switch:checked {
+    background-color: oklch(var(--p)) !important;
+}
+
+.ecwp-switch::before {
+    position: absolute !important;
+    content: "" !important;
+    left: calc(1.5rem - 1.6rem) !important;
+    top: calc(1.5rem - 1.6rem) !important;
+    margin: 0 !important;
+    display: block !important;
+    height: 1.6rem !important;
+    width: 1.6rem !important;
+    cursor: pointer !important;
+    border: 1px solid rgba(100, 116, 139, 0.527) !important;
+    border-radius: 9999px !important;
+    background-color: rgba(255, 255, 255, 1) !important;
+    box-shadow: 0 3px 10px rgba(100, 116, 139, 0.327) !important;
+    transition: all .3s ease !important;
+}
+
+.ecwp-switch:hover::before {
+    box-shadow: 0 0 0px 8px rgba(0, 0, 0, .15)
+}
+
+.ecwp-switch:checked:hover::before {
+    box-shadow: 0 0 0px 8px rgba(236, 72, 153, .15)
+}
+
+.ecwp-switch:checked:before {
+    transform: translateX(100%);
+    border-color: oklch(var(--p)) !important;
+}
+
+#modal_planning .modal-box {
+    overflow: visible !important;
+}
+
+.ecwp-color-preview {
+    width: 35px;
+    height: 35px;
+    border: 1px solid black;
+    border-radius: 8px;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.mockup-code pre {
+    padding-left: 1.25rem;
+}
+
+.indicator {
+    width: auto !important;
+}
+
+.autocomplete-input {
+    width: 100%;
+    padding: 8px;
+    box-sizing: border-box;
+}
+
+.autocomplete-dropdown {
+    position: absolute;
+    border: 1px solid #ccc;
+    max-height: 200px;
+    overflow-y: auto;
+    width: 280px;
+    z-index: 1000;
+    top: 50px;
+}
+
+.autocomplete-item {
+    padding: 8px;
+    cursor: pointer;
+}
+
+.autocomplete-item:hover {
+    background-color: #f0f0f09b;
+}
+
+.ecwp-watermark {
+    font-size: 8em;
+    opacity: .25;
+    position: absolute;
+    text-align: center;
+    width: 100%;
+    z-index: 1000;
+    text-transform: uppercase;
+    line-height: 70px;
+}
+
+.ecwp-select {
+    border: 1px solid #e8eaee !important;
+}
+
+.ecwp-select.select-xs {
+    font-size: .75rem !important;
+}
+
+.blur-app {
+    filter: blur(10px);
+}
+
+.admin-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    color: red;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    font-size: 20px;
+    text-align: center;
+    padding: 20px;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+.admin-overlay a {
+    color: yellow;
+}
+
+.ecwp-pro-badge {
+    background-color: #fff3cd;
+    color: #674e00;
+    border-radius: 12px;
+    padding: 0 5px;
+    margin-left: 5px;
+    font-size: 11px;
+    width: 35px;
+}
+
+.card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.card-body {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.card-actions {
+    margin-top: auto;
+}
