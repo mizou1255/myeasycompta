@@ -170,7 +170,6 @@ class PDFGenerator
         }
 
         $html = $this->generateHTML('invoice', $invoice, $items, $client, $default_currency_symbol);
-
         $mpdf = new \Mpdf\Mpdf([
             'margin_left' => 20,
             'margin_right' => 15,
@@ -328,67 +327,20 @@ class PDFGenerator
         }
 
         $html = '<html>
-        <head><style>
-        body {
-            font-family: dejavusanscondensed;
-            font-size: 10pt;
-            line-height: 13pt;
-            color: #777777;
-        }
-        p {
-            margin: 4pt 0 0 0;
-        }
-        td {
-            vertical-align: top;
-        }
-        .items td {
-            border: 0.2mm solid #ffffff;
-            background-color: #F5F5F5;
-        }
-        table thead td {
-            vertical-align: bottom;
-            text-align: center;
-            text-transform: uppercase;
-            font-size: 7pt;
-            font-weight: bold;
-            background-color: #FFFFFF;
-            color: #111111;
-        }
-        table thead td {
-            border-bottom: 0.2mm solid ' . $global_color . ';
-        }
-        table .last td  {
-            border-bottom: 0.2mm solid ' . $global_color . ';
-        }
-        table .first td  {
-            border-top: 0.2mm solid ' . $global_color . ';
-        }
-        teable.items > tr-items tr:last-child {
-            border-bottom: 0.2mm solid ' . $global_color . ';
-        }
-        .watermark {
-            text-transform: uppercase;
-            font-weight: bold;
-            position: absolute;
-            left: 100px;
-            top: 400px;
-        }
-    </style>
-</head>
 <body>
 <htmlpagefooter name="myfooter">
-    <div style="font-size: 9pt; text-align: center; padding-top: 3mm; width:100%;">
+    <div style="font-size: 8pt; text-align: center; padding-top: 3mm; width:100%;font-family: dejavusanscondensed;font-size: 9pt;line-height: 13pt;color: #777777;">
     ' . $this->invoice_footer . '
     </div>
 </htmlpagefooter>
 
 <sethtmlpagefooter name="myfooter" value="on" />
     <div>
-        <table width="100%">
+        <table width="100%" style="font-family: dejavusanscondensed;font-size: 10pt;line-height: 13pt;color: #777777;">
             <tr>
                 <td width="60%" height="100">
                     <img style="width: ' . $this->logo_width . 'px;" src="' . $this->logo_path . '" /><br /><br />
-                    <p>' . $this->logo_mentions . '</p>
+                    <p style="margin: 4pt 0 0 0;">' . $this->logo_mentions . '</p>
                 </td>
                 <td width="40%" style="text-align: right;">
                     <div style="font-weight: bold; color: #111111; font-size: 20pt; text-transform: uppercase;">' . $show_type . '</div>
@@ -415,7 +367,7 @@ class PDFGenerator
     </div>
 
     <div style="margin-bottom: 20px; margin-top: 30px;">
-        <table width="100%" cellpadding="10" style="vertical-align: top;">
+        <table width="100%" cellpadding="10" style="vertical-align: top; font-family: dejavusanscondensed;font-size: 10pt;line-height: 13pt;color: #777777;">
             <tr>
                 <td width="45%" style="border-bottom:0.2mm solid ' . $global_color . '; font-size: 9pt; font-weight:bold; color: ' . $global_color . '; text-transform: uppercase;">' . __('Received From', 'my-easy-compta') . '</td>
                 <td width="10%">&nbsp;</td>
@@ -451,16 +403,16 @@ class PDFGenerator
         </table>
     </div>
 
-    <table class="items" width="100%" style="border-spacing:3px; font-size: 9pt; border-collapse: collapse;" cellpadding="10">
+    <table class="items" width="100%" style=" font-family: dejavusanscondensed;line-height: 13pt;border-spacing:3px; font-size: 9pt; border-collapse: collapse;" cellpadding="10">
         <thead>
         <tr>
-            <td width="10%">' . __('Ref', 'my-easy-compta') . '</td>
-            <td width="45%" style="text-align: left;">' . __('Item name', 'my-easy-compta') . '</td>
-            <td width="10%">' . __('Qty', 'my-easy-compta') . '</td>
-            <td width="15%">' . __('Unit price', 'my-easy-compta') . '</td>
-            <td width="15%">' . __('Vat', 'my-easy-compta') . '</td>
-            <td width="15%">' . __('Discount', 'my-easy-compta') . '</td>
-            <td width="15%">' . __('Total', 'my-easy-compta') . '</td>
+            <td width="10%" style="vertical-align: bottom; text-align: center; text-transform: uppercase; font-size: 7pt; font-weight: bold; background-color: #FFFFFF; color: #111111;border-bottom: 0.2mm solid ' . $global_color . '">' . __('Ref', 'my-easy-compta') . '</td>
+            <td width="45%" style="vertical-align: bottom; text-align: left; text-transform: uppercase; font-size: 7pt; font-weight: bold; background-color: #FFFFFF; color: #111111;border-bottom: 0.2mm solid ' . $global_color . '">' . __('Item name', 'my-easy-compta') . '</td>
+            <td width="10%" style="vertical-align: bottom; text-align: center; text-transform: uppercase; font-size: 7pt; font-weight: bold; background-color: #FFFFFF; color: #111111;border-bottom: 0.2mm solid ' . $global_color . '">' . __('Qty', 'my-easy-compta') . '</td>
+            <td width="15%" style="vertical-align: bottom; text-align: center; text-transform: uppercase; font-size: 7pt; font-weight: bold; background-color: #FFFFFF; color: #111111;border-bottom: 0.2mm solid ' . $global_color . '">' . __('Unit price', 'my-easy-compta') . '</td>
+            <td width="15%" style="vertical-align: bottom; text-align: center; text-transform: uppercase; font-size: 7pt; font-weight: bold; background-color: #FFFFFF; color: #111111;border-bottom: 0.2mm solid ' . $global_color . '">' . __('Vat', 'my-easy-compta') . '</td>
+            <td width="15%" style="vertical-align: bottom; text-align: center; text-transform: uppercase; font-size: 7pt; font-weight: bold; background-color: #FFFFFF; color: #111111;border-bottom: 0.2mm solid ' . $global_color . '">' . __('Discount', 'my-easy-compta') . '</td>
+            <td width="15%" style="vertical-align: bottom; text-align: center; text-transform: uppercase; font-size: 7pt; font-weight: bold; background-color: #FFFFFF; color: #111111;border-bottom: 0.2mm solid ' . $global_color . '">' . __('Total', 'my-easy-compta') . '</td>
         </tr>
         </thead>
         <tbody>';
@@ -506,16 +458,16 @@ class PDFGenerator
             $sub_total_discounted += $total_after_discount;
 
             $html .= '<tr>
-            <td width="10%">' . nl2br($item_ref) . '</td>
-            <td width="45%" style="text-align: left;">
-                <div style="margin-bottom:6px; font-weight:bold; color: #111111;">' . nl2br($item_name) . '</div>
+            <td width="10%" style="border: 0.2mm solid #ffffff; background-color: #F5F5F5; vertical-align: top;">' . nl2br($item_ref) . '</td>
+            <td width="45%" style="text-align: left; border: 0.2mm solid #ffffff; background-color: #F5F5F5; vertical-align: top;">
+                <div style="margin-bottom:6px; font-weight:bold; color: #111111; vertical-align: top;">' . nl2br($item_name) . '</div>
                 ' . nl2br($item_description) . '
             </td>
-            <td width="10%" style="text-align: center;">' . $quantity . '</td>
-            <td width="15%" style="text-align: right;">' . $this->positionCurrency($this->formatAmount($unit_price), $default_currency_symbol->symbol) . '</td>
-            <td width="15%" style="text-align: right;">' . $this->positionCurrency($this->formatAmount($item_total_vat), $default_currency_symbol->symbol) . '<br /><small>' . $vat_rate . '%</small></td>
-            <td width="15%" style="text-align: right;">' . $this->positionCurrency($this->formatAmount($discount_amount), $default_currency_symbol->symbol) . '<br /><small>' . $discount_percentage . '%</small></td>
-            <td width="15%" style="text-align: right;">' . $this->positionCurrency($this->formatAmount($total_after_discount_with_vat), $default_currency_symbol->symbol) . '</td>
+            <td width="10%" style="text-align: center;border: 0.2mm solid #ffffff; background-color: #F5F5F5; vertical-align: top;">' . $quantity . '</td>
+            <td width="15%" style="text-align: right;border: 0.2mm solid #ffffff; background-color: #F5F5F5; vertical-align: top;">' . $this->positionCurrency($this->formatAmount($unit_price), $default_currency_symbol->symbol) . '</td>
+            <td width="15%" style="text-align: right;border: 0.2mm solid #ffffff; background-color: #F5F5F5; vertical-align: top;">' . $this->positionCurrency($this->formatAmount($item_total_vat), $default_currency_symbol->symbol) . '<br /><small>' . $vat_rate . '%</small></td>
+            <td width="15%" style="text-align: right;border: 0.2mm solid #ffffff; background-color: #F5F5F5; vertical-align: top;">' . $this->positionCurrency($this->formatAmount($discount_amount), $default_currency_symbol->symbol) . '<br /><small>' . $discount_percentage . '%</small></td>
+            <td width="15%" style="text-align: right;border: 0.2mm solid #ffffff; background-color: #F5F5F5; vertical-align: top;">' . $this->positionCurrency($this->formatAmount($total_after_discount_with_vat), $default_currency_symbol->symbol) . '</td>
             </tr>';
 
         }
@@ -529,15 +481,15 @@ class PDFGenerator
         if ($sub_total == $sub_total_discounted) {
             $html .= '<tr>
                     <td colspan="3" style="background-color:#ffffff;"></td>
-                    <td colspan="2" style="font-size: 8pt; color: #111111;"><strong>' . __('Subtotal', 'my-easy-compta') . '</strong></td>
-                    <td  colspan="2" style="font-weight: bold; color: #111111; text-align: right;">' . $this->positionCurrency($this->formatAmount($sub_total), $default_currency_symbol->symbol) . '</td>
+                    <td colspan="2" style="border: 0.2mm solid #ffffff; background-color: #F5F5F5;font-size: 8pt; color: #111111;"><strong>' . __('Subtotal', 'my-easy-compta') . '</strong></td>
+                    <td  colspan="2" style="border: 0.2mm solid #ffffff; background-color: #F5F5F5;font-weight: bold; color: #111111; text-align: right;">' . $this->positionCurrency($this->formatAmount($sub_total), $default_currency_symbol->symbol) . '</td>
                 </tr>';
         } else {
             $html .= '
             <tr>
                 <td colspan="3" style="background-color:#ffffff;"></td>
-                <td colspan="2" style="font-size: 8pt; color: #111111;"><strong>' . __('Subtotal', 'my-easy-compta') . '</strong></td>
-                <td colspan="2" style="font-weight: bold; color: #111111; text-align: right;"><span style="text-decoration: line-through">' . $this->positionCurrency($this->formatAmount($sub_total), $default_currency_symbol->symbol) . '</span><br/>' . $this->positionCurrency($this->formatAmount($sub_total_discounted), $default_currency_symbol->symbol) . '</td>
+                <td colspan="2" style="border: 0.2mm solid #ffffff; background-color: #F5F5F5;font-size: 8pt; color: #111111;"><strong>' . __('Subtotal', 'my-easy-compta') . '</strong></td>
+                <td colspan="2" style="border: 0.2mm solid #ffffff; background-color: #F5F5F5;font-weight: bold; color: #111111; text-align: right;"><span style="text-decoration: line-through">' . $this->positionCurrency($this->formatAmount($sub_total), $default_currency_symbol->symbol) . '</span><br/>' . $this->positionCurrency($this->formatAmount($sub_total_discounted), $default_currency_symbol->symbol) . '</td>
             </tr>';
         }
 
@@ -545,20 +497,20 @@ class PDFGenerator
             foreach ($tva_totaux as $rate => $amount) {
                 $html .= '<tr>
                     <td colspan="3" style="background-color:#ffffff;"></td>
-                    <td colspan="2" style="font-size: 8pt; color: #111111;"><strong>' . __('Tax', 'my-easy-compta') . ' (' . $rate . '%)</strong></td>
-                    <td colspan="2" style="font-weight: bold; color: #111111; text-align: right;">' . $this->positionCurrency($this->formatAmount($amount), $default_currency_symbol->symbol) . '</td>
+                    <td colspan="2" style="border: 0.2mm solid #ffffff; background-color: #F5F5F5;font-size: 8pt; color: #111111;"><strong>' . __('Tax', 'my-easy-compta') . ' (' . $rate . '%)</strong></td>
+                    <td colspan="2" style="border: 0.2mm solid #ffffff; background-color: #F5F5F5;font-weight: bold; color: #111111; text-align: right;">' . $this->positionCurrency($this->formatAmount($amount), $default_currency_symbol->symbol) . '</td>
                 </tr>';
             }
         }
         $html .= '
         <tr>
             <td colspan="3" style="background-color:#ffffff;"></td>
-            <td colspan="2" style="font-size: 8pt; color: #111111; background-color: ' . $global_color . '; color:#ffffff;"><strong>' . __('Total', 'my-easy-compta') . '</strong></td>
-            <td colspan="2" style="font-weight: bold; color: #111111; text-align: right; background-color: ' . $global_color . '; color:#ffffff;">' . $this->positionCurrency($this->formatAmount($balance_due), $default_currency_symbol->symbol) . '</td>
+            <td colspan="2" style="border: 0.2mm solid #ffffff; background-color: #F5F5F5;font-size: 8pt; color: #111111; background-color: ' . $global_color . '; color:#ffffff;"><strong>' . __('Total', 'my-easy-compta') . '</strong></td>
+            <td colspan="2" style="border: 0.2mm solid #ffffff; background-color: #F5F5F5;font-weight: bold; color: #111111; text-align: right; background-color: ' . $global_color . '; color:#ffffff;">' . $this->positionCurrency($this->formatAmount($balance_due), $default_currency_symbol->symbol) . '</td>
         </tr>';
 
         $html .= '</tbody></table>
-            <div style="margin-top:40px;">
+            <div style="margin-top:40px; font-family: dejavusanscondensed;font-size: 8pt;line-height: 13pt;color: #777777;">
                 <h4 style="padding:5px 0; color: #111111; border-bottom: 0.2mm solid ' . $global_color . '; font-size:9pt; text-transform: uppercase;">' . __('Conditions terms', 'my-easy-compta') . '</h4>
                 ' . $this->invoice_terms . '
             </div>';
@@ -568,7 +520,7 @@ class PDFGenerator
                 $upload_dir = wp_upload_dir();
                 $file_path = $upload_dir['basedir'] . '/signatures/' . $data->file_sign;
             }
-            $html .= '<div style="margin-top: 50px; border: 0.2emm solid #111111; padding: 0px 20px 50px; width: 350px; float: right;">
+            $html .= '<div style="font-family: dejavusanscondensed;font-size: 10pt;line-height: 13pt;color: #777777;margin-top: 50px; border: 0.2emm solid #111111; padding: 0px 20px 50px; width: 350px; float: right;">
                 <h4 style="font-size:9pt;">' . __('Agreement & signature', 'my-easy-compta') . '</h4>';
             if ($file_path) {
                 $html .= '<img style="max-width: 100%; max-height: 100%" src="' . $file_path . '" />';

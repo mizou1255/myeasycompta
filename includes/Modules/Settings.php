@@ -396,20 +396,33 @@ class ECWP_Settings
         global $wp_filesystem;
 
         $upload_dir = wp_upload_dir();
-        $upload_path = $upload_dir['basedir'] . '/logo/';
+        $upload_path = trailingslashit($upload_dir['basedir']) . 'logo/';
 
         if (!$wp_filesystem->is_dir($upload_path)) {
             $wp_filesystem->mkdir($upload_path);
         }
 
-        $file = $_FILES['logo'];
-        $file_type = wp_check_filetype($file['name']);
+        if (!isset($_FILES['logo']) || !isset($_FILES['logo']['tmp_name']) || $_FILES['logo']['error'] !== UPLOAD_ERR_OK) {
+            return new \WP_Error('file_upload_error', 'File upload error.');
+        }
 
+        $file = $_FILES['logo'];
+
+        $file_type = wp_check_filetype($file['name']);
         $allowed_types = array('jpg', 'jpeg', 'png', 'gif');
         if (!in_array($file_type['ext'], $allowed_types)) {
             return new \WP_REST_Response(array('message' => 'Invalid file type. Only JPG, JPEG, PNG, and GIF are allowed.'), 400);
         }
-        $upload_overrides = array('test_form' => false, 'upload_dir' => $upload_path);
+
+        $max_file_size = 2 * 1024 * 1024;
+        if ($file['size'] > $max_file_size) {
+            return new \WP_REST_Response(array('message' => 'File size exceeds the maximum allowed size of 2 MB.'), 400);
+        }
+
+        $upload_overrides = array(
+            'test_form' => false,
+            'upload_dir' => $upload_path,
+        );
         $upload = wp_handle_upload($file, $upload_overrides);
 
         if (isset($upload['error'])) {

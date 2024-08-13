@@ -201,7 +201,7 @@ class ECWP_Clients
             if (empty($params[$field])) {
                 return new WP_Error(
                     'rest_missing_param',
-                    // Translators: %s is the placeholder for the field name.
+                    /* translators: %s: is the field name. */
                     sprintf(
                         esc_html__('The field %s is required', 'my-easy-compta'),
                         esc_html($field)
