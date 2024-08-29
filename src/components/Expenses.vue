@@ -19,7 +19,7 @@
       :modal-title="translations.edit_expense"
       :expense="selectedExpense"
       :categories="categoriesExpenses"
-      :clients="listClients"
+      :clients="clientOptions"
       @expenseEdited="fetchExpenses"
     />
 
@@ -36,9 +36,33 @@
     <Card topMargin="mt-8">
       <div class="flex justify-between items-center">
         <h2 class="card-title">{{ translations.expenses }}</h2>
-        <button class="btn btn-primary rounded-full" @click="AddNew">
-          {{ translations.add }} <i class="fas fa-plus-circle"></i>
-        </button>
+        <div>
+          <button class="btn btn-primary rounded-full" @click="AddNew">
+            {{ translations.add }} <i class="fas fa-plus-circle"></i>
+          </button>
+          <span
+            v-if="settings.easy_compta_export_addon_active == 1"
+            class="ms-2"
+          >
+            <a
+              class="btn btn-outline btn-accent rounded-full hover:text-white"
+              href="/wp-admin/admin.php?page=my-easy-compta-export#tab5"
+            >
+              {{ translations.export }}
+              <i class="fas fa-file-export"></i>
+            </a>
+          </span>
+          <span
+            v-else
+            class="tooltip tooltip-left tooltip-warning ms-2"
+            :data-tip="translations.active_export_addon"
+          >
+            <button class="btn btn-outline btn-accent rounded-full" disabled>
+              {{ translations.export }}
+              <i class="fas fa-file-export"></i>
+            </button>
+          </span>
+        </div>
       </div>
       <div class="divider mt-2"></div>
 
@@ -185,6 +209,7 @@ export default {
       expenses: [],
       categoriesExpenses: [],
       listClients: [],
+      clientOptions: [],
       currentPage: 1,
       totalPages: 1,
       paginationButtons: [],
@@ -295,6 +320,10 @@ export default {
           this.selectedExpense = data;
           this.categoriesExpenses = data.categories_expenses;
           this.listClients = data.list_clients;
+          this.clientOptions = this.listClients.map((client) => ({
+            value: client.id,
+            text: `${client.company_name}`,
+          }));
           this.loadingModal = false;
         })
         .catch((error) => {

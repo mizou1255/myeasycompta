@@ -38,7 +38,7 @@
                 field.label
               }}</label>
               <input
-                v-if="key !== 'payment_method'"
+                v-if="key !== 'payment_method' && key !== 'payment_date'"
                 :type="field.type || 'text'"
                 :id="key"
                 v-model="editedPayment[key]"
@@ -50,7 +50,7 @@
                 :disabled="field.disabled"
               />
               <select
-                v-else
+                v-else-if="key == 'payment_method'"
                 :id="key"
                 v-model="editedPayment.payment_method_id"
                 :class="[
@@ -67,6 +67,18 @@
                   {{ method.method_name }}
                 </option>
               </select>
+              <VueDatePicker
+                v-else-if="key == 'payment_date'"
+                class="ecwp-input ecwp-date input input-bordered w-full"
+                id="invoiceDate"
+                v-model="editedPayment.payment_date"
+                :enable-time-picker="false"
+                auto-apply
+                :format="formattedDate"
+                :min-date="new Date()"
+                locale="fr"
+                required
+              />
             </div>
           </div>
           <div class="ecwp-group form-group mt-4">
@@ -100,7 +112,11 @@
 </template>
   
   <script>
+import VueDatePicker from "@vuepic/vue-datepicker";
 export default {
+  components: {
+    VueDatePicker,
+  },
   props: {
     loading: {
       type: Boolean,
@@ -163,6 +179,15 @@ export default {
   computed: {
     translations() {
       return window.myEasyComptaAdmin.easyComptaTranslations;
+    },
+    formattedDate() {
+      return (date) => {
+        if (!date) return "";
+        const day = date.getDate().toString().padStart(2, "0");
+        const month = (date.getMonth() + 1).toString().padStart(2, "0");
+        const year = date.getFullYear();
+        return `${day}-${month}-${year}`;
+      };
     },
     paymentMethods() {
       return this.methods;

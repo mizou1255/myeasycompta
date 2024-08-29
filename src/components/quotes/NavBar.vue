@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div>
+    <div v-if="emailActive == 1">
       <send-quote-modal
         :loading="loadingModal"
         :show-modal="sendQuoteModal"
@@ -120,14 +120,28 @@
       </div>
       <div class="flex gap-2">
         <button
+          v-if="emailActive == 1"
           @click.prevent="sendQuote(quoteInfo.client_id)"
           class="btn btn-outline btn-primary btn-sm hover:text-white"
-          v-if="emailActive == 1"
         >
           <i class="fas fa-paper-plane"></i>
           {{ translations.send_quote }}
           <i class="far fa-envelope" v-if="quoteInfo.sent == 1"></i>
         </button>
+        <div
+          v-else
+          class="tooltip tooltip-bottom tooltip-warning"
+          :data-tip="translations.active_email_addon"
+        >
+          <button
+            click="#"
+            class="btn btn-outline btn-primary btn-sm hover:text-white"
+            disabled
+          >
+            <i class="fas fa-paper-plane"></i>
+            {{ translations.send_quote }}
+          </button>
+        </div>
         <button
           @click="exportToPDF"
           class="btn btn-outline btn-success btn-sm"

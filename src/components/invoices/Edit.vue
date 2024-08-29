@@ -27,11 +27,15 @@
             <label for="invoiceDate" class="ecwp-label">{{
               translations.due_date
             }}</label>
-            <input
-              type="date"
+            <VueDatePicker
+              class="ecwp-input ecwp-date input input-bordered w-full"
               id="invoiceDate"
               v-model="invoice.due_date"
-              class="ecwp-input input input-bordered w-full"
+              :enable-time-picker="false"
+              auto-apply
+              :format="formattedDate"
+              :min-date="new Date()"
+              locale="fr"
               required
             />
           </div>
@@ -39,20 +43,15 @@
             <label for="client" class="ecwp-label">{{
               translations.company_name
             }}</label>
-            <select
+            <model-select
               v-model="invoice.client_id"
+              :options="clientOptions"
+              label="text"
+              track-by="value"
+              :placeholder="translations.select"
               class="ecwp-input input input-bordered w-full"
-            >
-              <option
-                v-for="client in clients"
-                :value="client.id"
-                :key="client.id"
-                :selected="client.id === invoice.client_id"
-              >
-                {{ client.company_name }} - {{ client.email }} (
-                {{ client.currency_symbol }} )
-              </option>
-            </select>
+              required
+            />
           </div>
           <div class="ecwp-group form-group mb-4">
             <label for="status" class="ecwp-label">{{
@@ -61,12 +60,12 @@
             <select
               id="status"
               v-model="invoice.status"
+              required
               class="ecwp-input select select-bordered w-full"
             >
               <option value="draft" selected>{{ translations.draft }}</option>
               <option value="unpaid">{{ translations.unpaid }}</option>
               <option value="paid">{{ translations.paid }}</option>
-              <option value="cancelled">{{ translations.cancelled }}</option>
             </select>
           </div>
           <div v-if="currencyMismatch" class="ecwp-group form-group mb-4">
@@ -109,11 +108,15 @@
     
   <script>
 import Card from "@/components/Card.vue";
+import { ModelSelect } from "vue-search-select";
+import VueDatePicker from "@vuepic/vue-datepicker";
 
 export default {
   name: "invoiceEdit",
   components: {
     Card,
+    ModelSelect,
+    VueDatePicker,
   },
   data() {
     return {
@@ -128,6 +131,7 @@ export default {
       loading: false,
       loadingBtn: false,
       clients: [],
+      clientOptions: [],
       settings: [],
       toast: {
         visible: false,
@@ -140,6 +144,15 @@ export default {
   computed: {
     translations() {
       return window.myEasyComptaAdmin.easyComptaTranslations;
+    },
+    formattedDate() {
+      return (date) => {
+        if (!date) return "";
+        const day = date.getDate().toString().padStart(2, "0");
+        const month = (date.getMonth() + 1).toString().padStart(2, "0");
+        const year = date.getFullYear();
+        return `${day}-${month}-${year}`;
+      };
     },
 
     currencyMismatch() {
@@ -171,6 +184,13 @@ export default {
         .then((response) => response.json())
         .then((data) => {
           this.clients = data.clients;
+          this.clientOptions = this.clients.map((client) => ({
+            value: client.id,
+            text: `${client.company_name} - ${client.email} (${client.currency_symbol})`,
+          }));
+          if (this.invoice.client_id) {
+            this.setClientById(this.invoice.client_id);
+          }
         })
         .catch((error) => {
           console.error("Error fetching clients:", error);
@@ -221,7 +241,6 @@ export default {
         .then((data) => {
           if (data) {
             this.invoice = data;
-            console.log(this.invoice);
           } else {
             console.error("Error fetching invoice details:", data.message);
             this.showToast(data.message, "alert-error");

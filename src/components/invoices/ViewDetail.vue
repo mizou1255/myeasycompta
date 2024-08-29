@@ -15,6 +15,18 @@
       @confirm="this.removeItem(selectedItem, SelectedInvoiceId)"
       @cancel="showRemoveModal = false"
     />
+    <div v-if="settings.easy_compta_email_addon_active == 1">
+      <remind-invoice-modal
+        :loading="loadingModal"
+        :show-modal="RemindInvoiceModal"
+        modal-id="modal_send_remind"
+        :client="client_detail"
+        :invoice-id="invoice.id"
+        :subject="settings.remind_invoice_subject"
+        :content="settings.remind_invoice_content"
+        @close="RemindInvoiceModal = false"
+      />
+    </div>
     <div
       v-if="toast.visible"
       :class="['toast', toast.position]"
@@ -30,7 +42,6 @@
     >
       <span class="loading loading-spinner text-primary loading-lg"></span>
     </div>
-
     <div v-if="isInvoiceOverdue && invoice.status == 'unpaid'">
       <div role="alert" class="alert alert-warning">
         <svg
@@ -47,6 +58,23 @@
           />
         </svg>
         <span>{{ translations.invoice_overdue }}</span>
+        <div v-if="settings.easy_compta_email_addon_active == 1">
+          <button
+            @click.prevent="sendRemind(invoice.client_id)"
+            class="btn btn-sm btn-primary"
+          >
+            {{ translations.remind_invoice }}
+          </button>
+        </div>
+        <div
+          v-else
+          class="tooltip tooltip-bottom tooltip-warning"
+          :data-tip="translations.active_email_addon"
+        >
+          <button class="btn btn-sm btn-primary" disabled>
+            {{ translations.remind_invoice }}
+          </button>
+        </div>
       </div>
     </div>
     <Card topMargin="mt-8" id="invoice-content">
@@ -87,11 +115,6 @@
               class="badge badge-success text-white"
               >{{ translations.paid }}</span
             >
-            <span
-              v-if="invoice.status == 'cancelled'"
-              class="badge badge-secondary text-white"
-              >{{ translations.cancelled }}</span
-            >
           </div>
         </div>
       </div>
@@ -110,7 +133,7 @@
             {{ client_detail.country }}<br />
             <a
               v-if="client_detail.phone"
-              href="tel:{{ client_detail.phone }}"
+              :href="'tel:' + client_detail.phone"
               >{{ client_detail.phone }}</a
             >
           </p>
@@ -126,12 +149,12 @@
             {{ settings.country }}<br />
             <a
               v-if="settings.company_phone"
-              href="tel:{{ settings.company_phone }}"
+              :href="'tel:' + settings.company_phone"
               >{{ settings.company_phone }}</a
             ><br />
             <a
               v-if="settings.mobile_phone"
-              href="tel:{{ settings.mobile_phone }}"
+              :href="'tel:' + settings.mobile_phone"
               >{{ settings.mobile_phone }}</a
             >
           </p>
@@ -471,7 +494,7 @@ import EditItemModal from "@/components/invoices/Modal_Edit_Item.vue";
 import RemoveModal from "@/components/RemoveAlert.vue";
 import Sortable from "sortablejs";
 import { fetchSettings } from "@/api/api";
-import { parseDate } from "@/utils/helpers";
+import RemindInvoiceModal from "@/components/invoices/Remind.vue";
 
 export default {
   name: "InvoiceViewDetail",
@@ -480,12 +503,14 @@ export default {
     InvoiceNavBar,
     EditItemModal,
     RemoveModal,
+    RemindInvoiceModal,
   },
   data() {
     return {
       selectedItem: null,
       SelectedInvoiceId: null,
       editItemsModal: false,
+      RemindInvoiceModal: false,
       loading: false,
       loading_add: false,
       invoice: [],
@@ -528,12 +553,13 @@ export default {
       return window.myEasyComptaAdmin.easyComptaTranslations;
     },
     isInvoiceOverdue() {
-      const dueDate = parseDate(
-        this.invoice.due_date,
-        this.settings.date_format
-      );
-      const today = new Date();
-      return dueDate && dueDate < today;
+      const today = new Date().getTime();
+
+      const dueDateTimestamp = this.invoice.due_date
+        ? new Date(this.invoice.due_date).getTime()
+        : null;
+
+      return dueDateTimestamp && dueDateTimestamp < today;
     },
     defaultCurrency() {
       return {
@@ -845,17 +871,12 @@ export default {
         });
     },
     formatCurrency(amount) {
-      if (isNaN(amount)) return "0,00";
-
-      const formattedAmount = amount
-        .toFixed(2)
-        .replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-
+      const formattedAmount = amount.toFixed(2);
       const currencySymbol =
         this.client_currency !== this.default_currency_symbol
           ? this.client_currency
           : this.default_currency_symbol;
-      return `${formattedAmount} ${currencySymbol}`;
+      return `${formattedAmount}${currencySymbol}`;
     },
     calculateDiscountAmount(quantity, unitPrice, vat_rate, discount) {
       const totalBeforeDiscount = quantity * unitPrice;
@@ -998,6 +1019,13 @@ export default {
         this.showDropdown = false;
         this.showDropdownRef = false;
       }
+    },
+    sendRemind(clientId) {
+      this.loadingModal = true;
+      this.RemindInvoiceModal = true;
+      modal_send_remind.showModal();
+      this.fetchClientInfo(clientId);
+      this.loadSettings();
     },
     showToast(message, type) {
       this.toast.message = message;

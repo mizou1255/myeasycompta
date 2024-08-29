@@ -34,11 +34,20 @@
               :key="key"
               class="ecwp-group form-group"
             >
-              <label :for="key" class="ecwp-label form-label">{{
-                field.label
-              }}</label>
+              <label
+                :for="key"
+                :class="[
+                  'ecwp-label form-label',
+                  key === 'client_id' ? 'label-search' : '',
+                ]"
+                >{{ field.label }}</label
+              >
               <input
-                v-if="key !== 'category_id' && key !== 'client_id'"
+                v-if="
+                  key !== 'category_id' &&
+                  key !== 'client_id' &&
+                  key !== 'expense_date'
+                "
                 :type="field.type || 'text'"
                 :id="key"
                 v-model="editedExpense[key]"
@@ -66,24 +75,27 @@
                   {{ category.name }}
                 </option>
               </select>
-              <select
+              <model-select
                 v-if="key === 'client_id'"
-                :id="key"
                 v-model="editedExpense.client_id"
-                :class="[
-                  'ecwp-input input',
-                  'input-bordered',
-                  field.class || 'w-full',
-                ]"
-              >
-                <option
-                  v-for="client in clients"
-                  :key="client.id"
-                  :value="client.id"
-                >
-                  {{ client.company_name }}
-                </option>
-              </select>
+                :options="clients"
+                label="text"
+                track-by="value"
+                :placeholder="translations.select"
+                class="ecwp-input input input-bordered w-full"
+                required
+              />
+              <VueDatePicker
+                v-if="key == 'expense_date'"
+                class="ecwp-input ecwp-date input input-bordered w-full"
+                id="invoiceDate"
+                v-model="editedExpense.expense_date"
+                :enable-time-picker="false"
+                auto-apply
+                :format="formattedDate"
+                locale="fr"
+                required
+              />
             </div>
           </div>
           <!-- <div class="ecwp-group form-group relative">
@@ -129,8 +141,14 @@
   </div>
 </template>
   
-  <script>
+<script>
+import { ModelSelect } from "vue-search-select";
+import VueDatePicker from "@vuepic/vue-datepicker";
 export default {
+  components: {
+    ModelSelect,
+    VueDatePicker,
+  },
   props: {
     loading: {
       type: Boolean,
@@ -167,6 +185,7 @@ export default {
     return {
       editedExpense: { ...this.expense },
       loadingBtn: false,
+      clientOptions: [],
       toast: {
         visible: false,
         message: "",
@@ -188,6 +207,15 @@ export default {
   computed: {
     translations() {
       return window.myEasyComptaAdmin.easyComptaTranslations;
+    },
+    formattedDate() {
+      return (date) => {
+        if (!date) return "";
+        const day = date.getDate().toString().padStart(2, "0");
+        const month = (date.getMonth() + 1).toString().padStart(2, "0");
+        const year = date.getFullYear();
+        return `${day}-${month}-${year}`;
+      };
     },
     skeletonItems() {
       return Array.from({ length: 10 }, (_, index) => index);

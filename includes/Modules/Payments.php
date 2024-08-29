@@ -27,7 +27,7 @@ class ECWP_Payments
             'manage_options',
             'my-easy-compta-payments',
             array($this, 'render_page'),
-            4
+            5
         );
     }
     public function enqueue_scripts($hook_suffix)

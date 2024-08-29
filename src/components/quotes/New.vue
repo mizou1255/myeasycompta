@@ -27,23 +27,31 @@
             <label for="quoteDate" class="ecwp-label">{{
               translations.due_date
             }}</label>
-            <input
-              type="date"
+            <VueDatePicker
+              class="ecwp-input ecwp-date input input-bordered w-full"
               id="quoteDate"
               v-model="quote.due_date"
-              class="ecwp-input input input-bordered w-full"
+              :enable-time-picker="false"
+              auto-apply
+              :format="formattedDate"
+              :min-date="new Date()"
+              locale="fr"
               required
             />
           </div>
           <div class="ecwp-group form-group mb-4">
-            <label for="quoteDate" class="ecwp-label">{{
+            <label for="quoteDatePr" class="ecwp-label">{{
               translations.provisional_date
             }}</label>
-            <input
-              type="date"
-              id="quoteDate"
+            <VueDatePicker
+              class="ecwp-input ecwp-date input input-bordered w-full"
+              id="quoteDatePr"
               v-model="quote.provisional_start_date"
-              class="ecwp-input input input-bordered w-full"
+              :enable-time-picker="false"
+              auto-apply
+              :format="formattedDate"
+              :min-date="new Date()"
+              locale="fr"
               required
             />
           </div>
@@ -53,20 +61,14 @@
             <label for="client" class="ecwp-label">{{
               translations.company_name
             }}</label>
-            <select
+            <model-select
               v-model="quote.client_id"
+              :options="clientOptions"
+              label="text"
+              track-by="value"
+              :placeholder="translations.select"
               class="ecwp-input input input-bordered w-full"
-            >
-              <option
-                v-for="client in clients"
-                :value="client.id"
-                :key="client.id"
-                :selected="client.id === quote.client_id"
-              >
-                {{ client.company_name }} - {{ client.email }} (
-                {{ client.currency_symbol }} )
-              </option>
-            </select>
+            />
           </div>
           <div class="ecwp-group form-group mb-4">
             <label for="status" class="ecwp-label">{{
@@ -115,14 +117,20 @@
 
 <script>
 import Card from "@/components/Card.vue";
+import { ModelSelect } from "vue-search-select";
+import VueDatePicker from "@vuepic/vue-datepicker";
 
 export default {
   name: "QuoteNew",
   components: {
     Card,
+    ModelSelect,
+    VueDatePicker,
   },
   data() {
     return {
+      clientOptions: [],
+      clients: [],
       quote: {
         number: "",
         due_date: "",
@@ -132,7 +140,6 @@ export default {
       },
       loading: false,
       loadingBtn: false,
-      clients: [],
       settings: [],
       last_quote_number: "",
       toast: {
@@ -146,6 +153,15 @@ export default {
   computed: {
     translations() {
       return window.myEasyComptaAdmin.easyComptaTranslations;
+    },
+    formattedDate() {
+      return (date) => {
+        if (!date) return "";
+        const day = date.getDate().toString().padStart(2, "0");
+        const month = (date.getMonth() + 1).toString().padStart(2, "0");
+        const year = date.getFullYear();
+        return `${day}-${month}-${year}`;
+      };
     },
   },
   mounted() {
@@ -166,6 +182,10 @@ export default {
         .then((response) => response.json())
         .then((data) => {
           this.clients = data.clients;
+          this.clientOptions = this.clients.map((client) => ({
+            value: client.id,
+            text: `${client.company_name} - ${client.email} (${client.currency_symbol})`,
+          }));
         })
         .catch((error) => {
           console.error("Error fetching clients:", error);
@@ -173,6 +193,9 @@ export default {
         .finally(() => {
           this.loading = false;
         });
+    },
+    customLabel(option) {
+      return option.text;
     },
     async fetchSettings() {
       try {

@@ -23,12 +23,36 @@
     <Card topMargin="mt-8">
       <div class="flex justify-between items-center">
         <h2 class="card-title">{{ translations.invoices }}</h2>
-        <router-link :to="{ name: 'InvoiceNew' }">
-          <button class="btn btn-primary rounded-full">
-            {{ translations.add }}
-            <i class="fas fa-plus-circle"></i>
-          </button>
-        </router-link>
+        <div>
+          <router-link :to="{ name: 'InvoiceNew' }">
+            <button class="btn btn-primary rounded-full">
+              {{ translations.add }}
+              <i class="fas fa-plus-circle"></i>
+            </button>
+          </router-link>
+          <span
+            v-if="settings.easy_compta_export_addon_active == 1"
+            class="ms-2"
+          >
+            <a
+              class="btn btn-outline btn-accent rounded-full hover:text-white"
+              href="/wp-admin/admin.php?page=my-easy-compta-export#tab3"
+            >
+              {{ translations.export }}
+              <i class="fas fa-file-export"></i>
+            </a>
+          </span>
+          <span
+            v-else
+            class="tooltip tooltip-left tooltip-warning ms-2"
+            :data-tip="translations.active_export_addon"
+          >
+            <button class="btn btn-outline btn-accent rounded-full" disabled>
+              {{ translations.export }}
+              <i class="fas fa-file-export"></i>
+            </button>
+          </span>
+        </div>
       </div>
       <div class="divider mt-2"></div>
       <div class="overflow-x-auto">
@@ -65,9 +89,9 @@
                   >{{ translations.paid }}</span
                 >
                 <span
-                  v-if="invoice.status == 'cancelled'"
-                  class="badge badge-secondary badge-outline badge-sm"
-                  >{{ translations.cancelled }}</span
+                  v-if="invoice.credit == '1'"
+                  class="badge badge-error badge-outline badge-sm ms-2"
+                  >{{ translations.credit }}</span
                 >
               </td>
               <td>

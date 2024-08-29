@@ -50,6 +50,7 @@ class ECWP_APP
             'myeasycompta_page_my-easy-compta-quotes',
             'myeasycompta_page_my-easy-compta-invoices',
             'myeasycompta_page_my-easy-compta-planning',
+            'myeasycompta_page_my-easy-compta-credits',
             'myeasycompta_page_my-easy-compta-payments',
             'myeasycompta_page_my-easy-compta-expenses',
             'myeasycompta_page_my-easy-compta-settings',
@@ -89,6 +90,7 @@ class ECWP_APP
             'my-easy-compta-clients',
             'my-easy-compta-quotes',
             'my-easy-compta-invoices',
+            'my-easy-compta-credits',
             'my-easy-compta-payments',
             'my-easy-compta-expenses',
             'my-easy-compta-settings',
@@ -133,6 +135,9 @@ class ECWP_APP
         $this->routes->add_route('/stats/total-earnings', 'GET', $this, 'get_total_earnings', function () {
             return current_user_can('manage_options');
         });
+        $this->routes->add_route('/stats/total-pogress-earnings', 'GET', $this, 'get_total_earnings_progess', function () {
+            return current_user_can('manage_options');
+        });
 
         $this->routes->add_route('/stats/monthly-payments-expenses', 'GET', $this, 'get_monthly_payments_expenses', function () {
             return current_user_can('manage_options');
@@ -160,12 +165,13 @@ class ECWP_APP
             FROM %i  AS invoices
             INNER JOIN %i AS clients ON invoices.client_id = clients.id
             INNER JOIN %i AS currency ON clients.currency_id = currency.id
-            WHERE invoices.status = 'unpaid'",
+            WHERE invoices.status_stats = 'unpaid'",
                 ECWP_TABLE_INVOICES, ECWP_TABLE_CLIENTS, ECWP_TABLE_CURRENCY),
             ARRAY_A
         );
 
         $unpaid_amounts_by_currency = array();
+        $encrypt = new \ECWP\Admin\Encrypt\ECWP_Encrypt;
 
         if (!$unpaid_invoices) {
             $unpaid_amounts_by_currency[0]['total_amount'] = 0;
@@ -175,7 +181,7 @@ class ECWP_APP
         foreach ($unpaid_invoices as $invoice) {
             $currency = $invoice['currency_id'];
             $symbol = $invoice['symbol'];
-            $amount = floatval($invoice['total_amount']);
+            $amount = floatval($encrypt->decrypt($invoice['total_amount']));
 
             if (!isset($unpaid_amounts_by_currency[$currency])) {
                 $unpaid_amounts_by_currency[$currency] = array(
@@ -310,6 +316,27 @@ class ECWP_APP
         $total = number_format($total_earnings[0]['total_earnings'] ?? 0, 2, '.', ' ');
 
         return rest_ensure_response(array('default_currency_id' => $default_currency_id, 'total' => $total, 'default_currency_symbol' => $default_currency_symbol));
+    }
+
+    /**
+     *
+     * @return [type]
+     */
+    public function get_total_earnings_progess()
+    {
+        global $wpdb;
+        $total_earnings = $wpdb->get_var(
+            $wpdb->prepare("SELECT SUM(payments.amount) as total_earnings
+        FROM %i AS payments",
+                ECWP_TABLE_PAYMENTS),
+            ARRAY_A
+        );
+
+        if (empty($total_earnings)) {
+            $total_earnings = 0;
+        }
+
+        return rest_ensure_response($total_earnings);
     }
 
     /**

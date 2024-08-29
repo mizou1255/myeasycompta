@@ -103,6 +103,12 @@ class ECWP_Settings
             return current_user_can('manage_options');
         });
 
+        $this->routes->add_route('/settings/articles', 'POST', $this, 'add_article', function () {
+            return current_user_can('manage_options');
+        });
+        $this->routes->add_route('/settings/articles/(?P<id>\d+)', 'PUT', $this, 'edit_article', function () {
+            return current_user_can('manage_options');
+        });
         $this->routes->add_route('/settings/articles/(?P<id>\d+)', 'DELETE', $this, 'delete_article', function () {
             return current_user_can('manage_options');
         });
@@ -406,23 +412,31 @@ class ECWP_Settings
             return new \WP_Error('file_upload_error', 'File upload error.');
         }
 
-        $file = $_FILES['logo'];
+        $file_name = sanitize_file_name($_FILES['logo']['name']);
+        $file_type = wp_check_filetype($file_name);
+        $file_tmp_name = sanitize_text_field($_FILES['logo']['tmp_name']);
+        $file_size = absint($_FILES['logo']['size']);
+        $file_error = absint($_FILES['logo']['error']);
 
-        $file_type = wp_check_filetype($file['name']);
         $allowed_types = array('jpg', 'jpeg', 'png', 'gif');
         if (!in_array($file_type['ext'], $allowed_types)) {
             return new \WP_REST_Response(array('message' => 'Invalid file type. Only JPG, JPEG, PNG, and GIF are allowed.'), 400);
         }
 
         $max_file_size = 2 * 1024 * 1024;
-        if ($file['size'] > $max_file_size) {
+        if ($file_size > $max_file_size) {
             return new \WP_REST_Response(array('message' => 'File size exceeds the maximum allowed size of 2 MB.'), 400);
         }
 
-        $upload_overrides = array(
-            'test_form' => false,
-            'upload_dir' => $upload_path,
+        $file = array(
+            'name' => $file_name,
+            'type' => $file_type['type'],
+            'tmp_name' => $file_tmp_name,
+            'size' => $file_size,
+            'error' => $file_error,
         );
+
+        $upload_overrides = array('test_form' => false);
         $upload = wp_handle_upload($file, $upload_overrides);
 
         if (isset($upload['error'])) {
@@ -524,6 +538,82 @@ class ECWP_Settings
         }
 
         return new \WP_REST_Response(['id' => $id], 200);
+    }
+
+    /**
+     * @param \WP_REST_Request $request
+     *
+     * @return [type]
+     */
+    public function add_article(\WP_REST_Request $request)
+    {
+        $nonce = sanitize_text_field(wp_unslash($request->get_header('X-WP-Nonce')));
+        if (!wp_verify_nonce($nonce, 'wp_rest')) {
+            return new \WP_Error('invalid_nonce', 'Nonce verification failed.', array('status' => 403));
+        }
+        global $wpdb;
+        $params = $request->get_json_params();
+        $ref = sanitize_text_field($params['ref']);
+        $name = sanitize_text_field($params['name']);
+        $description = sanitize_text_field($params['description']);
+        $unit_price = sanitize_text_field($params['unit_price']);
+
+        $result = $wpdb->insert(
+            ECWP_TABLE_ARTICLES,
+            [
+                'ref' => $ref,
+                'name' => $name,
+                'description' => $description,
+                'unit_price' => $unit_price,
+            ]
+        );
+
+        if ($result === false) {
+            return new \WP_Error('currency_creation_failed', 'Failed to create currency', ['status' => 500]);
+        }
+
+        return new \WP_REST_Response(['id' => $wpdb->insert_id, 'name' => $name,
+            'description' => $description,
+            'unit_price' => $unit_price], 201);
+    }
+
+    /**
+     * @param \WP_REST_Request $request
+     *
+     * @return [type]
+     */
+    function edit_article(\WP_REST_Request $request)
+    {
+        $nonce = sanitize_text_field(wp_unslash($request->get_header('X-WP-Nonce')));
+        if (!wp_verify_nonce($nonce, 'wp_rest')) {
+            return new \WP_Error('invalid_nonce', 'Nonce verification failed.', array('status' => 403));
+        }
+        global $wpdb;
+        $params = $request->get_json_params();
+        $id = (int) $request['id'];
+        $ref = sanitize_text_field($params['ref']);
+        $name = sanitize_text_field($params['name']);
+        $description = sanitize_text_field($params['description']);
+        $unit_price = sanitize_text_field($params['unit_price']);
+
+        $result = $wpdb->update(
+            ECWP_TABLE_ARTICLES,
+            [
+                'ref' => $ref,
+                'name' => $name,
+                'description' => $description,
+                'unit_price' => $unit_price,
+            ],
+            ['id' => $id]
+        );
+
+        if ($result === false) {
+            return new \WP_Error('currency_update_failed', 'Failed to update currency', ['status' => 500]);
+        }
+
+        return new \WP_REST_Response(['id' => $id, 'name' => $name,
+            'description' => $description,
+            'unit_price' => $unit_price], 200);
     }
 
     /**

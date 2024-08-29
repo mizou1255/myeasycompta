@@ -9,48 +9,20 @@
         <span>{{ toast.message }}</span>
       </div>
     </div>
-    <payment-edit-modal
-      :loading="loadingModal"
-      :show-modal="editPaymentModal"
-      modal-id="modal_payment_edit"
-      :modal-title="translations.edit_payment"
-      :payment="selectedPayment"
-      :methods="paymentMethods"
-      @close="editPaymentModal = false"
-      @paymentEdited="fetchPayments"
-    />
+
     <remove-modal
       :show-modal="showRemoveModal"
       :title="translations.are_you_sure"
       :message="translations.no_turning_back"
       :confirmText="translations.yes_delete_it"
       :cancelText="translations.cancel"
-      @confirm="this.deletePayment(selectedPayment)"
+      @confirm="this.deleteCredit(selectedCredit)"
       @cancel="showRemoveModal = false"
     />
+
     <Card topMargin="mt-8">
       <div class="flex justify-between items-center">
-        <h2 class="card-title">{{ translations.payments }}</h2>
-
-        <div v-if="settings.easy_compta_export_addon_active == 1">
-          <a
-            class="btn btn-outline btn-accent rounded-full"
-            href="/wp-admin/admin.php?page=my-easy-compta-export#tab4"
-          >
-            {{ translations.export }}
-            <i class="fas fa-file-export"></i>
-          </a>
-        </div>
-        <div
-          v-else
-          class="tooltip tooltip-left tooltip-warning"
-          :data-tip="translations.active_export_addon"
-        >
-          <button class="btn btn-outline btn-accent rounded-full" disabled>
-            {{ translations.export }}
-            <i class="fas fa-file-export"></i>
-          </button>
-        </div>
+        <h2 class="card-title">{{ translations.credits }}</h2>
       </div>
       <div class="divider mt-2"></div>
 
@@ -72,24 +44,26 @@
         <table v-if="!loading" class="table w-full">
           <thead>
             <tr>
+              <th>{{ translations.credit_number }}</th>
               <th>{{ translations.invoice_number }}</th>
               <th>{{ translations.client }}</th>
               <th>{{ translations.payment_date }}</th>
+              <th>{{ translations.created_at }}</th>
               <th>{{ translations.amount }}</th>
-              <th>{{ translations.payment_method }}</th>
-              <th>{{ translations.note }}</th>
-              <th class="flex justify-center">{{ translations.actions }}</th>
+              <th class="flex justify-end">{{ translations.actions }}</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="payment in payments" :key="payment.id">
-              <td>{{ payment.invoice_number }}</td>
-              <td>{{ payment.company_name }}</td>
-              <td>{{ payment.payment_date }}</td>
+            <tr v-for="credit in credits" :key="credit.id">
+              <td>{{ credit.credit_number }}</td>
+              <td>{{ credit.invoice_number }}</td>
+              <td>{{ credit.client_name }}</td>
+              <td>{{ credit.due_date }}</td>
+              <td>{{ credit.created_at }}</td>
               <td>
                 <div v-if="!loadingPrice">
                   <span>{{
-                    formatAmount(payment.amount, default_currency_symbol)
+                    formatAmount(credit.total_amount, default_currency_symbol)
                   }}</span>
                 </div>
                 <div v-else>
@@ -97,23 +71,29 @@
                 </div>
               </td>
 
-              <td>{{ payment.method_name }}</td>
-              <td>{{ payment.notes }}</td>
               <td class="flex justify-end">
-                <span class="lg:tooltip" :data-tip="translations.edit">
-                  <button
-                    class="btn btn-circle mx-1"
-                    @click="editPayment(payment.id)"
-                  >
-                    <i class="fas fa-pencil-alt"></i></button
-                ></span>
-
                 <span class="lg:tooltip" :data-tip="translations.delete">
                   <button
-                    @click="confirmDeletePayment(payment.id)"
+                    @click="confirmDeleteCredit(credit.id)"
                     class="btn btn-circle text-red-500 hover:text-red-700 mx-1"
                   >
                     <i class="far fa-trash-alt"></i></button
+                ></span>
+                <span class="lg:tooltip" :data-tip="translations.export">
+                  <button
+                    @click="exportToPDF(credit.credit_id)"
+                    class="btn btn-circle mx-1 text-green-700"
+                    :disabled="loadingPdfId === credit.credit_id"
+                  >
+                    <i
+                      class="far fa-file-pdf"
+                      aria-hidden="true"
+                      v-if="loadingPdfId !== credit.credit_id"
+                    ></i>
+                    <span
+                      v-if="loadingPdfId === credit.credit_id"
+                      class="loading loading-spinner loading-sm"
+                    ></span></button
                 ></span>
               </td>
             </tr>
@@ -159,7 +139,6 @@
 
 <script>
 import Card from "@/components/Card.vue";
-import PaymentEditModal from "@/components/payments/Edit.vue";
 import RemoveModal from "@/components/RemoveAlert.vue";
 import { fetchSettings } from "@/api/api";
 import {
@@ -169,30 +148,21 @@ import {
 } from "@/utils/helpers";
 
 export default {
-  name: "Payments",
+  name: "Credits",
   components: {
     Card,
-    PaymentEditModal,
     RemoveModal,
   },
   data() {
     return {
-      payments: [],
-      paymentMethods: [],
-      paymentForm: {
-        invoice_id: "",
-        client_id: "",
-        amount: "",
-        payment_method_id: "",
-        payment_date: "",
-      },
-      editPaymentModal: false,
-      selectedPayment: null,
+      credits: [],
+      selectedCredit: null,
       currentPage: 1,
       totalPages: 1,
       paginationButtons: [],
       loading: true,
       loadingPrice: true,
+      loadingPdfId: null,
       loadingModal: false,
       showRemoveModal: false,
       skeletonRows: 5,
@@ -209,15 +179,15 @@ export default {
     };
   },
   created() {
-    this.fetchPayments();
+    this.fetchCredits();
     this.loadSettings();
   },
   methods: {
-    fetchPayments(page = 1) {
+    fetchCredits(page = 1) {
       this.loading = true;
       const { perPage } = this;
       fetch(
-        `/wp-json/my-easy-compta/v1/payments?page=${page}&per_page=${perPage}`,
+        `/wp-json/my-easy-compta/v1/credits?page=${page}&per_page=${perPage}`,
         {
           headers: {
             "X-WP-Nonce": myEasyComptaAdmin.nonce,
@@ -226,7 +196,7 @@ export default {
       )
         .then((response) => response.json())
         .then((data) => {
-          this.payments = data.payments;
+          this.credits = data.credits;
           this.totalCount = data.total_count;
           this.totalPages = data.total_pages;
           this.currentPage = data.page;
@@ -234,34 +204,10 @@ export default {
           this.generatePaginationButtons();
         })
         .catch((error) => {
-          console.error("Error fetching payments:", error);
+          console.error("Error fetching credits:", error);
         })
         .finally(() => {
           this.loading = false;
-        });
-    },
-    editPayment(payment) {
-      this.loadingModal = true;
-      this.editPaymentModal = true;
-      modal_payment_edit.showModal();
-      this.fetchPaymentDetails(payment);
-    },
-    fetchPaymentDetails(paymentId) {
-      fetch(`/wp-json/my-easy-compta/v1/payments/details/${paymentId}`, {
-        headers: {
-          "X-WP-Nonce": myEasyComptaAdmin.nonce,
-        },
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          this.selectedPayment = data;
-          this.paymentMethods = data.payment_methods;
-          console.log(this.paymentMethods);
-          this.loadingModal = false;
-        })
-        .catch((error) => {
-          console.error("Error fetching payment details:", error);
-          this.loadingModal = false;
         });
     },
     generatePaginationButtons() {
@@ -274,10 +220,10 @@ export default {
       if (pageNumber === "...") {
         return;
       }
-      this.fetchPayments(pageNumber);
+      this.fetchCredits(pageNumber);
     },
     perPageChanged() {
-      this.fetchPayments();
+      this.fetchCredits();
     },
     formatAmount(amount, currency) {
       return formatAmount(amount, currency, this.settings.currency_position);
@@ -285,17 +231,14 @@ export default {
     showToast(message, type) {
       showToast(this.toast, message, type);
     },
-    closePaymentModal() {
-      this.showPaymentModal = false;
-    },
-    confirmDeletePayment(payment) {
-      this.selectedPayment = payment;
+    confirmDeleteCredit(credit) {
+      this.selectedCredit = credit;
       modal_remove.showModal();
       this.showRemoveModal = true;
     },
-    deletePayment(paymentId) {
+    deleteCredit(creditId) {
       this.loading = true;
-      fetch(`/wp-json/my-easy-compta/v1/payments/${paymentId}`, {
+      fetch(`/wp-json/my-easy-compta/v1/credits/${creditId}`, {
         method: "DELETE",
         headers: {
           "X-WP-Nonce": myEasyComptaAdmin.nonce,
@@ -309,15 +252,42 @@ export default {
         })
         .then((data) => {
           if (data.success) {
-            this.fetchPayments();
+            this.fetchCredits();
             this.showToast(data.message, "alert-success");
           } else {
             this.showToast(data.message, "alert-error");
-            console.error("Error deleting payment:", data.statusText);
+            console.error("Error deleting credit:", data.statusText);
           }
         })
         .catch((error) => {
-          console.error("Error deleting payment:", error);
+          console.error("Error deleting credit:", error);
+        });
+    },
+    exportToPDF(invoiceId) {
+      this.loadingPdfId = invoiceId;
+      fetch(`/wp-json/my-easy-compta/v1/credits/pdf/${invoiceId}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "X-WP-Nonce": myEasyComptaAdmin.nonce,
+        },
+      })
+        .then((response) => {
+          if (!response.ok) {
+            this.loadingPdfId = null;
+            throw new Error("Network response was not ok");
+          }
+          this.loadingPdfId = null;
+          return response.blob();
+        })
+        .then((blob) => {
+          const url = URL.createObjectURL(blob);
+          this.loadingPdfId = null;
+          window.open(url);
+        })
+        .catch((error) => {
+          this.loadingPdfId = null;
+          console.error("There was a problem with the fetch operation:", error);
         });
     },
     async loadSettings() {

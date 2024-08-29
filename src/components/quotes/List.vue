@@ -31,12 +31,36 @@
     <Card topMargin="mt-8">
       <div class="flex justify-between items-center">
         <h2 class="card-title">{{ translations.quotes }}</h2>
-        <router-link :to="{ name: 'QuoteNew' }">
-          <button class="btn btn-primary rounded-full">
-            {{ translations.add }}
-            <i class="fas fa-plus-circle"></i>
-          </button>
-        </router-link>
+        <div>
+          <router-link :to="{ name: 'QuoteNew' }">
+            <button class="btn btn-primary rounded-full">
+              {{ translations.add }}
+              <i class="fas fa-plus-circle"></i>
+            </button>
+          </router-link>
+          <span
+            v-if="settings.easy_compta_export_addon_active == 1"
+            class="ms-2"
+          >
+            <a
+              class="btn btn-outline btn-accent rounded-full hover:text-white"
+              href="/wp-admin/admin.php?page=my-easy-compta-export#tab2"
+            >
+              {{ translations.export }}
+              <i class="fas fa-file-export"></i>
+            </a>
+          </span>
+          <span
+            v-else
+            class="tooltip tooltip-left tooltip-warning ms-2"
+            :data-tip="translations.active_export_addon"
+          >
+            <button class="btn btn-outline btn-accent rounded-full" disabled>
+              {{ translations.export }}
+              <i class="fas fa-file-export"></i>
+            </button>
+          </span>
+        </div>
       </div>
       <div class="divider mt-2"></div>
       <div class="overflow-x-auto">

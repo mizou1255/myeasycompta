@@ -119,7 +119,7 @@
             {{ client_detail.country }}<br />
             <a
               v-if="client_detail.phone"
-              href="tel:{{ client_detail.phone }}"
+              :href="'tel:' + client_detail.phone"
               >{{ client_detail.phone }}</a
             >
           </p>
@@ -135,12 +135,12 @@
             {{ settings.country }}<br />
             <a
               v-if="settings.company_phone"
-              href="tel:{{ settings.company_phone }}"
+              :href="'tel:' + settings.company_phone"
               >{{ settings.company_phone }}</a
             ><br />
             <a
               v-if="settings.mobile_phone"
-              href="tel:{{ settings.mobile_phone }}"
+              :href="'tel:' + settings.mobile_phone"
               >{{ settings.mobile_phone }}</a
             >
           </p>
@@ -560,9 +560,13 @@ export default {
       return window.myEasyComptaAdmin.easyComptaTranslations;
     },
     isQuoteExpired() {
-      const dueDate = parseDate(this.quote.due_date, this.settings.date_format);
-      const today = new Date();
-      return dueDate && dueDate < today;
+      const today = new Date().getTime();
+
+      const dueDateTimestamp = this.quote.due_date
+        ? new Date(this.quote.due_date).getTime()
+        : null;
+
+      return dueDateTimestamp && dueDateTimestamp < today;
     },
     totalAmountWithoutDiscount() {
       const total = this.quoteItems.reduce((total, item) => {

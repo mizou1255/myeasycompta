@@ -4,9 +4,7 @@ import path from "path";
 import obfuscator from "rollup-plugin-obfuscator";
 
 export default defineConfig({
-  plugins: [
-    vue()
-  ],
+  plugins: [vue()],
   css: {
     postcss: "./postcss.config.js",
   },
@@ -17,6 +15,7 @@ export default defineConfig({
         clients: path.resolve(__dirname, "src/apps/clients.js"),
         quotes: path.resolve(__dirname, "src/apps/quotes.js"),
         invoices: path.resolve(__dirname, "src/apps/invoices.js"),
+        credits: path.resolve(__dirname, "src/apps/credits.js"),
         payments: path.resolve(__dirname, "src/apps/payments.js"),
         expenses: path.resolve(__dirname, "src/apps/expenses.js"),
         settings: path.resolve(__dirname, "src/apps/settings.js"),
@@ -51,7 +50,7 @@ export default defineConfig({
           stringArrayEncoding: ["rc4"],
           stringArrayThreshold: 0.75,
           unicodeEscapeSequence: false,
-        })
+        }),
       ],
     },
     assetsDir: "",

@@ -1,16 +1,16 @@
 <?php
 /**
  * Plugin Name: myEasyCompta
- * Description: A comprehensive accounting plugin using Vue.js and TailwindCSS. Manage your quotes, invoices, expenses, and more with ease.
+ * Description: Streamline your financial management with myEasyCompta, an all-in-one accounting plugin. Effortlessly handle quotes, invoices, expenses, and more, all within a sleek, user-friendly interface. Perfect for freelancers and small businesses looking to simplify their accounting processes.
  * Version: 1.0.0
- * Author: Moez
+ * Author: MELIOZ.dev
  * Author URI: https://myeasycompta.com
  * Text Domain: my-easy-compta
  * Domain Path: /languages/
  * License: GPLv2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Requires at least: 6.2
- * Tested up to: 6.3
+ * Tested up to: 6.6.1
  * Requires PHP: 7.4
  * Tags: accounting, quotes, invoices, expenses, Vue.js, TailwindCSS
  */
@@ -133,6 +133,7 @@ final class ECWP_Easy_Compta
         define('ECWP_TABLE_ARTICLES', ECWP_PREFIX . 'ecwp_articles');
         define('ECWP_TABLE_ARTICLES_CATEGORIES', ECWP_PREFIX . 'ecwp_articles_categories');
         define('ECWP_TABLE_CLIENTS', ECWP_PREFIX . 'ecwp_clients');
+        define('ECWP_TABLE_CREDITS', ECWP_PREFIX . 'ecwp_credits');
         define('ECWP_TABLE_INVOICES', ECWP_PREFIX . 'ecwp_invoices');
         define('ECWP_TABLE_INVOICE_ELEMENTS', ECWP_PREFIX . 'ecwp_invoice_items');
         define('ECWP_TABLE_QUOTES', ECWP_PREFIX . 'ecwp_quotes');
@@ -160,6 +161,7 @@ final class ECWP_Easy_Compta
         require_once ECWP_INCLUDES . '/Modules/Quotes.php';
         require_once ECWP_INCLUDES . '/Modules/Invoices.php';
         require_once ECWP_INCLUDES . '/Modules/Payments.php';
+        require_once ECWP_INCLUDES . '/Modules/Credits.php';
         require_once ECWP_INCLUDES . '/Modules/Expenses.php';
         require_once ECWP_INCLUDES . '/Modules/Settings.php';
         require_once ECWP_INCLUDES . '/Modules/Setup.php';
@@ -180,6 +182,7 @@ final class ECWP_Easy_Compta
         $this->container['clients'] = new ECWP\Admin\ECWP_Clients();
         $this->container['quotes'] = new ECWP\Admin\ECWP_Quotes();
         $this->container['invoices'] = new ECWP\Admin\ECWP_Invoices();
+        $this->container['credits'] = new ECWP\Admin\ECWP_Credits();
         $this->container['payments'] = new ECWP\Admin\ECWP_Payments();
         $this->container['expenses'] = new ECWP\Admin\ECWP_Expenses();
         $this->container['settings'] = new ECWP\Admin\Settings\ECWP_Settings();
@@ -203,9 +206,9 @@ final class ECWP_Easy_Compta
         register_activation_hook(ECWP_FILE, [$this, 'ecwp_encrypt_key']);
 
         // Drop tables on deactivation
-        //register_deactivation_hook(ECWP_FILE, [$this->container['tables'], 'drop_tables']);
         register_deactivation_hook(ECWP_FILE, [$this, 'ecwp_deactivate']);
         register_deactivation_hook(ECWP_FILE, [$this, 'ecwp_delete_encrypt_key']);
+        register_deactivation_hook(ECWP_FILE, [$this->container['tables'], 'drop_tables']);
 
         add_action('init', [$this, 'ecwp_add_rewrite_rules']);
         add_filter('query_vars', [$this, 'ecwp_query_vars']);
@@ -297,6 +300,21 @@ final class ECWP_Easy_Compta
 
     public function ecwp_deactivate()
     {
+        $addons = [
+            'my-easy-compta-signature/my-easy-compta-signature.php',
+            'my-easy-compta-user/my-easy-compta-user.php',
+            'my-easy-compta-backup/my-easy-compta-backup.php',
+        ];
+
+        foreach ($addons as $addon) {
+            if (is_plugin_active($addon)) {
+                wp_die(
+                    esc_html__('You cannot deactivate the myEasyCompta plugin while add-ons are enabled.', 'my-easy-compta'),
+                    esc_html__('Plugin deactivation error', 'my-easy-compta'),
+                    ['response' => 200, 'back_link' => true]
+                );
+            }
+        }
         flush_rewrite_rules();
     }
 

@@ -709,7 +709,7 @@ class ECWP_Quotes
     function convert_quote_to_invoice($request)
     {
         global $wpdb;
-        $quote_id = $request['id'];
+        $quote_id = absint($request['id']);
         $nonce = sanitize_text_field(wp_unslash($request->get_header('X-WP-Nonce')));
         if (!wp_verify_nonce($nonce, 'wp_rest')) {
             return new WP_Error('rest_nonce_invalid', __('Invalid nonce', 'my-easy-compta'), array('status' => 403));
@@ -738,6 +738,7 @@ class ECWP_Quotes
             'total_amount' => $encrypt->encrypt($quote['total_amount']),
             'due_date' => $quote['due_date'],
             'status' => $encrypt->encrypt('unpaid'),
+            'status_stats' => 'unpaid',
             'created_at' => $quote['created_at'],
         );
 
@@ -756,7 +757,8 @@ class ECWP_Quotes
                 'invoice_id' => $invoice_id,
                 'item_name' => $encrypt->encrypt($item['item_name']),
                 'item_ref' => $encrypt->encrypt($item['item_ref']),
-                'item_description' => $item['item_description'],
+                'item_description' => $encrypt->encrypt($item['item_description']),
+                'item_category' => $item['item_category'],
                 'quantity' => $encrypt->encrypt($item['quantity']),
                 'vat_rate' => $encrypt->encrypt($item['vat_rate']),
                 'unit_price' => $encrypt->encrypt($item['unit_price']),

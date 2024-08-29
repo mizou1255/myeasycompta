@@ -42,9 +42,33 @@
     <Card topMargin="mt-8">
       <div class="flex justify-between items-center">
         <h2 class="card-title">{{ translations.clients }}</h2>
-        <button class="btn btn-primary rounded-full" @click="AddNew">
-          {{ translations.add }} <i class="fas fa-plus-circle"></i>
-        </button>
+        <div>
+          <button class="btn btn-primary rounded-full" @click="AddNew">
+            {{ translations.add }} <i class="fas fa-plus-circle"></i>
+          </button>
+          <span
+            v-if="settings.easy_compta_export_addon_active == 1"
+            class="ms-2"
+          >
+            <a
+              class="btn btn-outline btn-accent rounded-full hover:text-white"
+              href="/wp-admin/admin.php?page=my-easy-compta-export#tab1"
+            >
+              {{ translations.export }}
+              <i class="fas fa-file-export"></i>
+            </a>
+          </span>
+          <span
+            v-else
+            class="tooltip tooltip-left tooltip-warning ms-2"
+            :data-tip="translations.active_export_addon"
+          >
+            <button class="btn btn-outline btn-accent rounded-full" disabled>
+              {{ translations.export }}
+              <i class="fas fa-file-export"></i>
+            </button>
+          </span>
+        </div>
       </div>
       <div class="divider mt-2"></div>
 
@@ -188,6 +212,7 @@ import ClientDetailsModal from "@/components/clients/View.vue";
 import ClientEditModal from "@/components/clients/Edit.vue";
 import RemoveModal from "@/components/RemoveAlert.vue";
 import { generatePaginationButtons, showToast } from "@/utils/helpers";
+import { fetchSettings } from "@/api/api";
 
 export default {
   name: "Clients",
@@ -209,6 +234,7 @@ export default {
       totalPages: 1,
       paginationButtons: [],
       loading: true,
+      settings: [],
       loadingModal: false,
       skeletonRows: 5,
       perPage: 10,
@@ -223,6 +249,7 @@ export default {
   },
   created() {
     this.fetchClients();
+    this.loadSettings();
   },
   methods: {
     AddNew() {
@@ -342,6 +369,19 @@ export default {
             console.error("Error deleting client:", error);
           }
         });
+    },
+    async loadSettings() {
+      try {
+        this.loadingPrice = true;
+        const { settings, currencySymbol, vatData } = await fetchSettings();
+        this.settings = settings;
+        this.default_currency_symbol = currencySymbol;
+        this.default_vat = vatData;
+        this.loadingPrice = false;
+      } catch (error) {
+        this.showToast(error.message, "alert-error");
+        this.loadingPrice = false;
+      }
     },
     showToast(message, type) {
       showToast(this.toast, message, type);

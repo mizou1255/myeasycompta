@@ -112,6 +112,7 @@ class ECWP_Invoices
                         invoices.total_amount,
                         invoices.status,
                         invoices.due_date,
+                        invoices.credit,
                         invoices.created_at
                 FROM %i AS invoices
                 LEFT JOIN %i AS clients ON invoices.client_id = clients.id
@@ -140,6 +141,7 @@ class ECWP_Invoices
                 'amount' => number_format(floatval($encrypt->decrypt($invoice->amount)), 2, '.', ''),
                 'total_amount' => number_format(floatval($encrypt->decrypt($invoice->total_amount)), 2, '.', ''),
                 'status' => $encrypt->decrypt($invoice->status),
+                'credit' => $invoice->credit,
                 'due_date' => date_i18n($format_date, strtotime($invoice->due_date)),
                 'created' => date_i18n($format_date, strtotime($invoice->created_at)),
             );
@@ -215,13 +217,15 @@ class ECWP_Invoices
             'client_id' => absint($request['client_id']),
             'exchange_rate' => $encrypt->encrypt(floatval($request['exchange_rate'])),
             'status' => $encrypt->encrypt(sanitize_text_field($request['status'])),
-            'due_date' => sanitize_text_field($request['date']),
+            'status_stats' => sanitize_text_field($request['status']),
+            'due_date' => sanitize_text_field($request['due_date']),
             'created_at' => gmdate('Y-m-d'),
         );
         $format = array(
             '%d',
             '%s',
             '%d',
+            '%s',
             '%s',
             '%s',
             '%s',
@@ -292,7 +296,7 @@ class ECWP_Invoices
             'item_name' => $encrypt->encrypt(sanitize_text_field($params['item_name'])),
             'item_ref' => $encrypt->encrypt(sanitize_text_field($params['item_ref'])),
             'item_category' => sanitize_text_field($params['item_category']),
-            'item_description' => wp_kses_post($params['item_description']),
+            'item_description' => $encrypt->encrypt(wp_kses_post($params['item_description'])),
             'quantity' => $encrypt->encrypt(sanitize_text_field($params['quantity'])),
             'vat_rate' => $encrypt->encrypt(sanitize_text_field($params['vat_rate'])),
             'unit_price' => $encrypt->encrypt(sanitize_text_field($params['unit_price'])),
@@ -378,9 +382,10 @@ class ECWP_Invoices
                 'client_id' => $client_id,
                 'exchange_rate' => $encrypt->encrypt($exchange_rate),
                 'status' => $encrypt->encrypt($status),
+                'status_stats' => $status,
             ),
             array('id' => $invoice_id),
-            array('%s', '%d', '%s', '%s'),
+            array('%s', '%d', '%s', '%s', '%s'),
             array('%d')
         );
 
@@ -468,7 +473,7 @@ class ECWP_Invoices
         foreach ($items as &$item) {
             $item['item_name'] = $encrypt->decrypt($item['item_name']);
             $item['item_ref'] = $encrypt->decrypt($item['item_ref']);
-            $item['item_description'] = $item['item_description'];
+            $item['item_description'] = $encrypt->decrypt($item['item_description']);
             $item['quantity'] = (int) $encrypt->decrypt($item['quantity']);
             $item['vat_rate'] = (int) $encrypt->decrypt($item['vat_rate']);
             $item['unit_price'] = number_format((float) $encrypt->decrypt($item['unit_price']), 2, '.', '');
@@ -501,7 +506,7 @@ class ECWP_Invoices
         // Décrypter les champs
         $item_details['item_name'] = $encrypt->decrypt($item_details['item_name']);
         $item_details['item_ref'] = $encrypt->decrypt($item_details['item_ref']);
-        $item_details['item_description'] = $item_details['item_description'];
+        $item_details['item_description'] = $encrypt->decrypt($item_details['item_description']);
         $item_details['quantity'] = (int) $encrypt->decrypt($item_details['quantity']);
         $item_details['vat_rate'] = (int) $encrypt->decrypt($item_details['vat_rate']);
         $item_details['unit_price'] = number_format((float) $encrypt->decrypt($item_details['unit_price']), 2, '.', '');
@@ -538,11 +543,10 @@ class ECWP_Invoices
         $vat_rate_total = ($total_price * $vat_rate) / 100;
         $total_amount = $vat_rate_total + $total_price;
 
-        // Chiffrer les données avant la mise à jour
         $encrypted_data = array(
             'item_name' => $encrypt->encrypt($item_name),
             'item_ref' => $encrypt->encrypt($item_ref),
-            'item_description' => $item_description,
+            'item_description' => $encrypt->encrypt($item_description),
             'quantity' => $encrypt->encrypt($quantity),
             'vat_rate' => $encrypt->encrypt($vat_rate),
             'unit_price' => $encrypt->encrypt($unit_price),
@@ -585,8 +589,8 @@ class ECWP_Invoices
             $calculate_amount,
             array('id' => $invoice_id),
             array(
-                '%f',
-                '%f',
+                '%s',
+                '%s',
             ),
             array('%d')
         );
@@ -682,7 +686,7 @@ class ECWP_Invoices
 
         global $wpdb;
 
-        if (!in_array($status, ['unpaid', 'paid', 'cancelled'])) {
+        if (!in_array($status, ['unpaid', 'paid'])) {
             return new \WP_Error('invalid_status', 'Invalid status provided', array('status' => 400));
         }
 
@@ -694,12 +698,18 @@ class ECWP_Invoices
         if (null === $invoice) {
             return new \WP_Error('invalid_id', __('Invoice not found', 'my-easy-compta'), array('status' => 404));
         }
+        $encrypt = new \ECWP\Admin\Encrypt\ECWP_Encrypt;
+        $status_stats = $status;
+        $status_encrypt = $encrypt->encrypt($status);
 
         $result = $wpdb->update(
             ECWP_TABLE_INVOICES,
-            array('status' => $status),
+            array(
+                'status' => $status_encrypt,
+                'status_stats' => $status_stats,
+            ),
             array('id' => $id),
-            array('%s'),
+            array('%s', '%s'),
             array('%d')
         );
 
@@ -785,8 +795,8 @@ class ECWP_Invoices
     public function generate_invoice_pdf(\WP_REST_Request $request)
     {
         global $wpdb;
-        $invoice_id = $request->get_param('id');
-        $currency_id = $request->get_param('currency_id');
+        $invoice_id = sanitize_text_field($request->get_param('id'));
+        $currency_id = sanitize_text_field($request->get_param('currency_id'));
 
         $pdfGenerator = new PDFGenerator($wpdb);
         $pdfGenerator->generateInvoicePDF($invoice_id, "", $currency_id);

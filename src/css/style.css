@@ -1,3 +1,6 @@
+@import "vue-search-select/dist/VueSearchSelect.css";
+@import '@vuepic/vue-datepicker/dist/main.css';
+
 *:focus {
     outline: none;
 }
@@ -88,6 +91,16 @@
     margin-top: 20px
 }
 
+.ecwp-group .ecwp-date {
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.ecwp-group .ecwp-date input {
+    border: 0;
+    height: 3rem;
+}
+
 .ecwp-group select {
     max-width: 100%;
 }
@@ -98,6 +111,11 @@
     left: 8px;
     background: #fff;
     padding: 0 8px;
+    z-index: 9;
+}
+
+.ecwp-group .ecwp-label.label-search {
+    z-index: 11;
 }
 
 .label {
@@ -455,4 +473,9 @@ input:focus {
 
 .card-actions {
     margin-top: auto;
+}
+
+.ui.selection.dropdown {
+    border-color: #8c8f94;
+    padding-top: 18px;
 }

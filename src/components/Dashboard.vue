@@ -1,5 +1,5 @@
 <template>
-  <div class="pt-2 pr-4">
+  <div class="relative pt-2 pr-4">
     <label class="ecwp-swap swap swap-rotate bg-base-100 p-2 mt-10">
       <input type="checkbox" class="theme-controller" @change="toggleTheme" />
       <i class="swap-off far fa-sun text-xl"></i>
@@ -8,11 +8,11 @@
     <Stats />
 
     <div class="grid lg:grid-cols-3 mt-4 grid-cols-1 gap-6">
-      <div class="card w-full p-6 bg-base-100 shadow-xl mt-6 col-span-2">
+      <div class="card w-full p-6 bg-base-100 shadow-xl col-span-2 mt-4">
         <BarChart />
       </div>
 
-      <div class="card w-full p-6 bg-base-100 shadow-xl mt-6">
+      <div class="card w-full p-6 bg-base-100 shadow-xl mt-4">
         <InvoicesHistory />
       </div>
     </div>
@@ -55,6 +55,11 @@ export default {
     ) {
       this.setTheme("dark");
     }
+  },
+  computed: {
+    translations() {
+      return window.myEasyComptaAdmin.easyComptaTranslations;
+    },
   },
 };
 </script>

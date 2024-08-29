@@ -1,5 +1,4 @@
 === myEasyCompta ===
-Contributors: mizou1255
 Tags: accounting, quotes, invoices, expenses, freelancers
 Requires at least: 6.2
 Tested up to: 6.6.1
@@ -23,7 +22,7 @@ myEasyCompta is a comprehensive and modern accounting solution for WordPress, sp
 ⚙️ **Settings Management**: Customize myEasyCompta to fit your needs: add a logo, configure client emails, and personalize quote and invoice templates.  
 
 
-🚀 **myEasyCompta PRO - Coming Soon!**
+🚀 **myEasyCompta Addons - Coming Soon!**
 
 Get ready for the launch of myEasyCompta PRO, which will include powerful additional features:
 
@@ -73,10 +72,10 @@ We welcome contributions from the community! You can contribute by submitting a 
 
 1. **Dashboard** - Overview of your financial activities.
 2. **Clients Management** - Create and manage your clients list.
-2. **Quotes Management** - Create and manage quotes for your clients.
-3. **Invoices Management** - Generate and track invoices.
-4. **Expenses Tracking** - Record and categorize your business expenses.
-5. **Settings** - Settings page.
+3. **Quotes Management** - Create and manage quotes for your clients.
+4. **Invoices Management** - Generate and track invoices.
+5. **Expenses Tracking** - Record and categorize your business expenses.
+6. **Addons** - Addons page.
 
 == Changelog ==
 
@@ -126,15 +125,13 @@ The non-compressed source code for JavaScript and CSS files is available in the 
 - JavaScript Source: `/src/api/`, `/src/apps/`, `/src/components/`, `/src/js/`
 - CSS Source: `/src/css/`
 
-Please refer to these directories for the human-readable version of the code.
-
 The non-compressed source code is also available on our public repository:
 
 - GitHub Repository: [https://github.com/mizou1255/myeasycompta](https://github.com/mizou1255/myeasycompta)
 
 == Build Tools ==
 
-This plugin uses npm and Webpack to manage and build the source code. To install and use these tools:
+This plugin uses npm and Vite to manage and build the source code. To install and use these tools:
 
 1. Navigate to the plugin's directory.
 2. Run `npm install` to install dependencies.

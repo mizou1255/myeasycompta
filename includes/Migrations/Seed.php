@@ -12,6 +12,7 @@ class ECWP_Tables
             'currency.php',
             'articles.php',
             'clients.php',
+            'credits.php',
             'quotes.php',
             'quotes-items.php',
             'invoices.php',
@@ -36,6 +37,7 @@ class ECWP_Tables
             ECWP_TABLE_ARTICLES,
             ECWP_TABLE_ARTICLES_CATEGORIES,
             ECWP_TABLE_CLIENTS,
+            ECWP_TABLE_CREDITS,
             ECWP_TABLE_INVOICES,
             ECWP_TABLE_INVOICE_ELEMENTS,
             ECWP_TABLE_QUOTES,
@@ -50,10 +52,10 @@ class ECWP_Tables
         ];
 
         foreach ($tables as $table) {
-            // Ensure table name is safely sanitized and validated
-            $table = sanitize_key($table);
+            $escaped_table = esc_sql($table);
 
-            $wpdb->query("DROP TABLE IF EXISTS %i", $table);
+            $wpdb->query($wpdb->prepare("DROP TABLE IF EXISTS %i", $escaped_table));
+
         }
     }
 
@@ -103,9 +105,14 @@ class ECWP_Tables
             array('meta_key' => 'logo_url', 'meta_value' => $logo_url),
             array('meta_key' => 'date_format', 'meta_value' => 'DD/MM/YYYY'),
             array('meta_key' => 'logo_width', 'meta_value' => '99'),
+            array('meta_key' => 'logo_mentions', 'meta_value' => 'EI - Entrepreneur Individuel'),
             array('meta_key' => 'invoice_color', 'meta_value' => '#0860d6'),
             array('meta_key' => 'invoice_footer', 'meta_value' => '<p>Dispensé d\'immatriculation au registre du commerce et des sociétés (RCS) et au répertoire des métiers (RM)</p>'),
             array('meta_key' => 'invoice_terms', 'meta_value' => '<p><strong>TVA non applicable</strong>, art. 293 B du CGI Pénalité de retard au taux annuel de 2% En cas de retard de paiement, application d\'une indemnité forfaitaire pour frais de recouvrement de 40 euros (article D. 441-5 du code du commerce)</p>'),
+            array('meta_key' => 'credit_color', 'meta_value' => '#ff6a00'),
+            array('meta_key' => 'credit_prefix', 'meta_value' => 'AVR'),
+            array('meta_key' => 'credit_footer', 'meta_value' => '<p>Dispensé d\'immatriculation au registre du commerce et des sociétés (RCS) et au répertoire des métiers (RM)</p>'),
+            array('meta_key' => 'credit_terms', 'meta_value' => '<p><strong>TVA non applicable</strong>, art. 293 B du CGI Pénalité de retard au taux annuel de 2% En cas de retard de paiement, application d\'une indemnité forfaitaire pour frais de recouvrement de 40 euros (article D. 441-5 du code du commerce)</p>'),
             array('meta_key' => 'quote_color', 'meta_value' => '#29c742'),
             array('meta_key' => 'quote_footer', 'meta_value' => '<p>Dispensé d\'immatriculation au registre du commerce et des sociétés (RCS) et au répertoire des métiers (RM)</p>'),
             array('meta_key' => 'quote_terms', 'meta_value' => '<p><strong>TVA non applicable</strong>, art. 293 B du CGI Pénalité de retard au taux annuel de 2% En cas de retard de paiement, application d\'une indemnité forfaitaire pour frais de recouvrement de 40 euros (article D. 441-5 du code du commerce)</p>'),
@@ -162,12 +169,10 @@ class ECWP_Tables
         }
 
         $payment_methods_data = array(
-            array('method_name' => 'Credit Card'),
+            array('method_name' => 'Virement bancaire'),
             array('method_name' => 'PayPal'),
-            array('method_name' => 'Bank Transfer'),
-            array('method_name' => 'Cash'),
-            array('method_name' => 'Cheque'),
-            array('method_name' => 'Cryptocurrency'),
+            array('method_name' => 'Espèce'),
+            array('method_name' => 'Chèque'),
         );
 
         foreach ($payment_methods_data as $method) {
@@ -224,6 +229,7 @@ class ECWP_Tables
             'total_amount' => $encrypt->encrypt(1800.00),
             'exchange_rate' => $encrypt->encrypt(1.3000),
             'status' => $encrypt->encrypt('paid'),
+            'status_stats' => 'paid',
             'due_date' => '2024-07-30',
             'created_at' => '2024-06-14',
             'source' => '',
@@ -238,7 +244,7 @@ class ECWP_Tables
             'item_name' => $encrypt->encrypt('Model S'),
             'item_ref' => $encrypt->encrypt('ref1'),
             'item_category' => 1,
-            'item_description' => 'Electric car',
+            'item_description' => $encrypt->encrypt('Electric car'),
             'quantity' => $encrypt->encrypt(1),
             'vat_rate' => $encrypt->encrypt(20),
             'unit_price' => $encrypt->encrypt(1500.00),
@@ -257,6 +263,7 @@ class ECWP_Tables
         // Insert a new quote
         $wpdb->insert(ECWP_TABLE_QUOTES, [
             'client_id' => $client_id_amazon,
+            'number' => $quote_first,
             'quote_number' => $quote_number,
             'total_amount' => 2500.00,
             'status' => 'pending',

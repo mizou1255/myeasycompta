@@ -2,81 +2,88 @@
   <div>
     <dialog id="modal_expenses" class="modal">
       <div class="modal-box">
-        <h3 class="font-bold text-lg">Ajouter une dépense</h3>
+        <h3 class="font-bold text-lg">{{ translations.add }}</h3>
+        <button
+          class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+          @click="closeModal"
+        >
+          ✕
+        </button>
         <form @submit.prevent="submitForm">
-          <button
-            class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-            @click="closeModal"
-          >
-            ✕
-          </button>
-          <!-- Amount -->
-          <div class="ecwp-group form-group relative">
-            <label for="amount" class="ecwp-label form-label">Montant</label>
-            <input
-              type="number"
-              id="amount"
-              v-model="formData.amount"
-              class="ecwp-input input input-bordered w-full peer"
-              placeholder="Montant"
-              required
-            />
-          </div>
-          <!-- Expense Date -->
-          <div class="ecwp-group form-group relative">
-            <label for="expense_date" class="ecwp-label form-label"
-              >Date de dépense</label
+          <div class="grid grid-cols-2 gap-4">
+            <div
+              v-for="(field, key) in fields"
+              :key="key"
+              class="ecwp-group form-group"
             >
-            <input
-              type="date"
-              id="expense_date"
-              v-model="formData.expense_date"
-              class="ecwp-input input input-bordered w-full peer"
-              placeholder="Date de dépense"
-              required
-            />
-          </div>
-          <!-- Client -->
-          <div class="ecwp-group form-group relative">
-            <label for="client_id" class="ecwp-label form-label">{{
-              translations.client
-            }}</label>
-            <select
-              id="client_id"
-              v-model="formData.client_id"
-              class="ecwp-input input input-bordered w-full peer"
-              required
-            >
-              <option value="">{{ translations.select_client }}</option>
-              <option
-                v-for="client in options.clients"
-                :key="client.id"
-                :value="client.id"
+              <label
+                :for="key"
+                :class="[
+                  'ecwp-label form-label',
+                  key === 'client_id' ? 'label-search' : '',
+                ]"
+                >{{ field.label }}</label
               >
-                {{ client.company_name }}
-              </option>
-            </select>
-          </div>
-          <!-- Category -->
-          <div class="ecwp-group form-group relative">
-            <label for="category_id" class="ecwp-label form-label">{{
-              translations.category
-            }}</label>
-            <select
-              id="category_id"
-              v-model="formData.category_id"
-              class="ecwp-input input input-bordered w-full peer"
-              required
-            >
-              <option value="">{{ translations.select_category }}</option>
-              <option
-                v-for="category in options.categories"
-                :key="category.id"
-                :value="category.id"
+              <input
+                v-if="
+                  key !== 'category_id' &&
+                  key !== 'client_id' &&
+                  key !== 'expense_date'
+                "
+                :type="field.type || 'text'"
+                :id="key"
+                v-model="formData[key]"
+                :class="[
+                  'ecwp-input input',
+                  'input-bordered',
+                  field.class || 'w-full',
+                ]"
+              />
+              <select
+                v-if="key === 'category_id'"
+                :id="key"
+                v-model="formData.category_id"
+                :class="[
+                  'ecwp-input input',
+                  'input-bordered',
+                  field.class || 'w-full',
+                ]"
               >
-                {{ category.name }}
-              </option>
-            </select>
+                <option
+                  v-for="category in options.categories"
+                  :key="category.id"
+                  :value="category.id"
+                >
+                  {{ category.name }}
+                </option>
+              </select>
+
+              <select
+                v-if="key === 'client_id'"
+                id="client_id"
+                v-model="formData.client_id"
+                class="ecwp-input input input-bordered w-full peer"
+              >
+                <option value="">{{ translations.select_client }}</option>
+                <option
+                  v-for="client in options.clients"
+                  :key="client.id"
+                  :value="client.id"
+                >
+                  {{ client.company_name }}
+                </option>
+              </select>
+
+              <input
+                v-if="key == 'expense_date'"
+                type="date"
+                id="expense_date"
+                v-model="formData.expense_date"
+                class="ecwp-input input input-bordered w-full peer"
+                placeholder="Date de dépense"
+                required
+              />
+            </div>
           </div>
           <!-- Attachment -->
           <div class="ecwp-group form-group relative">
@@ -126,6 +133,7 @@
 <script>
 export default {
   data() {
+    const translations = window.myEasyComptaAdmin.easyComptaTranslations;
     return {
       loadingBtn: false,
       formData: {
@@ -139,6 +147,16 @@ export default {
       options: {
         clients: [],
         categories: [],
+      },
+      fields: {
+        expense_date: {
+          label: translations.expense_date,
+        },
+        client_id: {
+          label: translations.client,
+        },
+        amount: { label: translations.amount },
+        category_id: { label: translations.category },
       },
     };
   },

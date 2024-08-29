@@ -65,29 +65,36 @@
             :class="tabClass(5)"
             @click="selectTab(5)"
             class="justify-start w-full"
-          >
-            <i class="far fa-question-circle mr-2"></i>
-            {{ translations.quotes_settings }}</a
+            ><i class="fas fa-undo mr-2"></i>
+            {{ translations.credits_settings }}</a
           >
           <a
             :class="tabClass(6)"
             @click="selectTab(6)"
             class="justify-start w-full"
           >
-            <i class="fas fa-dollar-sign mr-2"></i>
-            {{ translations.currency_vat_settings }}</a
+            <i class="far fa-question-circle mr-2"></i>
+            {{ translations.quotes_settings }}</a
           >
           <a
             :class="tabClass(7)"
             @click="selectTab(7)"
             class="justify-start w-full"
           >
-            <i class="fas fa-money-check-alt mr-2"></i>
-            {{ translations.payments_settings }}</a
+            <i class="fas fa-dollar-sign mr-2"></i>
+            {{ translations.currency_vat_settings }}</a
           >
           <a
             :class="tabClass(8)"
             @click="selectTab(8)"
+            class="justify-start w-full"
+          >
+            <i class="fas fa-money-check-alt mr-2"></i>
+            {{ translations.payments_settings }}</a
+          >
+          <a
+            :class="tabClass(9)"
+            @click="selectTab(9)"
             class="justify-start w-full"
           >
             <i class="fas fa-shopping-basket mr-2"></i>
@@ -95,8 +102,8 @@
           >
           <a
             v-if="form.easy_compta_planning_addon_active == 1"
-            :class="tabClass(9)"
-            @click="selectTab(9)"
+            :class="tabClass(10)"
+            @click="selectTab(10)"
             class="justify-start w-full"
           >
             <i class="fas fa-calendar-alt mr-2"></i>
@@ -104,8 +111,8 @@
           >
           <a
             v-if="form.easy_compta_email_addon_active == 1"
-            :class="tabClass(10)"
-            @click="selectTab(10)"
+            :class="tabClass(11)"
+            @click="selectTab(11)"
             class="justify-start w-full"
           >
             <i class="far fa-envelope mr-2"></i>
@@ -113,16 +120,34 @@
           >
           <a
             v-if="form.easy_compta_user_addon_active == 1"
-            :class="tabClass(11)"
-            @click="selectTab(11)"
+            :class="tabClass(12)"
+            @click="selectTab(12)"
             class="justify-start w-full"
           >
             <i class="fas fa-user mr-2"></i>
             {{ translations.users_settings }}</a
           >
           <a
-            :class="tabClass(12)"
-            @click="selectTab(12)"
+            v-if="form.easy_compta_payment_addon_active == 1"
+            :class="tabClass(13)"
+            @click="selectTab(13)"
+            class="justify-start w-full"
+          >
+            <i class="far fa-credit-card mr-2"></i>
+            {{ translations.stripe_settings }}</a
+          >
+          <a
+            v-if="form.easy_compta_stats_addon_active == 1"
+            :class="tabClass(14)"
+            @click="selectTab(14)"
+            class="justify-start w-full"
+          >
+            <i class="far fa-chart-bar mr-2"></i>
+            {{ translations.stats_settings }}</a
+          >
+          <a
+            :class="tabClass(15)"
+            @click="selectTab(15)"
             class="justify-start w-full"
           >
             <i class="far fa-id-badge mr-2"></i>
@@ -441,7 +466,6 @@
                   <option value="MM.DD.YYYY">MM.DD.YYYY</option>
                 </select>
               </div>
-
               <div class="mt-6 flex justify-end">
                 <button type="submit" class="btn btn-primary rounded-full">
                   <i class="far fa-save"></i> {{ translations.save }}
@@ -450,9 +474,95 @@
             </form>
           </div>
           <div v-if="selectedTab === 3">
-            <h2 class="text-xl font-semibold mb-4">
-              {{ translations.articles_settings }}
-            </h2>
+            <dialog v-if="showArticleModal" id="modal_article" class="modal">
+              <div class="modal-box">
+                <h3>
+                  {{ editingArticle ? translations.edit : translations.add }}
+                </h3>
+                <form @submit.prevent="saveArticle">
+                  <button
+                    class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+                    @click="closeArticleModal"
+                  >
+                    ✕
+                  </button>
+                  <div class="ecwp-group form-control">
+                    <label class="ecwp-label label" for="name_ref">{{
+                      translations.item_ref
+                    }}</label>
+                    <input
+                      type="text"
+                      id="name_ref"
+                      v-model="articleForm.ref"
+                      class="ecwp-input input input-bordered"
+                      required
+                    />
+                  </div>
+                  <div class="ecwp-group form-control">
+                    <label class="ecwp-label label" for="name_article">{{
+                      translations.item_name
+                    }}</label>
+                    <input
+                      type="text"
+                      id="name_article"
+                      v-model="articleForm.name"
+                      class="ecwp-input input input-bordered"
+                      required
+                    />
+                  </div>
+                  <div class="ecwp-group form-control">
+                    <label class="ecwp-label label" for="desc_article">{{
+                      translations.description
+                    }}</label>
+                    <textarea
+                      id="desc_article"
+                      v-model="articleForm.description"
+                      class="ecwp-input input input-bordered"
+                      required
+                    ></textarea>
+                  </div>
+                  <div class="ecwp-group form-control">
+                    <label class="ecwp-label label" for="price_article">{{
+                      translations.unit_price
+                    }}</label>
+                    <input
+                      type="text"
+                      id="price_article"
+                      v-model="articleForm.unit_price"
+                      class="ecwp-input input input-bordered"
+                      required
+                    />
+                  </div>
+
+                  <div class="form-group mt-4 flex justify-end">
+                    <button
+                      type="button"
+                      class="btn btn-secondary rounded-full"
+                      @click="closeArticleModal"
+                    >
+                      {{ translations.cancel }}
+                    </button>
+                    <button
+                      type="submit"
+                      class="btn btn-primary rounded-full mx-2"
+                    >
+                      {{
+                        editingArticle ? translations.save : translations.add
+                      }}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </dialog>
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="text-lg font-semibold">
+                {{ translations.articles_settings }}
+              </h3>
+              <button class="btn btn-primary rounded-full" @click="addArticle">
+                <i class="fas fa-plus mr-2"></i>
+                {{ translations.add }}
+              </button>
+            </div>
 
             <div class="table-container">
               <table class="table w-full">
@@ -472,6 +582,12 @@
                     <td>{{ article.description }}</td>
                     <td>{{ article.unit_price }}</td>
                     <td>
+                      <button
+                        class="p-2 text-secondary"
+                        @click="editArticle(article.id)"
+                      >
+                        <i class="fas fa-edit"></i>
+                      </button>
                       <button
                         class="p-2 text-error"
                         @click="delete_item('article', article.id)"
@@ -578,6 +694,71 @@
           </div>
           <div v-if="selectedTab === 5">
             <h2 class="text-xl font-semibold mb-4">
+              {{ translations.credits_settings }}
+            </h2>
+            <form @submit.prevent="handleSubmit">
+              <div class="grid grid-cols-2 gap-4">
+                <div class="ecwp-group form-control">
+                  <label class="ecwp-label label" for="credit-color">{{
+                    translations.credit_color
+                  }}</label>
+                  <input
+                    type="text"
+                    id="credit-color"
+                    v-model="form.credit_color"
+                    class="ecwp-input input input-bordered"
+                    required
+                  />
+                  <color-input v-model="form.credit_color" />
+                </div>
+
+                <div class="ecwp-group form-control">
+                  <label class="ecwp-label label" for="credit-prefix">{{
+                    translations.credit_prefix
+                  }}</label>
+                  <input
+                    type="text"
+                    id="credit-prefix"
+                    v-model="form.credit_prefix"
+                    class="ecwp-input input input-bordered"
+                    required
+                  />
+                </div>
+              </div>
+              <div class="grid grid-cols-1 gap-4">
+                <div class="form-control">
+                  <label class="ecwp-label label" for="credit-prefix">{{
+                    translations.credit_footer
+                  }}</label>
+                  <div>
+                    <vue-editor
+                      v-model="form.credit_footer"
+                      :editorToolbar="toolbarOptions"
+                    ></vue-editor>
+                  </div>
+                </div>
+
+                <div class="form-control">
+                  <label class="ecwp-label label" for="credit-prefix">{{
+                    translations.credit_terms
+                  }}</label>
+                  <div>
+                    <vue-editor
+                      v-model="form.credit_terms"
+                      :editorToolbar="toolbarOptions"
+                    ></vue-editor>
+                  </div>
+                </div>
+              </div>
+              <div class="mt-6 flex justify-end">
+                <button type="submit" class="btn btn-primary rounded-full">
+                  <i class="far fa-save"></i> {{ translations.save }}
+                </button>
+              </div>
+            </form>
+          </div>
+          <div v-if="selectedTab === 6">
+            <h2 class="text-xl font-semibold mb-4">
               {{ translations.quotes_settings }}
             </h2>
             <form @submit.prevent="handleSubmit">
@@ -641,7 +822,7 @@
               </div>
             </form>
           </div>
-          <div v-if="selectedTab === 6">
+          <div v-if="selectedTab === 7">
             <h2 class="text-xl font-semibold mb-4">
               {{ translations.currency_vat_settings }}
             </h2>
@@ -861,7 +1042,7 @@
               </div>
             </div>
           </div>
-          <div v-if="selectedTab === 7">
+          <div v-if="selectedTab === 8">
             <h2 class="text-xl font-semibold mb-4">
               {{ translations.payments_settings }}
             </h2>
@@ -956,7 +1137,7 @@
               </div>
             </div>
           </div>
-          <div v-if="selectedTab === 8">
+          <div v-if="selectedTab === 9">
             <h2 class="text-xl font-semibold mb-4">
               {{ translations.expenses_settings }}
             </h2>
@@ -1049,7 +1230,7 @@
               </div>
             </div>
           </div>
-          <div v-if="selectedTab === 9">
+          <div v-if="selectedTab === 10">
             <h2 class="text-xl font-semibold mb-4">
               {{ translations.planning_settings }}
             </h2>
@@ -1191,7 +1372,7 @@
               </div>
             </div>
           </div>
-          <div v-if="selectedTab === 10">
+          <div v-if="selectedTab === 11">
             <h2 class="text-xl font-semibold mb-4">
               {{ translations.email_settings }}
             </h2>
@@ -1271,6 +1452,7 @@
                     <div class="mockup-code bg-base-900 mt-4">
                       <pre><b>{REF}</b></pre>
                       <pre><b>{CLIENT}</b></pre>
+                      <pre><b>{DUE_DATE}</b></pre>
                       <pre><b>{AMOUNT}</b></pre>
                       <pre><b>{CURRENCY}</b></pre>
                     </div>
@@ -1314,12 +1496,39 @@
                 </div>
               </div>
               <div v-if="activeTabEmail === 'tab3'" class="p-4">
-                <div role="alert" class="alert shadow">
-                  <i class="fas fa-exclamation-circle"></i>
-                  <div>
-                    <h2 class="text-xl text-center my-4">
-                      {{ translations.coming_soon }}
-                    </h2>
+                <div class="grid grid-cols-1 gap-4">
+                  <div class="ecwp-group form-control">
+                    <label
+                      class="ecwp-label label"
+                      for="remind_invoice_subject"
+                      >{{ translations.email_subject }}</label
+                    >
+                    <input
+                      type="text"
+                      id="remind_invoice_subject"
+                      v-model="form.remind_invoice_subject"
+                      class="ecwp-input input input-bordered"
+                      required
+                    />
+                  </div>
+
+                  <div class="form-control">
+                    <label class="ecwp-label label">{{
+                      translations.email_content
+                    }}</label>
+                    <div>
+                      <vue-editor
+                        v-model="form.remind_invoice_content"
+                        :editorToolbar="toolbarOptions"
+                      ></vue-editor>
+                    </div>
+                    <div class="mockup-code bg-base-900 mt-4">
+                      <pre><b>{REF}</b></pre>
+                      <pre><b>{CLIENT}</b></pre>
+                      <pre><b>{DUE_DATE}</b></pre>
+                      <pre><b>{AMOUNT}</b></pre>
+                      <pre><b>{CURRENCY}</b></pre>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1341,7 +1550,7 @@
               </div>
             </form>
           </div>
-          <div v-if="selectedTab === 11">
+          <div v-if="selectedTab === 12">
             <h2 class="text-xl font-semibold mb-4">
               {{ translations.users_settings }}
             </h2>
@@ -1415,7 +1624,143 @@
               </div>
             </div>
           </div>
-          <div v-if="selectedTab === 12">
+          <div v-if="selectedTab === 13">
+            <h2 class="text-xl font-semibold mb-4">
+              {{ translations.stripe_settings }}
+            </h2>
+            <form @submit.prevent="handleSubmit">
+              <div class="grid grid-cols-1 gap-4">
+                <!-- Mode Selector -->
+                <div class="ecwp-group form-control">
+                  <label class="ecwp-label label" for="stripe-mode">
+                    {{ translations.stripe_mode }}
+                  </label>
+                  <select
+                    id="stripe-mode"
+                    v-model="form.stripe_mode"
+                    class="ecwp-input input input-bordered"
+                    required
+                  >
+                    <option value="test">{{ translations.test_mode }}</option>
+                    <option value="live">{{ translations.live_mode }}</option>
+                  </select>
+                </div>
+
+                <!-- Stripe Keys for Test Mode -->
+                <div v-if="form.stripe_mode === 'test'">
+                  <div class="ecwp-group form-control">
+                    <label
+                      class="ecwp-label label"
+                      for="stripe-public-key-test"
+                    >
+                      {{ translations.stripe_public_key_test }}
+                    </label>
+                    <input
+                      type="text"
+                      id="stripe-public-key-test"
+                      v-model="form.stripe_public_key_test"
+                      class="ecwp-input input input-bordered"
+                      required
+                    />
+                  </div>
+                  <div class="ecwp-group form-control">
+                    <label
+                      class="ecwp-label label"
+                      for="stripe-secret-key-test"
+                    >
+                      {{ translations.stripe_secret_key_test }}
+                    </label>
+                    <input
+                      type="text"
+                      id="stripe-secret-key-test"
+                      v-model="form.stripe_secret_key_test"
+                      class="ecwp-input input input-bordered"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <!-- Stripe Keys for Live Mode -->
+                <div v-if="form.stripe_mode === 'live'">
+                  <div class="ecwp-group form-control">
+                    <label
+                      class="ecwp-label label"
+                      for="stripe-public-key-live"
+                    >
+                      {{ translations.stripe_public_key_live }}
+                    </label>
+                    <input
+                      type="text"
+                      id="stripe-public-key-live"
+                      v-model="form.stripe_public_key_live"
+                      class="ecwp-input input input-bordered"
+                      required
+                    />
+                  </div>
+                  <div class="ecwp-group form-control">
+                    <label
+                      class="ecwp-label label"
+                      for="stripe-secret-key-live"
+                    >
+                      {{ translations.stripe_secret_key_live }}
+                    </label>
+                    <input
+                      type="text"
+                      id="stripe-secret-key-live"
+                      v-model="form.stripe_secret_key_live"
+                      class="ecwp-input input input-bordered"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+              <div class="mt-6 flex justify-end">
+                <button type="submit" class="btn btn-primary rounded-full">
+                  <i class="far fa-save"></i> {{ translations.save }}
+                </button>
+              </div>
+            </form>
+          </div>
+          <div v-if="selectedTab === 14">
+            <h2 class="text-xl font-semibold mb-4">
+              {{ translations.stats_settings }}
+            </h2>
+            <form @submit.prevent="handleSubmit">
+              <div class="grid grid-cols-1 gap-4">
+                <div class="ecwp-group form-control mt-2">
+                  <label class="ecwp-label label" for="limit-declaration">{{
+                    translations.limit_declaration
+                  }}</label>
+                  <input
+                    type="number"
+                    id="limit-declaration"
+                    v-model="form.limit_declaration"
+                    class="ecwp-input input input-bordered"
+                    required
+                  />
+                </div>
+
+                <div class="ecwp-group form-control mt-2">
+                  <label class="ecwp-label label" for="limit-tva">{{
+                    translations.limit_tva
+                  }}</label>
+                  <input
+                    type="number"
+                    id="limit-tva"
+                    v-model="form.limit_tva"
+                    class="ecwp-input input input-bordered"
+                    required
+                  />
+                </div>
+              </div>
+              <div class="mt-6 flex justify-end">
+                <button type="submit" class="btn btn-primary rounded-full">
+                  <i class="far fa-save"></i> {{ translations.save }}
+                </button>
+              </div>
+            </form>
+          </div>
+          <div v-if="selectedTab === 15">
             <h2 class="text-xl font-semibold mb-4">
               {{ translations.validation_license }}
             </h2>
@@ -1608,14 +1953,23 @@ export default {
         invoice_prefix: "",
         invoice_footer: "",
         invoice_terms: "",
+        credit_color: "",
+        credit_prefix: "",
+        credit_footer: "",
+        credit_terms: "",
         quote_color: "",
         quote_prefix: "",
         quote_footer: "",
         quote_terms: "",
         easy_compta_planning_addon_active: "",
         easy_compta_email_addon_active: "",
+        easy_compta_payment_addon_active: "",
+        easy_compta_signature_addon_active: "",
+        easy_compta_stats_addon_active: "",
         email_quote_subject: "",
         email_invoice_subject: "",
+        remind_invoice_subject: "",
+        remind_invoice_content: "",
         email_quote_content: "",
         email_invoice_content: "",
         email_create_account_subject: "",
@@ -1631,6 +1985,7 @@ export default {
       payments: [],
       logoPreviewUrl: "",
       previewWidth: "",
+      showArticleModal: false,
       showCurrencyModal: false,
       showVATModal: false,
       showPaymentModal: false,
@@ -1640,6 +1995,13 @@ export default {
         id: null,
         name: "",
         symbol: "",
+      },
+      articleForm: {
+        id: null,
+        ref: "",
+        name: "",
+        description: "",
+        unit_price: "",
       },
       vatForm: {
         id: null,
@@ -1663,6 +2025,7 @@ export default {
       showRemoveModal: false,
       deleteType: null,
       selectedId: null,
+      editingArticle: false,
       editingCurrency: false,
       editingVAT: false,
       editingExpense: false,
@@ -1950,6 +2313,20 @@ export default {
         }
       }
     },
+    async addArticle() {
+      this.articleForm = {
+        id: null,
+        ref: "",
+        name: "",
+        description: "",
+        price: "",
+      };
+      this.editingArticle = false;
+      this.showArticleModal = true;
+      this.$nextTick(() => {
+        document.getElementById("modal_article").showModal();
+      });
+    },
     async addCurrency() {
       this.currencyForm = {
         id: null,
@@ -2019,6 +2396,16 @@ export default {
       }
     },
 
+    async editArticle(id) {
+      const article = this.articles.find((art) => art.id === id);
+      this.articleForm = { ...article };
+      this.editingArticle = true;
+      this.showArticleModal = true;
+      this.$nextTick(() => {
+        document.getElementById("modal_article").showModal();
+      });
+    },
+
     async editCurrency(id) {
       const currency = this.currencies.find((cur) => cur.id === id);
       this.currencyForm = { ...currency };
@@ -2046,6 +2433,46 @@ export default {
             (currency) => currency.id !== id
           );
           this.showToast("Currency deleted successfully", "alert-success");
+        } else {
+          const error = await response.json();
+          this.showToast(error.message, "alert-error");
+        }
+      } catch (error) {
+        this.showToast(error.message, "alert-error");
+      }
+    },
+    async saveArticle() {
+      const method = this.editingArticle ? "PUT" : "POST";
+      const url = this.editingArticle
+        ? `/wp-json/my-easy-compta/v1/settings/articles/${this.articleForm.id}`
+        : "/wp-json/my-easy-compta/v1/settings/articles";
+
+      try {
+        const response = await fetch(url, {
+          method,
+          headers: {
+            "Content-Type": "application/json",
+            "X-WP-Nonce": myEasyComptaAdmin.nonce,
+          },
+          body: JSON.stringify(this.articleForm),
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          if (this.editingArticle) {
+            const indexExp = this.articles.findIndex(
+              (article) => article.id === result.id
+            );
+            this.articles[indexExp] = result;
+          } else {
+            this.articles.push(result);
+          }
+          this.showToast(
+            `Article ${this.editingArticle ? "updated" : "added"} successfully`,
+            "alert-success"
+          );
+          this.closeArticleModal();
+          this.fetchArticles();
         } else {
           const error = await response.json();
           this.showToast(error.message, "alert-error");
@@ -2087,6 +2514,7 @@ export default {
             "alert-success"
           );
           this.closeCurrencyModal();
+          this.fetchCurrencies();
         } else {
           const error = await response.json();
           this.showToast(error.message, "alert-error");
@@ -2169,6 +2597,7 @@ export default {
             "alert-success"
           );
           this.closeVATModal();
+          this.fetchVATs();
         } else {
           const error = await response.json();
           this.showToast(error.message, "alert-error");
@@ -2258,6 +2687,7 @@ export default {
             "alert-success"
           );
           this.closePaymentModal();
+          this.fetchPaymentsMethods();
         } else {
           const error = await response.json();
           this.showToast(error.message, "alert-error");
@@ -2340,7 +2770,6 @@ export default {
           } else {
             this.expenses.push(result);
           }
-          console.log(this.expenses);
           this.showToast(
             `Expense category ${
               this.editingExpense ? "updated" : "added"
@@ -2348,6 +2777,7 @@ export default {
             "alert-success"
           );
           this.closeExpenseModal();
+          this.fetchExpensesCat();
         } else {
           const error = await response.json();
           this.showToast(error.message, "alert-error");
@@ -2450,6 +2880,9 @@ export default {
     },
     closeCurrencyModal() {
       this.showCurrencyModal = false;
+    },
+    closeArticleModal() {
+      this.showArticleModal = false;
     },
     closeVATModal() {
       this.showVATModal = false;

@@ -77,7 +77,7 @@ class ECWP_Setup
         ];
 
         foreach ($tables as $table) {
-            $result = $wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %i", $table));
+            $result = $wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $table));
 
             if ($result !== $table) {
                 return false;
@@ -139,7 +139,7 @@ class ECWP_Setup
                 <form id="my-easy-compta-setup-form-step2" data-step="2" method="post" action="">
                     <input type="hidden" name="ecwp_setup_step" value="2">
                     <?php wp_nonce_field('ecwp_setup_nonce', 'security');?>
-                    <div class="grid grid-cols-4 gap-4">
+                    <div class="grid grid-cols-3 gap-4">
                         <div class="ecwp-group form-control">
                             <label class="ecwp-label label"
                                 for="company-code"><?php esc_html_e('SIRET n°', 'my-easy-compta');?></label>

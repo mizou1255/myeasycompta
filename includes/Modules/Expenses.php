@@ -154,16 +154,18 @@ class ECWP_Expenses
         }
 
         $amount = floatval($request->get_param('amount'));
-        $expense_date = sanitize_text_field($request->get_param('expense_date'));
+        $expense_date_raw = sanitize_text_field($request->get_param('expense_date'));
         $client_id = absint($request->get_param('client_id'));
         $category_id = absint($request->get_param('category_id'));
         $notes = sanitize_textarea_field($request->get_param('note'));
         $file_params = $request->get_file_params();
         $attachment = isset($file_params['attachment']) ? $file_params['attachment'] : null;
 
-        if (empty($amount) || empty($expense_date) || empty($client_id) || empty($category_id)) {
+        if (empty($amount) || empty($expense_date_raw) || empty($category_id)) {
             return new WP_Error('missing_data', 'Données manquantes', array('status' => 400));
         }
+
+        $expense_date = gmdate('Y-m-d', strtotime($expense_date_raw));
 
         $attachment_id = null;
         if ($attachment) {

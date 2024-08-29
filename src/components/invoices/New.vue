@@ -27,11 +27,15 @@
             <label for="invoiceDate" class="ecwp-label">{{
               translations.due_date
             }}</label>
-            <input
-              type="date"
+            <VueDatePicker
+              class="ecwp-input ecwp-date input input-bordered w-full"
               id="invoiceDate"
-              v-model="invoice.date"
-              class="ecwp-input input input-bordered w-full"
+              v-model="invoice.due_date"
+              :enable-time-picker="false"
+              auto-apply
+              :format="formattedDate"
+              :min-date="new Date()"
+              locale="fr"
               required
             />
           </div>
@@ -39,22 +43,15 @@
             <label for="client" class="ecwp-label">{{
               translations.company_name
             }}</label>
-            <select
-              id="client"
+            <model-select
               v-model="invoice.client_id"
-              @change="handleClientChange"
-              class="ecwp-input select select-bordered w-full"
+              :options="clientOptions"
+              label="text"
+              track-by="value"
+              :placeholder="translations.select"
+              class="ecwp-input input input-bordered w-full"
               required
-            >
-              <option
-                v-for="client in clients"
-                :key="client.id"
-                :value="client.id"
-              >
-                {{ client.company_name }} - {{ client.email }} (
-                {{ client.currency_symbol }} )
-              </option>
-            </select>
+            />
           </div>
           <div class="ecwp-group form-group mb-4">
             <label for="status" class="ecwp-label">{{
@@ -63,6 +60,7 @@
             <select
               id="status"
               v-model="invoice.status"
+              required
               class="ecwp-input select select-bordered w-full"
             >
               <option value="draft" selected>{{ translations.draft }}</option>
@@ -108,24 +106,30 @@
 
 <script>
 import Card from "@/components/Card.vue";
+import { ModelSelect } from "vue-search-select";
+import VueDatePicker from "@vuepic/vue-datepicker";
 
 export default {
   name: "InvoiceNew",
   components: {
     Card,
+    ModelSelect,
+    VueDatePicker,
   },
   data() {
     return {
       invoice: {
-        number: "",
-        date: "",
+        invoice_number: "",
+        due_date: "",
         client_id: "",
+        client: null,
         status: "unpaid",
         exchange_rate: 0,
       },
       loading: false,
       loadingBtn: false,
       clients: [],
+      clientOptions: [],
       settings: [],
       last_invoice_number: "",
       toast: {
@@ -139,6 +143,15 @@ export default {
   computed: {
     translations() {
       return window.myEasyComptaAdmin.easyComptaTranslations;
+    },
+    formattedDate() {
+      return (date) => {
+        if (!date) return "";
+        const day = date.getDate().toString().padStart(2, "0");
+        const month = (date.getMonth() + 1).toString().padStart(2, "0");
+        const year = date.getFullYear();
+        return `${day}-${month}-${year}`;
+      };
     },
     currencyMismatch() {
       const selectedClient = this.clients.find(
@@ -168,6 +181,10 @@ export default {
         .then((response) => response.json())
         .then((data) => {
           this.clients = data.clients;
+          this.clientOptions = this.clients.map((client) => ({
+            value: client.id,
+            text: `${client.company_name} - ${client.email} (${client.currency_symbol})`,
+          }));
         })
         .catch((error) => {
           console.error("Error fetching clients:", error);

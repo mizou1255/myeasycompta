@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div>
+    <div v-if="emailActive == 1">
       <send-invoice-modal
         :loading="loadingModal"
         :show-modal="sendInvoiceModal"
@@ -22,6 +22,16 @@
       :status="selectedStatus"
       @confirm="this.changeInvoiceStatus(selectedStatus)"
       @cancel="showConfirmModal = false"
+    />
+
+    <confirm-modal-credit
+      :show-modal="showConfirmCreditModal"
+      :title="translations.are_you_sure"
+      :message="translations.no_turning_back"
+      :confirmText="translations.yes_confirm_it"
+      :cancelText="translations.cancel"
+      @confirm="this.addCreditInvoice()"
+      @cancel="showConfirmCreditModal = false"
     />
     <div
       v-if="loading"
@@ -79,27 +89,47 @@
             </button>
           </router-link>
 
-          <button
-            v-if="
-              invoiceInfo.status == 'unpaid' ||
-              invoiceInfo.status == 'cancelled'
-            "
-            class="btn btn-outline btn-success btn-sm hover:text-white"
-            @click="confirmValidateInvoice('paid')"
-          >
-            <i class="fa fa-check"></i>
-            {{ translations.mark_as_paid }}
-          </button>
-          <button
-            v-if="
-              invoiceInfo.status == 'unpaid' || invoiceInfo.status == 'paid'
-            "
-            class="btn btn-outline btn-secondary btn-sm hover:text-white"
-            @click="confirmValidateInvoice('cancelled')"
-          >
-            <i class="fa fa-times"></i>
-            {{ translations.mark_as_cancelled }}
-          </button>
+          <div v-else>
+            <button class="btn btn-sm" disabled>
+              <i class="far fa-edit"></i>
+              {{ translations.edit_invoice }}
+            </button>
+          </div>
+
+          <template v-if="invoiceInfo.status == 'unpaid'">
+            <div>
+              <button
+                class="btn btn-outline btn-success btn-sm hover:text-white"
+                @click="confirmValidateInvoice('paid')"
+              >
+                <i class="fa fa-check"></i>
+                {{ translations.mark_as_paid }}
+              </button>
+            </div>
+          </template>
+          <template v-else>
+            <div>
+              <button
+                class="btn btn-outline btn-success btn-sm hover:text-white"
+                disabled
+              >
+                <i class="fa fa-check"></i>
+                {{ translations.mark_as_paid }}
+              </button>
+            </div>
+            <div v-if="invoiceInfo.credit != 0 && invoiceInfo.status == 'paid'">
+              <button class="btn btn-sm ms-2" disabled>
+                <i class="fas fa-undo"></i>
+                {{ translations.credit_invoice }}
+              </button>
+            </div>
+            <div v-if="invoiceInfo.credit == 0 && invoiceInfo.status == 'paid'">
+              <button class="btn btn-sm ms-2" @click="confirmCreditInvoice()">
+                <i class="fas fa-undo"></i>
+                {{ translations.credit_invoice }}
+              </button>
+            </div>
+          </template>
         </div>
       </div>
       <button
@@ -128,6 +158,36 @@
           <span v-else>{{ translations.send_invoice }}</span>
           <i class="far fa-envelope" v-if="invoiceInfo.sent == 1"></i>
         </button>
+
+        <div
+          v-else-if="emailActive == 1 && invoiceInfo.status == 'draft'"
+          class="tooltip tooltip-bottom tooltip-warning"
+          :data-tip="translations.draft_cannot_send"
+        >
+          <button
+            click="#"
+            class="btn btn-outline btn-primary btn-sm hover:text-white"
+            disabled
+          >
+            <i class="fas fa-paper-plane"></i>
+            {{ translations.send_invoice }}
+          </button>
+        </div>
+
+        <div
+          v-else
+          class="tooltip tooltip-bottom tooltip-warning"
+          :data-tip="translations.active_email_addon"
+        >
+          <button
+            click="#"
+            class="btn btn-outline btn-primary btn-sm hover:text-white"
+            disabled
+          >
+            <i class="fas fa-paper-plane"></i>
+            {{ translations.send_invoice }}
+          </button>
+        </div>
 
         <div v-if="currencyDefault.currency_id !== currencyClient.currency_id">
           <div
@@ -204,6 +264,7 @@
 <script>
 import SendInvoiceModal from "@/components/invoices/Send.vue";
 import ConfirmModal from "@/components/ConfirmAlert.vue";
+import ConfirmModalCredit from "@/components/ConfirmAlertCredit.vue";
 import RemoveModal from "@/components/RemoveAlert.vue";
 export default {
   name: "InvoiceNavBar",
@@ -211,6 +272,7 @@ export default {
     SendInvoiceModal,
     RemoveModal,
     ConfirmModal,
+    ConfirmModalCredit,
   },
   props: {
     invoiceInfo: Object,
@@ -220,6 +282,8 @@ export default {
   },
   data() {
     return {
+      showConfirmModal: false,
+      showConfirmCreditModal: false,
       loading: false,
       sendInvoiceModal: false,
       loadingModal: false,
@@ -258,6 +322,38 @@ export default {
         const data = await response.json();
         if (data.success) {
           this.invoiceInfo.status = newStatus;
+          this.loading = false;
+        } else {
+          console.error("Failed to update invoice status:", data.message);
+          this.loading = false;
+        }
+      } catch (error) {
+        console.error(
+          "An error occurred while updating invoice status:",
+          error
+        );
+      }
+    },
+    async addCreditInvoice() {
+      this.loading = true;
+      try {
+        const response = await fetch(
+          "/wp-json/my-easy-compta/v1/invoices/credit",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-WP-Nonce": myEasyComptaAdmin.nonce,
+            },
+            body: JSON.stringify({
+              id: this.invoiceInfo.id,
+            }),
+          }
+        );
+
+        const data = await response.json();
+        if (data.success) {
+          this.invoiceInfo.credit = 1;
           this.loading = false;
         } else {
           console.error("Failed to update invoice status:", data.message);
@@ -362,40 +458,9 @@ export default {
       modal_confirm.showModal();
       this.showConfirmModal = true;
     },
-    confirmPaidPayment(status) {
-      /* Swal.fire({
-        title: this.translations.are_you_sure,
-        text: this.translations.no_turning_back,
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonColor: "#3085d6",
-        cancelButtonColor: "#d33",
-        confirmButtonText: this.translations.yes_confirm_it,
-        cancelButtonText: this.translations.cancel,
-        input: "select",
-        inputOptions: {
-          paidMethods: {
-            1: "Credit Card",
-            2: "PayPal",
-            3: "Bank Transfer",
-            4: "Cash",
-          },
-        },
-        inputValidator: (value) => {
-          return new Promise((resolve) => {
-            if (value !== "") {
-              resolve();
-            } else {
-              resolve("Vous devez sélectionner une méthode de paiement");
-            }
-          });
-        },
-      }).then((result) => {
-        if (result.isConfirmed) {
-          const selectedPaymentMethod = result.value;
-          this.changeInvoiceStatus(status, selectedPaymentMethod);
-        }
-      }); */
+    confirmCreditInvoice() {
+      modal_confirm_credit.showModal();
+      this.showConfirmCreditModal = true;
     },
   },
 };
