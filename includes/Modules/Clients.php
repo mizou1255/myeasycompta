@@ -243,6 +243,7 @@ class ECWP_Clients
         $data = array(
             'company_name' => $company_name,
             'siren_number' => sanitize_text_field($params['siren_number'] ?? ''),
+            'tax_number' => sanitize_text_field($params['tax_number'] ?? ''),
             'manager_name' => sanitize_text_field($params['manager_name'] ?? ''),
             'address' => sanitize_text_field($params['address'] ?? ''),
             'city' => sanitize_text_field($params['city'] ?? ''),

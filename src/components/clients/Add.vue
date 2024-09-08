@@ -58,6 +58,19 @@
               />
             </div>
           </div>
+          <div class="grid grid-cols-1 gap-4">
+            <div class="ecwp-group form-group relative">
+              <label for="tax_number" class="ecwp-label form-label">{{
+                translations.tax_number
+              }}</label>
+              <input
+                type="text"
+                id="tax_number"
+                v-model="formData.tax_number"
+                class="ecwp-input input input-bordered w-full"
+              />
+            </div>
+          </div>
           <div class="grid grid-cols-2 gap-4">
             <div
               v-for="(field, key) in fields"

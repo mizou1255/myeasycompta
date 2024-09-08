@@ -2,7 +2,7 @@
 /**
  * Plugin Name: myEasyCompta
  * Description: Streamline your financial management with myEasyCompta, an all-in-one accounting plugin. Effortlessly handle quotes, invoices, expenses, and more, all within a sleek, user-friendly interface. Perfect for freelancers and small businesses looking to simplify their accounting processes.
- * Version: 1.0.1
+ * Version: 1.1.0
  * Author: MELIOZ.dev
  * Author URI: https://myeasycompta.com
  * Text Domain: my-easy-compta
@@ -21,10 +21,9 @@
  * A comprehensive accounting plugin using Vue.js and TailwindCSS. Manage your quotes, invoices, expenses, and more with ease.
  *
  * @package myEasyCompta
- * @since 1.0.0
+ * @since 1.1.0
  */
 
-// Ne pas appeler le fichier directement
 if (!defined('ABSPATH')) {
     exit;
 }
@@ -37,14 +36,14 @@ final class ECWP_Easy_Compta
      *
      * @var string
      */
-    public $version = '1.0.0';
+    public $version = '1.1.0';
 
     /**
      * Minimum PHP version required
      *
      * @var string
      */
-    private $min_php = '7.4';
+    private $min_php = '8.0';
 
     /**
      * Holds various class instances
@@ -214,6 +213,9 @@ final class ECWP_Easy_Compta
         add_filter('query_vars', [$this, 'ecwp_query_vars']);
         add_filter('admin_init', [$this, 'ecwp_redirect_after_activation']);
 
+        add_action('admin_init', [$this, 'maybe_run_migration']);
+        add_action('admin_notices', [$this, 'migration_admin_notice']);
+
     }
 
     /**
@@ -265,6 +267,18 @@ final class ECWP_Easy_Compta
         set_transient('ecwp_activation_redirect', true, 30);
     }
 
+    public function maybe_run_migration()
+    {
+        if (isset($_POST['run_migration_now']) && check_admin_referer('run_migration_action', 'run_migration_nonce')) {
+            $this->run_migrations();
+            add_action('admin_notices', function () {
+                echo '<div class="notice notice-success is-dismissible">
+                        <p>' . __('Database migration completed successfully.', 'my-easy-compta') . '</p>
+                      </div>';
+            });
+        }
+    }
+
     public function ecwp_add_rewrite_rules()
     {
         add_rewrite_rule('^my-easy-compta/uploads/(.*)$',
@@ -296,6 +310,40 @@ final class ECWP_Easy_Compta
     public function ecwp_delete_encrypt_key()
     {
         delete_option('ecwp_encryption_key');
+    }
+
+    private function run_migrations()
+    {
+        $migrations = [
+            '1.1.0' => ECWP_INCLUDES . '/Migrations/migration_1_1_0.php',
+        ];
+
+        $installed_db_version = get_option('ecwp_db_version', true);
+
+        foreach ($migrations as $version => $file) {
+            if (version_compare($installed_db_version, $version, '<')) {
+                require_once $file;
+                $migration_function = 'run_migration_' . str_replace('.', '_', $version);
+                if (function_exists($migration_function)) {
+                    $migration_function();
+                }
+            }
+        }
+        update_option('ecwp_db_version', ECWP_VERSION);
+    }
+
+    public function migration_admin_notice()
+    {
+        $installed_db_version = get_option('ecwp_db_version');
+        if ($installed_db_version !== ECWP_VERSION) {
+            echo '<div class="notice notice-warning is-dismissible">
+                    <p>' . __('myEasyCompta requires a database update.', 'my-easy-compta') . '</p>
+                    <form method="post">
+                        ' . wp_nonce_field('run_migration_action', 'run_migration_nonce') . '
+                        <input type="submit" name="run_migration_now" class="button button-primary" value="' . esc_attr__('Update Database', 'my-easy-compta') . '" />
+                    </form>
+                </div>';
+        }
     }
 
     public function ecwp_deactivate()

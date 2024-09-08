@@ -63,6 +63,8 @@ class ECWP_Tables
     {
         global $wpdb;
 
+        update_option('ecwp_db_version', ECWP_VERSION);
+
         $logo_url = ECWP_ASSETS . '/img/logo.png';
         $logo_path = ECWP_PATH . '/assets/img/logo.png';
 
@@ -118,6 +120,15 @@ class ECWP_Tables
             array('meta_key' => 'quote_terms', 'meta_value' => '<p><strong>TVA non applicable</strong>, art. 293 B du CGI Pénalité de retard au taux annuel de 2% En cas de retard de paiement, application d\'une indemnité forfaitaire pour frais de recouvrement de 40 euros (article D. 441-5 du code du commerce)</p>'),
             array('meta_key' => 'logo_path', 'meta_value' => $logo_path),
             array('meta_key' => 'currency_position', 'meta_value' => 'after'),
+            array('meta_key' => 'logo_mentions_active', 'meta_value' => '1'),
+            array('meta_key' => 'payment_conditions', 'meta_value' => '45 jours'),
+            array('meta_key' => 'payment_mode', 'meta_value' => 'Virement bancaire'),
+            array('meta_key' => 'invoice_iban', 'meta_value' => 'FR111 1111 1111 1111 1111 1111'),
+            array('meta_key' => 'invoice_bic', 'meta_value' => 'BC111111111X'),
+            array('meta_key' => 'show_phone', 'meta_value' => '1'),
+            array('meta_key' => 'show_email', 'meta_value' => '1'),
+            array('meta_key' => 'show_siren', 'meta_value' => '1'),
+            array('meta_key' => 'show_tax_number', 'meta_value' => '1'),
         );
 
         $articles_categories = array(

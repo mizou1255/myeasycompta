@@ -11,6 +11,7 @@ class PDFGenerator
     private $credit_color;
     private $invoice_color;
     private $quote_color;
+    private $logo_mentions_active;
     private $logo_path;
     private $logo_width;
     private $logo_mentions;
@@ -19,9 +20,18 @@ class PDFGenerator
     private $postal_code;
     private $city;
     private $country;
-    private $phone;
+    private $company_phone;
     private $fax;
     private $siret;
+    private $tax_number;
+    private $show_phone;
+    private $show_email;
+    private $show_siren;
+    private $show_tax_number;
+    private $payment_conditions;
+    private $payment_mode;
+    private $invoice_iban;
+    private $invoice_bic;
     private $invoice_terms;
     private $invoice_footer;
     private $credit_terms;
@@ -66,9 +76,18 @@ class PDFGenerator
         $this->postal_code = $this->settings_array['postal_code'] ?? '';
         $this->city = $this->settings_array['city'] ?? '';
         $this->country = $this->settings_array['country'] ?? '';
-        $this->phone = $this->settings_array['phone'] ?? '';
+        $this->company_phone = $this->settings_array['company_phone'] ?? '';
         $this->fax = $this->settings_array['fax'] ?? '';
         $this->siret = $this->settings_array['company_code'] ?? '';
+        $this->tax_number = $this->settings_array['tax_number'] ?? '';
+        $this->show_phone = $this->settings_array['show_phone'] ?? '1';
+        $this->show_email = $this->settings_array['show_email'] ?? '1';
+        $this->show_siren = $this->settings_array['show_siren'] ?? '1';
+        $this->show_tax_number = $this->settings_array['show_tax_number'] ?? '1';
+        $this->payment_conditions = $this->settings_array['payment_conditions'] ?? '';
+        $this->payment_mode = $this->settings_array['payment_mode'] ?? '';
+        $this->invoice_iban = $this->settings_array['invoice_iban'] ?? '';
+        $this->invoice_bic = $this->settings_array['invoice_bic'] ?? '';
         $this->invoice_terms = $this->settings_array['invoice_terms'] ?? '';
         $this->invoice_footer = $this->settings_array['invoice_footer'] ?? '';
         $this->credit_terms = $this->settings_array['credit_terms'] ?? '';
@@ -76,6 +95,7 @@ class PDFGenerator
         $this->quote_terms = $this->settings_array['quote_terms'] ?? '';
         $this->quote_footer = $this->settings_array['quote_footer'] ?? '';
         $this->date_format = $this->convertFormatDate($this->settings_array['date_format']) ?? 'd-m-Y';
+        $this->logo_mentions_active = $this->settings_array['logo_mentions_active'] ?? '1';
         $this->vat_active = $this->settings_array['vat_active'] ?? '1';
         $this->default_vat = $this->settings_array['default_vat'] ?? '1';
         $this->currency_position = $this->settings_array['currency_position'] ?? 'after';
@@ -399,6 +419,11 @@ ie.item_order ASC",
         $date_show_type = __('Date planned', 'my-easy-compta');
         $date_type = "";
         $invoice_status = "";
+        $invoice_pyament_conditions = "";
+        $invoice_pyament_mode = "";
+        $invoice_iban = "";
+        $invoice_bic = "";
+        $discount_exist = false;
         if ($type == 'invoice') {
             $number = $encrypt->decrypt($data->invoice_number);
             $invoice_status = $encrypt->decrypt($data->status);
@@ -408,7 +433,12 @@ ie.item_order ASC",
             $date_show_type = __('Created at', 'my-easy-compta');
             $date_type = $this->formatDate($data->created_at);
             $terms = $this->invoice_terms;
+            $invoice_pyament_conditions = $this->payment_conditions;
+            $invoice_pyament_mode = $this->payment_mode;
+            $invoice_iban = $this->invoice_iban;
+            $invoice_bic = $this->invoice_bic;
             $footer = $this->invoice_footer;
+
         } else if ($type == 'credit_invoice') {
             $show_type = __('Credit', 'my-easy-compta');
             $number = $data->credit_number;
@@ -441,9 +471,12 @@ ie.item_order ASC",
         <table width="100%" style="font-family: dejavusanscondensed;font-size: 10pt;line-height: 13pt;color: #777777;">
             <tr>
                 <td width="60%" height="100">
-                    <img style="width: ' . $this->logo_width . 'px;" src="' . $this->logo_path . '" /><br /><br />
-                    <p style="margin: 4pt 0 0 0;">' . $this->logo_mentions . '</p>
-                </td>
+                    <img style="width: ' . $this->logo_width . 'px;" src="' . $this->logo_path . '" /><br /><br />';
+
+        if ($this->logo_mentions_active == 1) {
+            $html .= '<p style="margin: 4pt 0 0 0;">' . $this->logo_mentions . '</p>';
+        }
+        $html .= '</td>
                 <td width="40%" style="text-align: right;">
                     <div style="font-weight: bold; color: #111111; font-size: 20pt; text-transform: uppercase;">' .
         $show_type . '</div>
@@ -493,13 +526,20 @@ ie.item_order ASC",
                     <span style="font-size: 11pt; font-weight: bold; color: #111111;">' . $this->company_name .
         '</span><br />
                     ' . $this->company_address . '<br>
-                    ' . $this->city . ', ' . $this->postal_code . '<br>
-                    ' . $this->country . '<br>
-                    ' . $this->phone . '<br>
-                    ' . $this->fax . '<br>';
+                    ' . $this->postal_code . ', ' . $this->city . '<br>
+                    ' . $this->country . '<br>';
 
+        if ($this->company_phone) {
+            $html .= '<b>' . __('Phone', 'my-easy-compta') . ' : </b>' . $this->company_phone . '<br>';
+        }
+        if ($this->fax) {
+            $html .= '<b>Fax : </b>' . $this->fax . '<br>';
+        }
         if ($this->siret) {
-            $html .= '<b>SIRET : </b>' . $this->siret . '<br>';
+            $html .= '<b>' . __('SIRET n°', 'my-easy-compta') . ' : </b>' . $this->siret . '<br>';
+        }
+        if ($this->tax_number) {
+            $html .= '<b>' . __('Tax number', 'my-easy-compta') . ' : </b>' . $this->tax_number . '<br>';
         }
         $html .= '
                 </td>
@@ -509,48 +549,36 @@ ie.item_order ASC",
         '</span><br />
                     ' . $client->address . '<br>
                     ' . $client->postal_code . ', ' . $client->city . '<br>
-                    ' . $client->country . '<br>
-                    ' . $client->phone . '<br>';
+                    ' . $client->country . '<br>';
 
-        if ($client->siren_number) {
-            $html .= '<b>SIREN : </b>' . $client->siren_number . '<br>';
+        if ($client->phone && $this->show_phone == 1) {
+            $html .= '<b>' . __('Phone', 'my-easy-compta') . ' : </b>' . $client->phone . '<br>';
         }
-        $html .= '
-                </td>
-            </tr>
-        </table>
-    </div>
+        if ($client->email && $this->show_email == 1) {
+            $html .= '<b>' . __('Email', 'my-easy-compta') . ' : </b>' . $client->email . '<br>';
+        }
+        if ($client->siren_number && $this->show_siren == 1) {
+            $html .= '<b>' . __('SIREN n°', 'my-easy-compta') . ' : </b>' . $client->siren_number . '<br>';
+        }
+        if ($client->tax_number && $this->show_tax_number == 1) {
+            $html .= '<b>' . __('Tax number', 'my-easy-compta') . ' : </b>' . $client->tax_number . '<br>';
+        }
 
-    <table class="items" width="100%"
-        style=" font-family: dejavusanscondensed;line-height: 13pt;border-spacing:3px; font-size: 9pt; border-collapse: collapse;"
-        cellpadding="10">
-        <thead>
-            <tr>
-                <td width="10%"
-                    style="vertical-align: bottom; text-align: center; text-transform: uppercase; font-size: 7pt; font-weight: bold; background-color: #FFFFFF; color: #111111;border-bottom: 0.2mm solid ' . $global_color . '">
-                    ' . __('Ref', 'my-easy-compta') . '</td>
-                <td width="45%"
-                    style="vertical-align: bottom; text-align: left; text-transform: uppercase; font-size: 7pt; font-weight: bold; background-color: #FFFFFF; color: #111111;border-bottom: 0.2mm solid ' . $global_color . '">
-                    ' . __('Item name', 'my-easy-compta') . '</td>
-                <td width="10%"
-                    style="vertical-align: bottom; text-align: center; text-transform: uppercase; font-size: 7pt; font-weight: bold; background-color: #FFFFFF; color: #111111;border-bottom: 0.2mm solid ' . $global_color . '">
-                    ' . __('Qty', 'my-easy-compta') . '</td>
-                <td width="15%"
-                    style="vertical-align: bottom; text-align: center; text-transform: uppercase; font-size: 7pt; font-weight: bold; background-color: #FFFFFF; color: #111111;border-bottom: 0.2mm solid ' . $global_color . '">
-                    ' . __('Unit price', 'my-easy-compta') . '</td>
-                <td width="15%"
-                    style="vertical-align: bottom; text-align: center; text-transform: uppercase; font-size: 7pt; font-weight: bold; background-color: #FFFFFF; color: #111111;border-bottom: 0.2mm solid ' . $global_color . '">
-                    ' . __('Vat', 'my-easy-compta') . '</td>
-                <td width="15%"
-                    style="vertical-align: bottom; text-align: center; text-transform: uppercase; font-size: 7pt; font-weight: bold; background-color: #FFFFFF; color: #111111;border-bottom: 0.2mm solid ' . $global_color . '">
-                    ' . __('Discount', 'my-easy-compta') . '</td>
-                <td width="15%"
-                    style="vertical-align: bottom; text-align: center; text-transform: uppercase; font-size: 7pt; font-weight: bold; background-color: #FFFFFF; color: #111111;border-bottom: 0.2mm solid ' . $global_color . '">
-                    ' . __('Total', 'my-easy-compta') . '</td>
-            </tr>
-        </thead>
-        <tbody>';
+        $items_html = "";
         $tva_totaux = [];
+        foreach ($items as $item) {
+            if ($type == 'invoice' || $type == 'credit_invoice') {
+                $discount_percentage = intval($encrypt->decrypt($item->discount));
+                if ($discount_percentage > 0) {
+                    $discount_exist = true;
+                }
+            } else {
+                $discount_percentage = intval($item->discount);
+                if ($discount_percentage > 0) {
+                    $discount_exist = true;
+                }
+            }
+        }
         foreach ($items as $item) {
             if ($type == 'invoice' || $type == 'credit_invoice') {
                 $quantity = intval($encrypt->decrypt($item->quantity));
@@ -590,7 +618,7 @@ ie.item_order ASC",
             $sub_total += $item_total;
             $sub_total_discounted += $total_after_discount;
 
-            $html .= '<tr>
+            $items_html .= '<tr>
                 <td width="10%" style="border: 0.2mm solid #ffffff; background-color: #F5F5F5; vertical-align: top;">' .
             nl2br($item_ref) . '</td>
                 <td width="45%"
@@ -612,18 +640,59 @@ ie.item_order ASC",
                 <td width="15%"
                     style="text-align: right;border: 0.2mm solid #ffffff; background-color: #F5F5F5; vertical-align: top;">
                     ' . $this->positionCurrency($this->formatAmount($item_total_vat), $default_currency_symbol->symbol)
-            . '<br /><small>' . $vat_rate . '%</small></td>
-                <td width="15%"
+                . '<br /><small>' . $vat_rate . '%</small></td>';
+
+            if ($discount_exist) {
+                $items_html .= '<td width="15%"
                     style="text-align: right;border: 0.2mm solid #ffffff; background-color: #F5F5F5; vertical-align: top;">
-                    ' . $this->positionCurrency($this->formatAmount($discount_amount), $default_currency_symbol->symbol)
-            . '<br /><small>' . $discount_percentage . '%</small></td>
-                <td width="15%"
+                    ' . $this->positionCurrency($this->formatAmount($discount_amount), $default_currency_symbol->symbol) . '<br /><small>' . $discount_percentage . '%</small></td>';
+            }
+            $items_html .= '<td width="15%"
                     style="text-align: right;border: 0.2mm solid #ffffff; background-color: #F5F5F5; vertical-align: top;">
                     ' . $this->positionCurrency($this->formatAmount($total_after_discount_with_vat),
                 $default_currency_symbol->symbol) . '</td>
             </tr>';
-
         }
+
+        $html .= '
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <table class="items" width="100%"
+        style=" font-family: dejavusanscondensed;line-height: 13pt;border-spacing:3px; font-size: 9pt; border-collapse: collapse;"
+        cellpadding="10">
+        <thead>
+            <tr>
+                <td width="10%"
+                    style="vertical-align: bottom; text-align: center; text-transform: uppercase; font-size: 7pt; font-weight: bold; background-color: #FFFFFF; color: #111111;border-bottom: 0.2mm solid ' . $global_color . '">
+                    ' . __('Ref', 'my-easy-compta') . '</td>
+                <td width="45%"
+                    style="vertical-align: bottom; text-align: left; text-transform: uppercase; font-size: 7pt; font-weight: bold; background-color: #FFFFFF; color: #111111;border-bottom: 0.2mm solid ' . $global_color . '">
+                    ' . __('Item name', 'my-easy-compta') . '</td>
+                <td width="10%"
+                    style="vertical-align: bottom; text-align: center; text-transform: uppercase; font-size: 7pt; font-weight: bold; background-color: #FFFFFF; color: #111111;border-bottom: 0.2mm solid ' . $global_color . '">
+                    ' . __('Qty', 'my-easy-compta') . '</td>
+                <td width="15%"
+                    style="vertical-align: bottom; text-align: center; text-transform: uppercase; font-size: 7pt; font-weight: bold; background-color: #FFFFFF; color: #111111;border-bottom: 0.2mm solid ' . $global_color . '">
+                    ' . __('Unit price', 'my-easy-compta') . '</td>
+                <td width="15%"
+                    style="vertical-align: bottom; text-align: center; text-transform: uppercase; font-size: 7pt; font-weight: bold; background-color: #FFFFFF; color: #111111;border-bottom: 0.2mm solid ' . $global_color . '">
+                    ' . __('Vat', 'my-easy-compta') . '</td>';
+        if ($discount_exist) {
+            $html .= '<td width="15%"
+                    style="vertical-align: bottom; text-align: center; text-transform: uppercase; font-size: 7pt; font-weight: bold; background-color: #FFFFFF; color: #111111;border-bottom: 0.2mm solid ' . $global_color . '">
+                    ' . __('Discount', 'my-easy-compta') . '</td>';
+        }
+        $html .= '<td width="15%"
+                    style="vertical-align: bottom; text-align: center; text-transform: uppercase; font-size: 7pt; font-weight: bold; background-color: #FFFFFF; color: #111111;border-bottom: 0.2mm solid ' . $global_color . '">
+                    ' . __('Total', 'my-easy-compta') . '</td>
+            </tr>
+        </thead>
+        <tbody>';
+
+        $html .= $items_html;
 
         if ($this->vat_active == 1) {
             $balance_due = $sub_total_discounted_with_vat;
@@ -632,9 +701,14 @@ ie.item_order ASC",
         }
 
         if ($sub_total == $sub_total_discounted) {
-            $html .= '<tr>
-                <td colspan="3" style="background-color:#ffffff;"></td>
-                <td colspan="2"
+            $html .= '<tr>';
+
+            if ($discount_exist) {
+                $html .= '<td colspan="3" style="background-color:#ffffff;"></td>';
+            } else {
+                $html .= '<td colspan="2" style="background-color:#ffffff;"></td>';
+            }
+            $html .= '<td colspan="2"
                     style="border: 0.2mm solid #ffffff; background-color: #F5F5F5;font-size: 8pt; color: #111111;">
                     <strong>' . __('Subtotal', 'my-easy-compta') . '</strong></td>
                 <td colspan="2"
@@ -643,10 +717,13 @@ ie.item_order ASC",
                 </td>
             </tr>';
         } else {
-            $html .= '
-            <tr>
-                <td colspan="3" style="background-color:#ffffff;"></td>
-                <td colspan="2"
+            $html .= ' <tr>';
+            if ($discount_exist) {
+                $html .= '<td colspan="3" style="background-color:#ffffff;"></td>';
+            } else {
+                $html .= '<td colspan="2" style="background-color:#ffffff;"></td>';
+            }
+            $html .= '<td colspan="2"
                     style="border: 0.2mm solid #ffffff; background-color: #F5F5F5;font-size: 8pt; color: #111111;">
                     <strong>' . __('Subtotal', 'my-easy-compta') . '</strong></td>
                 <td colspan="2"
@@ -660,9 +737,13 @@ ie.item_order ASC",
 
         if ($this->vat_active == 1) {
             foreach ($tva_totaux as $rate => $amount) {
-                $html .= '<tr>
-                <td colspan="3" style="background-color:#ffffff;"></td>
-                <td colspan="2"
+                $html .= '<tr>';
+                if ($discount_exist) {
+                    $html .= '<td colspan="3" style="background-color:#ffffff;"></td>';
+                } else {
+                    $html .= '<td colspan="2" style="background-color:#ffffff;"></td>';
+                }
+                $html .= '<td colspan="2"
                     style="border: 0.2mm solid #ffffff; background-color: #F5F5F5;font-size: 8pt; color: #111111;">
                     <strong>' . __('Tax', 'my-easy-compta') . ' (' . $rate . '%)</strong></td>
                 <td colspan="2"
@@ -671,10 +752,14 @@ ie.item_order ASC",
             </tr>';
             }
         }
-        $html .= '
-            <tr>
-                <td colspan="3" style="background-color:#ffffff;"></td>
-                <td colspan="2"
+        $html .= '<tr>';
+
+        if ($discount_exist) {
+            $html .= '<td colspan="3" style="background-color:#ffffff;"></td>';
+        } else {
+            $html .= '<td colspan="2" style="background-color:#ffffff;"></td>';
+        }
+        $html .= '<td colspan="2"
                     style="border: 0.2mm solid #ffffff; background-color: #F5F5F5;font-size: 8pt; color: #111111; background-color: ' . $global_color . '; color:#ffffff;">
                     <strong>' . __('Total', 'my-easy-compta') . '</strong></td>
                 <td colspan="2"
@@ -689,9 +774,31 @@ ie.item_order ASC",
     <div style="margin-top:40px; font-family: dejavusanscondensed;font-size: 8pt;line-height: 13pt;color: #777777;">
         <h4
             style="padding:5px 0; color: #111111; border-bottom: 0.2mm solid ' . $global_color . '; font-size:9pt; text-transform: uppercase;">
-            ' . __('Conditions terms', 'my-easy-compta') . '</h4>
-        ' . $terms . '
-    </div>';
+            ' . __('Conditions terms', 'my-easy-compta') . '</h4>';
+
+        if ($invoice_pyament_conditions) {
+            $html .= '<strong>' . __('Payment conditions', 'my-easy-compta') . ' : </strong> ' . $invoice_pyament_conditions . '<br />';
+        }
+        if ($invoice_pyament_mode) {
+            $html .= '<strong>' . __('Payment mode', 'my-easy-compta') . ' : </strong> ' . $invoice_pyament_mode . '<br />';
+        }
+        $html .= $terms . '</div>';
+
+        if ($invoice_bic && $invoice_iban) {
+            $html .= '<div style="margin-top:40px; font-family: dejavusanscondensed;font-size: 8pt;line-height: 13pt;color: #777777;">
+            <h4
+                style="padding:5px 0; color: #111111; border-bottom: 0.2mm solid ' . $global_color . '; font-size:9pt; text-transform: uppercase;">
+                ' . __('RIB', 'my-easy-compta') . '</h4>';
+
+            if ($invoice_iban) {
+                $html .= '<strong>' . __('IBAN', 'my-easy-compta') . ' : </strong> ' . $invoice_iban . '<br />';
+            }
+            if ($invoice_bic) {
+                $html .= '<strong>' . __('BIC', 'my-easy-compta') . ' : </strong> ' . $invoice_bic . '<br />';
+            }
+            $html .= '</div>';
+        }
+
         if ($type == 'quote') {
             $file_path = "";
             if ($this->signature_active == 1 && $data->signed == 1 && !empty($data->file_sign)) {

@@ -333,7 +333,23 @@
               {{ translations.system_settings }}
             </h2>
             <form @submit.prevent="handleSubmit">
-              <div class="ecwp-group form-control">
+              <div class="form-control mt-4 mb-1">
+                <label class="cursor-pointer">
+                  <span class="label-text mr-2 font-bold">{{
+                    translations.activate_logo_mentions
+                  }}</span>
+                  <input
+                    type="checkbox"
+                    :checked="form.logo_mentions_active == 1"
+                    @change="updateLogoMentionsActive"
+                    class="wcpa-ui-toggle"
+                  />
+                </label>
+              </div>
+              <div
+                v-if="form.logo_mentions_active == 1"
+                class="ecwp-group form-control"
+              >
                 <label class="ecwp-label label" for="logo-mentions">{{
                   translations.logo_mentions
                 }}</label>
@@ -659,19 +675,92 @@
                   />
                 </div>
               </div>
-              <div class="grid grid-cols-1 gap-4">
-                <div class="form-control">
-                  <label class="ecwp-label label" for="invoice-prefix">{{
-                    translations.invoice_footer
+
+              <div class="divider my-4"></div>
+
+              <div class="grid grid-cols-2 gap-4">
+                <div class="form-control mt-4 mb-1">
+                  <label class="cursor-pointer">
+                    <input
+                      type="checkbox"
+                      :checked="form.show_phone == 1"
+                      @change="updateFormField($event, 'show_phone')"
+                      class="wcpa-ui-toggle"
+                    />
+                    <span class="label-text mr-2 font-bold">{{
+                      translations.show_phone
+                    }}</span>
+                  </label>
+                </div>
+                <div class="form-control mt-4 mb-1">
+                  <label class="cursor-pointer">
+                    <input
+                      type="checkbox"
+                      :checked="form.show_email == 1"
+                      @change="updateFormField($event, 'show_email')"
+                      class="wcpa-ui-toggle"
+                    />
+                    <span class="label-text mr-2 font-bold">{{
+                      translations.show_email
+                    }}</span>
+                  </label>
+                </div>
+                <div class="form-control mt-4 mb-1">
+                  <label class="cursor-pointer">
+                    <input
+                      type="checkbox"
+                      :checked="form.show_siren == 1"
+                      @change="updateFormField($event, 'show_siren')"
+                      class="wcpa-ui-toggle"
+                    />
+                    <span class="label-text mr-2 font-bold">{{
+                      translations.show_siren
+                    }}</span>
+                  </label>
+                </div>
+                <div class="form-control mt-4 mb-1">
+                  <label class="cursor-pointer">
+                    <input
+                      type="checkbox"
+                      :checked="form.show_tax_number == 1"
+                      @change="updateFormField($event, 'show_tax_number')"
+                      class="wcpa-ui-toggle"
+                    />
+                    <span class="label-text mr-2 font-bold">{{
+                      translations.show_tax_number
+                    }}</span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="divider my-4"></div>
+
+              <div class="grid grid-cols-2 gap-4">
+                <div class="ecwp-group form-control">
+                  <label class="ecwp-label label" for="conditions-payment">{{
+                    translations.payment_conditions
                   }}</label>
-                  <div>
-                    <vue-editor
-                      v-model="form.invoice_footer"
-                      :editorToolbar="toolbarOptions"
-                    ></vue-editor>
-                  </div>
+                  <input
+                    type="text"
+                    id="conditions-payment"
+                    v-model="form.payment_conditions"
+                    class="ecwp-input input input-bordered"
+                  />
                 </div>
 
+                <div class="ecwp-group form-control">
+                  <label class="ecwp-label label" for="mode-payment">{{
+                    translations.payment_mode
+                  }}</label>
+                  <input
+                    type="text"
+                    id="mode-payment"
+                    v-model="form.payment_mode"
+                    class="ecwp-input input input-bordered"
+                  />
+                </div>
+              </div>
+              <div class="grid grid-cols-1 gap-4">
                 <div class="form-control">
                   <label class="ecwp-label label" for="invoice-prefix">{{
                     translations.invoice_terms
@@ -679,6 +768,44 @@
                   <div>
                     <vue-editor
                       v-model="form.invoice_terms"
+                      :editorToolbar="toolbarOptions"
+                    ></vue-editor>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                  <div class="ecwp-group form-control">
+                    <label class="ecwp-label label" for="invoice-iban">{{
+                      translations.invoice_iban
+                    }}</label>
+                    <input
+                      type="text"
+                      id="invoice-iban"
+                      v-model="form.invoice_iban"
+                      class="ecwp-input input input-bordered"
+                    />
+                  </div>
+
+                  <div class="ecwp-group form-control">
+                    <label class="ecwp-label label" for="invoice-bic">{{
+                      translations.invoice_bic
+                    }}</label>
+                    <input
+                      type="text"
+                      id="invoice-bic"
+                      v-model="form.invoice_bic"
+                      class="ecwp-input input input-bordered"
+                    />
+                  </div>
+                </div>
+
+                <div class="form-control">
+                  <label class="ecwp-label label" for="invoice-prefix">{{
+                    translations.invoice_footer
+                  }}</label>
+                  <div>
+                    <vue-editor
+                      v-model="form.invoice_footer"
                       :editorToolbar="toolbarOptions"
                     ></vue-editor>
                   </div>
@@ -1939,6 +2066,7 @@ export default {
         company_phone: "",
         mobile_phone: "",
         fax: "",
+        logo_mentions_active: "",
         logo_url: "",
         logo_path: "",
         default_currency: "",
@@ -1950,6 +2078,10 @@ export default {
         logo_mentions: "",
         invoice_color: "",
         invoice_prefix: "",
+        show_phone: "",
+        show_email: "",
+        show_siren: "",
+        show_tax_number: "",
         invoice_footer: "",
         invoice_terms: "",
         credit_color: "",
@@ -2901,8 +3033,14 @@ export default {
     updateVatActive(event) {
       this.form.vat_active = event.target.checked ? 1 : 0;
     },
+    updateLogoMentionsActive(event) {
+      this.form.logo_mentions_active = event.target.checked ? 1 : 0;
+    },
     updateEmailLogsActive(event) {
       this.form.email_log_active = event.target.checked ? 1 : 0;
+    },
+    updateFormField(event, fieldName) {
+      this.form[fieldName] = event.target.checked ? 1 : 0;
     },
     showToast(message, type) {
       this.toast.message = message;

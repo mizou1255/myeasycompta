@@ -19,7 +19,10 @@
       </div>
       <div v-else-if="client">
         <div class="grid grid-cols-2 gap-4">
-          <div v-if="client.siret_number != 0" class="py-2">
+          <div
+            v-if="client.siret_number != 0 && addon_siret_active"
+            class="py-2"
+          >
             <dt class="text-sm font-medium text-gray-500">
               {{ translations.siret }}
             </dt>
@@ -34,6 +37,17 @@
             </dt>
             <dd class="mt-1 text-sm text-gray-900">
               {{ client["siren_number"] }}
+            </dd>
+            <dl class="divide-y divide-gray-200"></dl>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 gap-4">
+          <div class="py-2" v-if="client.tax_number != 0">
+            <dt class="text-sm font-medium text-gray-500">
+              {{ translations.tax_number }}
+            </dt>
+            <dd class="mt-1 text-sm text-gray-900">
+              {{ client["tax_number"] }}
             </dd>
             <dl class="divide-y divide-gray-200"></dl>
           </div>

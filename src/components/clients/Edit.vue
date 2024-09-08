@@ -122,6 +122,8 @@ export default {
       },
       currencyOptions: [],
       fields: {
+        siren_number: { label: translations.siren },
+        tax_number: { label: translations.tax_number },
         company_name: { label: translations.company_name },
         manager_name: { label: translations.manager_name },
         email: { label: translations.email },
