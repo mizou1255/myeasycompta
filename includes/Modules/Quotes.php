@@ -703,7 +703,15 @@ class ECWP_Quotes
             return new WP_Error('update_failed', __('Failed to update quote status', 'my-easy-compta'), array('status' => 500));
         }
 
-        return rest_ensure_response(array('success' => true, 'message' => __('Quote status updated successfully', 'my-easy-compta')));
+        $total_amount = $wpdb->get_var(
+            $wpdb->prepare("SELECT total_amount FROM %i WHERE id = %d", ECWP_TABLE_QUOTES, $id)
+        );
+
+        return rest_ensure_response(array(
+            'success' => true,
+            'message' => __('Quote status updated successfully', 'my-easy-compta'),
+            'total_amount' => $total_amount,
+        ));
     }
 
     function convert_quote_to_invoice($request)

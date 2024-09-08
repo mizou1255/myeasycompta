@@ -54,7 +54,23 @@
           </span>
         </div>
       </div>
+
       <div class="divider mt-2"></div>
+
+      <div class="flex items-center mb-4">
+        <label for="perPageSelect" class="mr-2">{{
+          translations.display_per_page
+        }}</label>
+        <select id="perPageSelect" v-model="perPage" @change="perPageChanged">
+          <option
+            v-for="option in perPageOptions"
+            :key="option"
+            :value="option"
+          >
+            {{ option }}
+          </option>
+        </select>
+      </div>
       <div class="overflow-x-auto">
         <table v-if="!loading" class="table w-full">
           <thead>
@@ -70,7 +86,13 @@
           </thead>
           <tbody>
             <tr v-for="invoice in invoices" :key="invoice.id">
-              <td>{{ invoice.invoice_number }}</td>
+              <td>
+                <span
+                  v-if="invoice.advance == 1"
+                  class="badge badge-primary badge-outline badge-sm mr-2"
+                  >{{ translations.advance }}</span
+                >{{ invoice.invoice_number }}
+              </td>
               <td>{{ invoice.client_name }}</td>
               <td>
                 <span
@@ -96,7 +118,23 @@
               </td>
               <td>
                 <div v-if="!loadingPrice">
-                  <div v-if="settings.vat_active == 1">
+                  <div
+                    v-if="
+                      settings.easy_compta_advance_addon_active &&
+                      invoice.advance == 1
+                    "
+                  >
+                    {{
+                      formatAmount(
+                        invoice.advance_amount,
+                        invoice.client_currency || default_currency_symbol
+                      )
+                    }}
+                  </div>
+                  <div
+                    v-if="settings.vat_active == 1"
+                    :class="{ 'text-xs': invoice.advance == 1 }"
+                  >
                     <span
                       v-if="
                         default_currency_symbol == invoice.client_currency ||
@@ -116,7 +154,7 @@
                       )
                     }}</span>
                   </div>
-                  <div v-else>
+                  <div v-else :class="{ 'text-xs': invoice.advance == 1 }">
                     <span
                       v-if="
                         default_currency_symbol == invoice.client_currency ||

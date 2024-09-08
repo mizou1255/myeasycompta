@@ -62,7 +62,23 @@
           </span>
         </div>
       </div>
+
       <div class="divider mt-2"></div>
+
+      <div class="flex items-center mb-4">
+        <label for="perPageSelect" class="mr-2">{{
+          translations.display_per_page
+        }}</label>
+        <select id="perPageSelect" v-model="perPage" @change="perPageChanged">
+          <option
+            v-for="option in perPageOptions"
+            :key="option"
+            :value="option"
+          >
+            {{ option }}
+          </option>
+        </select>
+      </div>
       <div class="overflow-x-auto">
         <table v-if="!loading" class="table w-full">
           <thead>

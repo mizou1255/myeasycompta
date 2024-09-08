@@ -1,5 +1,14 @@
 <template>
   <div class="pt-2 pr-4">
+    <div
+      v-if="toast.visible"
+      :class="['toast', toast.position]"
+      :style="{ zIndex: 9999 }"
+    >
+      <div :class="['alert', toast.type, 'text-white']">
+        <span>{{ toast.message }}</span>
+      </div>
+    </div>
     <Card topMargin="mt-8" modalType="modal_invoice_new">
       <div class="flex justify-between items-center mb-4">
         <h2 class="card-title">{{ translations.new_invoice }}</h2>
@@ -29,6 +38,7 @@
             }}</label>
             <VueDatePicker
               class="ecwp-input ecwp-date input input-bordered w-full"
+              :class="[!invoice.due_date && showError ? 'input-error' : '']"
               id="invoiceDate"
               v-model="invoice.due_date"
               :enable-time-picker="false"
@@ -36,7 +46,6 @@
               :format="formattedDate"
               :min-date="new Date()"
               locale="fr"
-              required
             />
           </div>
           <div class="ecwp-group form-group mb-4">
@@ -50,7 +59,7 @@
               track-by="value"
               :placeholder="translations.select"
               class="ecwp-input input input-bordered w-full"
-              required
+              :class="[!invoice.client_id && showError ? 'input-error' : '']"
             />
           </div>
           <div class="ecwp-group form-group mb-4">
@@ -60,10 +69,10 @@
             <select
               id="status"
               v-model="invoice.status"
-              required
               class="ecwp-input select select-bordered w-full"
+              :class="[!invoice.status && showError ? 'input-error' : '']"
             >
-              <option value="draft" selected>{{ translations.draft }}</option>
+              <option value="draft">{{ translations.draft }}</option>
             </select>
           </div>
           <div v-if="currencyMismatch" class="ecwp-group form-group mb-4">
@@ -123,9 +132,10 @@ export default {
         due_date: "",
         client_id: "",
         client: null,
-        status: "unpaid",
+        status: "",
         exchange_rate: 0,
       },
+      showError: false,
       loading: false,
       loadingBtn: false,
       clients: [],
@@ -236,6 +246,18 @@ export default {
       }
     },
     submitInvoice() {
+      if (
+        !this.invoice.due_date ||
+        !this.invoice.client_id ||
+        !this.invoice.status
+      ) {
+        this.showError = true;
+        this.showToast(
+          "Veuillez remplir tous les champs obligatoires.",
+          "alert-error"
+        );
+        return;
+      }
       this.loadingBtn = true;
       fetch("/wp-json/my-easy-compta/v1/invoices", {
         method: "POST",

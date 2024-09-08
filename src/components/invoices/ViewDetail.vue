@@ -5,6 +5,7 @@
       :currencyDefault="defaultCurrency"
       :currencyClient="clientCurrency"
       :emailActive="settings.easy_compta_email_addon_active"
+      :noItems="no_items"
     />
     <remove-modal
       :show-modal="showRemoveModal"
@@ -377,7 +378,7 @@
                 <select
                   v-model="newItem.vat_rate"
                   @change="updateTotal"
-                  class="select select-sm w-full mb-1 ecwp-select min-w-20"
+                  class="select select-md w-full mb-1 ecwp-select min-w-20"
                 >
                   <option
                     v-for="rate in list_vats"
@@ -511,6 +512,7 @@ export default {
       SelectedInvoiceId: null,
       editItemsModal: false,
       RemindInvoiceModal: false,
+      no_items: true,
       loading: false,
       loading_add: false,
       invoice: [],
@@ -707,9 +709,11 @@ export default {
             console.error("No items found");
             this.invoiceItems = [];
             this.loading = false;
+            this.no_items = true;
           } else {
             this.invoiceItems = data;
             this.loading = false;
+            this.no_items = false;
           }
         })
         .catch((error) => {

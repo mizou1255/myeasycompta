@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: myEasyCompta\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-08-26 22:07+0000\n"
+"POT-Creation-Date: 2024-09-01 11:00+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -70,6 +70,14 @@ msgstr ""
 msgid "Address"
 msgstr ""
 
+#: languages/my-easy-compta-translations.php:278
+msgid "Advance"
+msgstr ""
+
+#: languages/my-easy-compta-translations.php:279
+msgid "Advance invoice"
+msgstr ""
+
 #: languages/my-easy-compta-translations.php:115
 msgid "After amount"
 msgstr ""
@@ -91,7 +99,7 @@ msgstr ""
 msgid "Annual Payments Overview"
 msgstr ""
 
-#: includes/Modules/Invoices.php:197 includes/Modules/Invoices.php:271
+#: includes/Modules/Invoices.php:207 includes/Modules/Invoices.php:281
 #: includes/Modules/Quotes.php:201 includes/Modules/Quotes.php:500
 msgid "API access error"
 msgstr ""
@@ -257,7 +265,7 @@ msgstr ""
 msgid "Convert to invoice"
 msgstr ""
 
-#: includes/Modules/Invoices.php:242 includes/Modules/Invoices.php:252
+#: includes/Modules/Invoices.php:252 includes/Modules/Invoices.php:262
 msgid "Could not insert invoice into database"
 msgstr ""
 
@@ -509,7 +517,7 @@ msgstr ""
 msgid "Error"
 msgstr ""
 
-#: includes/Modules/Clients.php:194 includes/Modules/Invoices.php:614
+#: includes/Modules/Clients.php:194 includes/Modules/Invoices.php:624
 #: includes/Modules/Quotes.php:258 includes/Modules/Quotes.php:620
 msgid "Error API access"
 msgstr ""
@@ -592,11 +600,11 @@ msgstr ""
 msgid "Failed to add client"
 msgstr ""
 
-#: includes/Modules/Invoices.php:353
+#: includes/Modules/Invoices.php:363
 msgid "Failed to add invoice item"
 msgstr ""
 
-#: includes/Modules/Invoices.php:761
+#: includes/Modules/Invoices.php:771
 msgid "Failed to add payment to database"
 msgstr ""
 
@@ -608,7 +616,7 @@ msgstr ""
 msgid "Failed to check for updates."
 msgstr ""
 
-#: includes/Modules/Quotes.php:749
+#: includes/Modules/Quotes.php:757
 msgid "Failed to create invoice"
 msgstr ""
 
@@ -620,7 +628,7 @@ msgstr ""
 msgid "Failed to delete expense"
 msgstr ""
 
-#: includes/Modules/Invoices.php:632
+#: includes/Modules/Invoices.php:642
 msgid "Failed to delete invoice item."
 msgstr ""
 
@@ -640,7 +648,7 @@ msgstr ""
 msgid "Failed to edit Item"
 msgstr ""
 
-#: includes/Modules/Invoices.php:577
+#: includes/Modules/Invoices.php:587
 msgid "Failed to edit item"
 msgstr ""
 
@@ -648,15 +656,15 @@ msgstr ""
 msgid "Failed to edit payment"
 msgstr ""
 
-#: includes/Modules/Invoices.php:733
+#: includes/Modules/Invoices.php:743
 msgid "Failed to retrieve exchange rate for client currency"
 msgstr ""
 
-#: includes/Modules/Credits.php:202 includes/Modules/Invoices.php:393
+#: includes/Modules/Credits.php:202 includes/Modules/Invoices.php:403
 msgid "Failed to update invoice"
 msgstr ""
 
-#: includes/Modules/Invoices.php:717
+#: includes/Modules/Invoices.php:727
 msgid "Failed to update invoice status in database"
 msgstr ""
 
@@ -664,7 +672,7 @@ msgstr ""
 msgid "Failed to update quote status"
 msgstr ""
 
-#: includes/Modules/Invoices.php:427
+#: includes/Modules/Invoices.php:437
 msgid "Failure to delete invoice and/or associated items"
 msgstr ""
 
@@ -761,33 +769,33 @@ msgstr ""
 msgid "Invalid expense ID."
 msgstr ""
 
-#: includes/Modules/Invoices.php:694
+#: includes/Modules/Invoices.php:704
 msgid "Invalid ID provided"
 msgstr ""
 
-#: includes/Modules/Invoices.php:365
+#: includes/Modules/Invoices.php:375
 msgid "Invalid invoice ID"
 msgstr ""
 
-#: includes/Modules/Invoices.php:414
+#: includes/Modules/Invoices.php:424
 msgid "Invalid invoice ID."
 msgstr ""
 
-#: includes/Modules/Invoices.php:527
+#: includes/Modules/Invoices.php:537
 msgid "Invalid item ID."
 msgstr ""
 
 #: includes/Modules/Clients.php:320 includes/Modules/Credits.php:132
 #: includes/Modules/Credits.php:178 includes/Modules/Expenses.php:153
-#: includes/Modules/Expenses.php:334 includes/Modules/Invoices.php:192
-#: includes/Modules/Invoices.php:266 includes/Modules/Invoices.php:408
+#: includes/Modules/Expenses.php:334 includes/Modules/Invoices.php:202
+#: includes/Modules/Invoices.php:276 includes/Modules/Invoices.php:418
 #: includes/Modules/Quotes.php:196 includes/Modules/Quotes.php:253
 #: includes/Modules/Quotes.php:404 includes/Modules/Quotes.php:495
-#: includes/Modules/Quotes.php:715
+#: includes/Modules/Quotes.php:723
 msgid "Invalid nonce"
 msgstr ""
 
-#: includes/Modules/Invoices.php:665 includes/Modules/Quotes.php:663
+#: includes/Modules/Invoices.php:675 includes/Modules/Quotes.php:663
 msgid "Invalid order data"
 msgstr ""
 
@@ -803,11 +811,11 @@ msgstr ""
 msgid "Invoice"
 msgstr ""
 
-#: includes/Modules/Invoices.php:249
+#: includes/Modules/Invoices.php:259
 msgid "Invoice added successfully"
 msgstr ""
 
-#: includes/Modules/Invoices.php:424
+#: includes/Modules/Invoices.php:434
 msgid "Invoice and related items successfully deleted"
 msgstr ""
 
@@ -823,24 +831,24 @@ msgstr ""
 msgid "Invoice in"
 msgstr ""
 
-#: includes/Modules/Invoices.php:649
+#: includes/Modules/Invoices.php:659
 msgid "Invoice item deleted."
 msgstr ""
 
-#: includes/Modules/Invoices.php:351
+#: includes/Modules/Invoices.php:361
 msgid "Invoice item successfully added"
 msgstr ""
 
-#: includes/Modules/Invoices.php:678
+#: includes/Modules/Invoices.php:688
 msgid "Invoice items order updated successfully"
 msgstr ""
 
 #: includes/Modules/Credits.php:138 includes/Modules/Credits.php:186
-#: includes/Modules/Invoices.php:699
+#: includes/Modules/Invoices.php:709
 msgid "Invoice not found"
 msgstr ""
 
-#: includes/Modules/Invoices.php:171
+#: includes/Modules/Invoices.php:180
 msgid "Invoice not found."
 msgstr ""
 
@@ -860,7 +868,7 @@ msgstr ""
 msgid "Invoice reminder"
 msgstr ""
 
-#: includes/Modules/Invoices.php:765
+#: includes/Modules/Invoices.php:775
 msgid "Invoice status updated successfully"
 msgstr ""
 
@@ -868,7 +876,7 @@ msgstr ""
 msgid "Invoice terms"
 msgstr ""
 
-#: includes/Modules/Invoices.php:398
+#: includes/Modules/Invoices.php:408
 msgid "Invoice updated successfully"
 msgstr ""
 
@@ -887,7 +895,7 @@ msgstr ""
 msgid "Invoices settings"
 msgstr ""
 
-#: includes/Modules/Invoices.php:598 includes/Modules/Quotes.php:605
+#: includes/Modules/Invoices.php:608 includes/Modules/Quotes.php:605
 msgid "Item edited successfully"
 msgstr ""
 
@@ -968,16 +976,16 @@ msgstr ""
 msgid "May"
 msgstr ""
 
+#. Author of the plugin
+msgid "MELIOZ.dev"
+msgstr ""
+
 #: languages/my-easy-compta-translations.php:34 includes/Modules/Setup.php:197
 msgid "Mobile"
 msgstr ""
 
 #: languages/my-easy-compta-translations.php:266
 msgid "Mode"
-msgstr ""
-
-#. Author of the plugin
-msgid "Moez"
 msgstr ""
 
 #: languages/my-easy-compta-translations.php:127
@@ -993,8 +1001,21 @@ msgstr ""
 msgid "myEasyCompta - Setup Process"
 msgstr ""
 
+#: includes/Modules/Addons.php:191
+msgid ""
+"myEasyCompta Acompte is a plugin designed to simplify your invoicing process."
+" Once a quote has been validated, Acompte lets you generate down-payment and "
+"balance invoices with ease. You can set up down-payment invoices as "
+"percentages or fixed amounts, with automatic calculation of remaining "
+"amounts."
+msgstr ""
+
 #: includes/Modules/Addons.php:54
 msgid "myEasyCompta Addons"
+msgstr ""
+
+#: includes/Modules/Addons.php:189
+msgid "myEasyCompta Advance"
 msgstr ""
 
 #: includes/Modules/Addons.php:150
@@ -1084,15 +1105,15 @@ msgstr ""
 msgid "No data for the moment"
 msgstr ""
 
-#: includes/Modules/Invoices.php:582 includes/Modules/Invoices.php:622
+#: includes/Modules/Invoices.php:592 includes/Modules/Invoices.php:632
 msgid "No invoice found for the given item."
 msgstr ""
 
-#: includes/Modules/Invoices.php:503
+#: includes/Modules/Invoices.php:513
 msgid "No item details found."
 msgstr ""
 
-#: includes/Modules/Invoices.php:470
+#: includes/Modules/Invoices.php:480
 msgid "No items found for this invoice."
 msgstr ""
 
@@ -1108,12 +1129,12 @@ msgstr ""
 msgid "No update available."
 msgstr ""
 
-#: includes/Modules/Clients.php:189 includes/Modules/Invoices.php:609
+#: includes/Modules/Clients.php:189 includes/Modules/Invoices.php:619
 #: includes/Modules/Quotes.php:616
 msgid "Nonce invalide"
 msgstr ""
 
-#: includes/Modules/Invoices.php:361
+#: includes/Modules/Invoices.php:371
 msgid "Nonce verification failed."
 msgstr ""
 
@@ -1256,7 +1277,7 @@ msgstr ""
 msgid "Quote color"
 msgstr ""
 
-#: includes/Modules/Quotes.php:787
+#: includes/Modules/Quotes.php:795
 msgid "Quote converted to invoice successfully"
 msgstr ""
 
@@ -1280,7 +1301,7 @@ msgstr ""
 msgid "Quote items order updated successfully"
 msgstr ""
 
-#: includes/Modules/Quotes.php:722
+#: includes/Modules/Quotes.php:730
 msgid "Quote not found"
 msgstr ""
 
@@ -1296,7 +1317,7 @@ msgstr ""
 msgid "Quote prefix"
 msgstr ""
 
-#: includes/Modules/Quotes.php:706
+#: includes/Modules/Quotes.php:712
 msgid "Quote status updated successfully"
 msgstr ""
 
@@ -1322,6 +1343,7 @@ msgstr ""
 #: includes/Modules/Addons.php:118 includes/Modules/Addons.php:131
 #: includes/Modules/Addons.php:144 includes/Modules/Addons.php:157
 #: includes/Modules/Addons.php:170 includes/Modules/Addons.php:183
+#: includes/Modules/Addons.php:196
 msgid "Read more"
 msgstr ""
 
@@ -1567,7 +1589,7 @@ msgstr ""
 
 #. %s: is the field name.
 #. %s is the field name
-#: includes/Modules/Clients.php:206 includes/Modules/Invoices.php:283
+#: includes/Modules/Clients.php:206 includes/Modules/Invoices.php:293
 #: includes/Modules/Quotes.php:270
 #, php-format
 msgid "The field %s is required"
@@ -1616,7 +1638,7 @@ msgstr ""
 msgid "Type"
 msgstr ""
 
-#: includes/Modules/Invoices.php:659 includes/Modules/Quotes.php:657
+#: includes/Modules/Invoices.php:669 includes/Modules/Quotes.php:657
 msgid "Unauthorized request"
 msgstr ""
 

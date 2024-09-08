@@ -275,4 +275,7 @@ $translations = array(
     'security_code' => __('Security code', 'my-easy-compta'),
     'payment_success' => __('Payment successful', 'my-easy-compta'),
     'payment_secure' => __('Your payment is secure, and no card details are stored by our platform. The transaction is protected by Stripe\'s service.', 'my-easy-compta'),
+    'advance' => __('Advance', 'my-easy-compta'),
+    'advance_invoice' => __('Advance invoice', 'my-easy-compta'),
+    'min_article' => __('You must have at least one article', 'my-easy-compta'),
 );

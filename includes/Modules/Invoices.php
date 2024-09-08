@@ -104,7 +104,7 @@ class ECWP_Invoices
         $encrypt = new \ECWP\Admin\Encrypt\ECWP_Encrypt();
 
         $invoices = $wpdb->get_results(
-            $wpdb->prepare("SELECT invoices.id,
+            $wpdb->prepare("SELECT invoices.*,
                         clients.company_name,
                         currencies.symbol AS currency_symbole,
                         invoices.invoice_number,
@@ -133,7 +133,7 @@ class ECWP_Invoices
 
         $data = array();
         foreach ($invoices as $invoice) {
-            $data[] = array(
+            $invoice_data = array(
                 'id' => $invoice->id,
                 'client_name' => $invoice->company_name,
                 'client_currency' => $invoice->currency_symbole,
@@ -145,6 +145,15 @@ class ECWP_Invoices
                 'due_date' => date_i18n($format_date, strtotime($invoice->due_date)),
                 'created' => date_i18n($format_date, strtotime($invoice->created_at)),
             );
+
+            if (isset($invoice->advance)) {
+                $invoice_data['advance'] = $invoice->advance;
+            }
+            if (isset($invoice->advance_amount)) {
+                $invoice_data['advance_amount'] = number_format(floatval($encrypt->decrypt($invoice->advance_amount)), 2, '.', '');
+            }
+
+            $data[] = $invoice_data;
         }
 
         return rest_ensure_response(array(
@@ -177,6 +186,7 @@ class ECWP_Invoices
         $invoice_details['client_id'] = $invoice_details['client_id'];
         $invoice_details['exchange_rate'] = number_format($encrypt->decrypt($invoice_details['exchange_rate']), 2, '.', ' ');
         $invoice_details['status'] = $encrypt->decrypt($invoice_details['status']);
+        $invoice_details['advance_amount'] = $encrypt->decrypt($invoice_details['advance_amount']);
 
         return rest_ensure_response($invoice_details);
     }
@@ -799,7 +809,7 @@ class ECWP_Invoices
         $currency_id = sanitize_text_field($request->get_param('currency_id'));
 
         $pdfGenerator = new PDFGenerator($wpdb);
-        $pdfGenerator->generateInvoicePDF($invoice_id, "", $currency_id);
+        $pdfGenerator->generateInvoicePDF($invoice_id, $currency_id, "");
     }
 
 }

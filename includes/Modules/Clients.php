@@ -104,7 +104,7 @@ class ECWP_Clients
         $per_page = isset($request['per_page']) ? intval($request['per_page']) : 10;
         $page = isset($request['page']) ? intval($request['page']) : 1;
         $offset = ($page - 1) * $per_page;
-        $total_count = $wpdb->get_var("SELECT COUNT(*) FROM %i", ECWP_TABLE_CLIENTS);
+        $total_count = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM %i", ECWP_TABLE_CLIENTS));
         $results = $wpdb->get_results(
             $wpdb->prepare("SELECT * FROM %i ORDER BY company_name ASC  LIMIT %d OFFSET %d", ECWP_TABLE_CLIENTS,
                 $per_page, $offset),

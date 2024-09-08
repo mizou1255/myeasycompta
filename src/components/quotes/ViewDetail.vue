@@ -3,6 +3,9 @@
     <QuoteNavBar
       :quoteInfo="quote"
       :emailActive="settings.easy_compta_email_addon_active"
+      :advanceActive="settings.easy_compta_advance_addon_active"
+      :currency="default_currency_symbol"
+      :noItems="no_items"
     />
     <div
       v-if="toast.visible"
@@ -369,7 +372,7 @@
                 <select
                   v-model="newItem.vat_rate"
                   @change="updateTotal"
-                  class="select select-sm w-full mb-1 ecwp-select min-w-20"
+                  class="select select-md w-full mb-1 ecwp-select min-w-20"
                 >
                   <option
                     v-for="rate in list_vats"
@@ -516,7 +519,8 @@ export default {
       selectedItem: null,
       selectedInvoiceId: null,
       editItemsModal: false,
-      loading: false,
+      no_items: true,
+      loading: true,
       loading_add: false,
       quote: [],
       quoteItems: [],
@@ -707,9 +711,11 @@ export default {
             console.error("No items found");
             this.quoteItems = [];
             this.loading = false;
+            this.no_items = true;
           } else {
             this.quoteItems = data;
             this.loading = false;
+            this.no_items = false;
           }
         })
         .catch((error) => {
@@ -989,6 +995,7 @@ export default {
     },
     async loadSettings() {
       try {
+        this.loading = true;
         this.loadingPrice = true;
         const { settings, currencySymbol, vatData, listVatData } =
           await fetchSettings();
@@ -998,9 +1005,11 @@ export default {
         this.list_vats = listVatData;
         this.newItem.vat_rate = this.default_vat.rate;
         this.loadingPrice = false;
+        this.loading = false;
       } catch (error) {
         this.showToast(error.message, "alert-error");
         this.loadingPrice = false;
+        this.loading = false;
       }
     },
     showToast(message, type) {

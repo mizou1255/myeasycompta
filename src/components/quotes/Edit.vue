@@ -1,5 +1,14 @@
 <template>
   <div class="pt-2 pr-4">
+    <div
+      v-if="toast.visible"
+      :class="['toast', toast.position]"
+      :style="{ zIndex: 9999 }"
+    >
+      <div :class="['alert', toast.type, 'text-white']">
+        <span>{{ toast.message }}</span>
+      </div>
+    </div>
     <Card topMargin="mt-8" modalType="modal_quote_new">
       <div class="flex justify-between items-center mb-4">
         <h2 class="card-title">{{ translations.edit_quote }}</h2>
@@ -29,13 +38,13 @@
             }}</label>
             <VueDatePicker
               class="ecwp-input ecwp-date input input-bordered w-full"
+              :class="[!quote.due_date && showError ? 'input-error' : '']"
               id="quoteDate"
               v-model="quote.due_date"
               :enable-time-picker="false"
               auto-apply
               :format="formattedDate"
               :min-date="new Date()"
-              required
             />
           </div>
           <div class="ecwp-group form-group mb-4">
@@ -44,13 +53,15 @@
             }}</label>
             <VueDatePicker
               class="ecwp-input ecwp-date input input-bordered w-full"
+              :class="[
+                !quote.provisional_start_date && showError ? 'input-error' : '',
+              ]"
               id="quoteProvisanalDate"
               v-model="quote.provisional_start_date"
               :enable-time-picker="false"
               auto-apply
               :format="formattedDate"
               :min-date="new Date()"
-              required
             />
           </div>
         </div>
@@ -66,7 +77,7 @@
               track-by="value"
               :placeholder="translations.select"
               class="ecwp-input input input-bordered w-full"
-              required
+              :class="[!quote.client_id && showError ? 'input-error' : '']"
             />
           </div>
           <div class="ecwp-group form-group mb-4">
@@ -78,6 +89,7 @@
               v-model="quote.status"
               required
               class="ecwp-input select select-bordered w-full"
+              :class="[!quote.status && showError ? 'input-error' : '']"
             >
               <option value="draft">{{ translations.draft }}</option>
               <option value="pending">{{ translations.pending }}</option>
@@ -131,8 +143,9 @@ export default {
         provisional_start_date: "",
         client_id: "",
         client: null,
-        status: "pending",
+        status: "",
       },
+      showError: false,
       loading: false,
       loadingBtn: false,
       clients: [],
@@ -256,6 +269,19 @@ export default {
       this.quote.client_id = clientId;
     },
     submitQuote() {
+      if (
+        !this.quote.due_date ||
+        !this.quote.provisional_start_date ||
+        !this.quote.client_id ||
+        !this.quote.status
+      ) {
+        this.showError = true;
+        this.showToast(
+          "Veuillez remplir tous les champs obligatoires.",
+          "alert-error"
+        );
+        return;
+      }
       this.loadingBtn = true;
       fetch(`/wp-json/my-easy-compta/v1/quotes/${this.$route.params.id}`, {
         method: "PUT",

@@ -184,6 +184,19 @@ class ECWP_Addons
                 </div>
             </div>
         </div>
+        <div class="card p-6 bg-base-100 shadow-xl flex flex-col">
+            <div class="card-body flex flex-col flex-grow">
+                <h2 class="card-title mb-2"><?php esc_html_e('myEasyCompta Advance', 'my-easy-compta');?></h2>
+                <p class="mb-2 flex-grow">
+                    <?php esc_html_e('myEasyCompta Acompte is a plugin designed to simplify your invoicing process. Once a quote has been validated, Acompte lets you generate down-payment and balance invoices with ease. You can set up down-payment invoices as percentages or fixed amounts, with automatic calculation of remaining amounts.', 'my-easy-compta');?>
+                </p>
+                <div class="flex card-actions justify-end mt-auto btn-rounded">
+                    <a class="btn btn-primary hover:text-white rounded-full"
+                        href="https://myeasycompta.com/addons-all/myeasycompta-advance/"
+                        target="_blank"><?php esc_html_e('Read more', 'my-easy-compta');?></a>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 <?php

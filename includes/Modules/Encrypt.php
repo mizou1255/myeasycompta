@@ -23,10 +23,9 @@ class ECWP_Encrypt
 
     public function decrypt($data)
     {
-        $decoded_data = base64_decode($data);
-
+        $decoded_data = base64_decode($data, true);
         if ($decoded_data === false) {
-            return false;
+            throw new \InvalidArgumentException('Invalid base64 encoded data.');
         }
 
         $parts = explode('::', $decoded_data, 2);

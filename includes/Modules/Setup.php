@@ -149,8 +149,8 @@ class ECWP_Setup
                         <div class="ecwp-group form-control">
                             <label class="ecwp-label label"
                                 for="tax-number"><?php esc_html_e('Tax number', 'my-easy-compta');?></label>
-                            <input type="text" id="tax-number" name="tax_number" class="ecwp-input input input-bordered"
-                                required="">
+                            <input type="text" id="tax-number" name="tax_number"
+                                class="ecwp-input input input-bordered">
                         </div>
                         <div class="ecwp-group form-control">
                             <label class="ecwp-label label"
@@ -336,11 +336,11 @@ class ECWP_Setup
             'company_phone' => isset($_POST['company_phone']) ? sanitize_text_field($_POST['company_phone']) : '',
             'mobile_phone' => isset($_POST['mobile_phone']) ? sanitize_text_field($_POST['mobile_phone']) : '',
             'fax' => isset($_POST['fax']) ? sanitize_text_field($_POST['fax']) : '',
-            'default_currency' => isset($_POST['default_currency']) ? floatval($_POST['default_currency']) : 2,
+            'default_currency' => isset($_POST['default_currency']) ? sanitize_text_field($_POST['default_currency']) : '2',
             'vat_active' => isset($_POST['vat_active']) ? 1 : 0,
-            'default_vat' => isset($_POST['default_vat']) ? floatval($_POST['default_vat']) : '',
-            'quote_prefix' => isset($_POST['quote_prefix']) ? sanitize_text_field($_POST['quote_prefix']) : '',
-            'invoice_prefix' => isset($_POST['invoice_prefix']) ? sanitize_text_field($_POST['invoice_prefix']) : '',
+            'default_vat' => isset($_POST['default_vat']) ? sanitize_text_field($_POST['default_vat']) : '1',
+            'quote_prefix' => isset($_POST['quote_prefix']) ? sanitize_text_field($_POST['quote_prefix']) : 'EST',
+            'invoice_prefix' => isset($_POST['invoice_prefix']) ? sanitize_text_field($_POST['invoice_prefix']) : 'INV',
             'quote_first' => isset($_POST['quote_first']) ? floatval($_POST['quote_first']) : 1,
             'invoice_first' => isset($_POST['invoice_first']) ? floatval($_POST['invoice_first']) : 1,
         ];
@@ -357,7 +357,7 @@ class ECWP_Setup
     private function data_settings_exist()
     {
         global $wpdb;
-        $result = $wpdb->get_var("SELECT COUNT(*) %i WHERE meta_key IS NOT NULL AND meta_value IS NOT NULL", ECWP_TABLE_SETTINGS);
+        $result = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) %i WHERE meta_key IS NOT NULL AND meta_value IS NOT NULL", ECWP_TABLE_SETTINGS));
 
         return $result > 0;
     }

@@ -193,7 +193,6 @@
                     id="tax-number"
                     v-model="form.tax_number"
                     class="ecwp-input input input-bordered"
-                    required
                   />
                 </div>
                 <div class="ecwp-group form-control">

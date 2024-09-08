@@ -96,7 +96,7 @@
             </button>
           </div>
 
-          <template v-if="invoiceInfo.status == 'unpaid'">
+          <template v-if="invoiceInfo.status == 'unpaid' && !noItems">
             <div>
               <button
                 class="btn btn-outline btn-success btn-sm hover:text-white"
@@ -117,13 +117,25 @@
                 {{ translations.mark_as_paid }}
               </button>
             </div>
-            <div v-if="invoiceInfo.credit != 0 && invoiceInfo.status == 'paid'">
+            <div
+              v-if="
+                invoiceInfo.credit != 0 &&
+                invoiceInfo.status == 'paid' &&
+                !noItems
+              "
+            >
               <button class="btn btn-sm ms-2" disabled>
                 <i class="fas fa-undo"></i>
                 {{ translations.credit_invoice }}
               </button>
             </div>
-            <div v-if="invoiceInfo.credit == 0 && invoiceInfo.status == 'paid'">
+            <div
+              v-if="
+                invoiceInfo.credit == 0 &&
+                invoiceInfo.status == 'paid' &&
+                !noItems
+              "
+            >
               <button class="btn btn-sm ms-2" @click="confirmCreditInvoice()">
                 <i class="fas fa-undo"></i>
                 {{ translations.credit_invoice }}
@@ -249,13 +261,28 @@
         </div>
 
         <button
-          v-if="invoiceInfo.status == 'draft'"
+          v-if="invoiceInfo.status == 'draft' && !noItems"
           class="btn btn-outline btn-success btn-sm hover:text-white"
           @click="confirmValidateInvoice('unpaid')"
         >
           <i class="fas fa-check"></i>
           {{ translations.validateInvoice }}
         </button>
+
+        <div
+          v-if="invoiceInfo.status == 'draft' && noItems"
+          class="tooltip tooltip-left tooltip-warning"
+          :data-tip="translations.min_article"
+        >
+          <button
+            click="#"
+            class="btn btn-outline btn-primary btn-sm hover:text-white"
+            disabled
+          >
+            <i class="fas fa-check"></i>
+            {{ translations.validateInvoice }}
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -279,6 +306,7 @@ export default {
     currencyDefault: Object,
     currencyClient: Object,
     emailActive: String,
+    noItems: Boolean,
   },
   data() {
     return {

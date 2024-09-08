@@ -125,7 +125,7 @@ class PDFGenerator
      *
      * @return [type]
      */
-    public function generateInvoicePDF($invoice_id, $type = 'show', $currency_id)
+    public function generateInvoicePDF($invoice_id, $currency_id, $type = 'show')
     {
         global $wpdb;
         $invoice = $wpdb->get_row($wpdb->prepare("SELECT * FROM %i WHERE id = %d", ECWP_TABLE_INVOICES, $invoice_id));
