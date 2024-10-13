@@ -76,6 +76,9 @@ export async function fetchSettings() {
             listVatsResponse.statusText
           );
         }
+      } else {
+        vatData = 0;
+        listVatData = 0;
       }
 
       return {

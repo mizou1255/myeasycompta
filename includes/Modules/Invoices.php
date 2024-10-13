@@ -185,8 +185,18 @@ class ECWP_Invoices
         $invoice_details['invoice_number'] = $encrypt->decrypt($invoice_details['invoice_number']);
         $invoice_details['client_id'] = $invoice_details['client_id'];
         $invoice_details['exchange_rate'] = number_format($encrypt->decrypt($invoice_details['exchange_rate']), 2, '.', ' ');
+        $invoice_details['total_amount'] = $encrypt->decrypt($invoice_details['total_amount']);
         $invoice_details['status'] = $encrypt->decrypt($invoice_details['status']);
-        $invoice_details['advance_amount'] = $encrypt->decrypt($invoice_details['advance_amount']);
+        if (isset($invoice_details['advance_amount'])) {
+            $invoice_details['advance_amount'] = $encrypt->decrypt($invoice_details['advance_amount']);
+        }
+        if (isset($invoice_details['order_id'])) {
+            $invoice_details['order_id'] = $invoice_details['order_id'];
+        }
+
+        if (isset($invoice_details['shipping_amount'])) {
+            $invoice_details['shipping_amount'] = $encrypt->decrypt($invoice_details['shipping_amount']);
+        }
 
         return rest_ensure_response($invoice_details);
     }
@@ -484,7 +494,7 @@ class ECWP_Invoices
             $item['item_name'] = $encrypt->decrypt($item['item_name']);
             $item['item_ref'] = $encrypt->decrypt($item['item_ref']);
             $item['item_description'] = $encrypt->decrypt($item['item_description']);
-            $item['quantity'] = (int) $encrypt->decrypt($item['quantity']);
+            $item['quantity'] = $encrypt->decrypt($item['quantity']);
             $item['vat_rate'] = (int) $encrypt->decrypt($item['vat_rate']);
             $item['unit_price'] = number_format((float) $encrypt->decrypt($item['unit_price']), 2, '.', '');
             $item['discount'] = (int) $encrypt->decrypt($item['discount']);
@@ -517,7 +527,7 @@ class ECWP_Invoices
         $item_details['item_name'] = $encrypt->decrypt($item_details['item_name']);
         $item_details['item_ref'] = $encrypt->decrypt($item_details['item_ref']);
         $item_details['item_description'] = $encrypt->decrypt($item_details['item_description']);
-        $item_details['quantity'] = (int) $encrypt->decrypt($item_details['quantity']);
+        $item_details['quantity'] = $encrypt->decrypt($item_details['quantity']);
         $item_details['vat_rate'] = (int) $encrypt->decrypt($item_details['vat_rate']);
         $item_details['unit_price'] = number_format((float) $encrypt->decrypt($item_details['unit_price']), 2, '.', '');
         $item_details['discount'] = (int) $encrypt->decrypt($item_details['discount']);
@@ -543,7 +553,7 @@ class ECWP_Invoices
         $item_name = sanitize_text_field($request['item_name']);
         $item_ref = sanitize_text_field($request['item_ref']);
         $item_description = wp_kses_post($request['item_description']);
-        $quantity = absint($request['quantity']);
+        $quantity = sanitize_text_field($request['quantity']);
         $vat_rate = absint($request['vat_rate']);
         $unit_price = floatval($request['unit_price']);
         $discount = absint($request['discount']);
@@ -751,8 +761,8 @@ class ECWP_Invoices
                 'amount' => $amount_invoice,
                 'payment_date' => current_time('mysql'),
                 'client_id' => $invoice->client_id,
-                //'payment_method_id' => $method,
-                'payment_method_id' => 1,
+                'payment_method_id' => $method,
+                //'payment_method_id' => 1,
             );
 
             $result = $wpdb->insert(

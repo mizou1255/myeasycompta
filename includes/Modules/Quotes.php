@@ -282,7 +282,7 @@ class ECWP_Quotes
             'item_ref' => sanitize_text_field($params['item_ref']),
             'item_category' => sanitize_text_field($params['item_category']),
             'item_description' => sanitize_textarea_field($params['item_description'] ?? ''),
-            'quantity' => intval($params['quantity']),
+            'quantity' => sanitize_text_field($params['quantity']),
             'vat_rate' => intval($params['vat_rate']),
             'unit_price' => floatval($params['unit_price']),
             'discount' => intval($params['discount']),
@@ -550,7 +550,7 @@ class ECWP_Quotes
         $item_name = sanitize_text_field($request['item_name']);
         $item_ref = sanitize_text_field($request['item_ref']);
         $item_description = wp_kses_post($request['item_description']);
-        $quantity = absint($request['quantity']);
+        $quantity = sanitize_text_field($request['quantity']);
         $vat_rate = absint($request['vat_rate']);
         $unit_price = floatval($request['unit_price']);
         $discount = absint($request['discount']);

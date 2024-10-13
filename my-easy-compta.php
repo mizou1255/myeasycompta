@@ -2,7 +2,7 @@
 /**
  * Plugin Name: myEasyCompta
  * Description: Streamline your financial management with myEasyCompta, an all-in-one accounting plugin. Effortlessly handle quotes, invoices, expenses, and more, all within a sleek, user-friendly interface. Perfect for freelancers and small businesses looking to simplify their accounting processes.
- * Version: 1.1.0
+ * Version: 1.2.3
  * Author: MELIOZ.dev
  * Author URI: https://myeasycompta.com
  * Text Domain: my-easy-compta
@@ -21,7 +21,7 @@
  * A comprehensive accounting plugin using Vue.js and TailwindCSS. Manage your quotes, invoices, expenses, and more with ease.
  *
  * @package myEasyCompta
- * @since 1.1.0
+ * @since 1.2.3
  */
 
 if (!defined('ABSPATH')) {
@@ -36,7 +36,7 @@ final class ECWP_Easy_Compta
      *
      * @var string
      */
-    public $version = '1.1.0';
+    public $version = '1.2.3';
 
     /**
      * Minimum PHP version required
@@ -316,10 +316,10 @@ final class ECWP_Easy_Compta
     {
         $migrations = [
             '1.1.0' => ECWP_INCLUDES . '/Migrations/migration_1_1_0.php',
+            '1.2.3' => ECWP_INCLUDES . '/Migrations/migration_1_2_3.php',
         ];
 
-        $installed_db_version = get_option('ecwp_db_version', true);
-
+        $installed_db_version = get_option('ecwp_db_version', '1.0.0');
         foreach ($migrations as $version => $file) {
             if (version_compare($installed_db_version, $version, '<')) {
                 require_once $file;
@@ -334,13 +334,14 @@ final class ECWP_Easy_Compta
 
     public function migration_admin_notice()
     {
-        $installed_db_version = get_option('ecwp_db_version');
-        if ($installed_db_version !== ECWP_VERSION) {
+        $installed_db_version = get_option('ecwp_db_version', '1.0.0');
+
+        if (version_compare($installed_db_version, $this->version, '<')) {
             echo '<div class="notice notice-warning is-dismissible">
                     <p>' . __('myEasyCompta requires a database update.', 'my-easy-compta') . '</p>
                     <form method="post">
                         ' . wp_nonce_field('run_migration_action', 'run_migration_nonce') . '
-                        <input type="submit" name="run_migration_now" class="button button-primary" value="' . esc_attr__('Update Database', 'my-easy-compta') . '" />
+                        <p><input type="submit" name="run_migration_now" class="button button-primary" value="' . esc_attr__('Update Database', 'my-easy-compta') . '" /></p>
                     </form>
                 </div>';
         }

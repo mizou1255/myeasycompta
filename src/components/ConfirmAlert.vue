@@ -89,7 +89,7 @@ export default {
   },
   methods: {
     onConfirm() {
-      this.$emit("confirm", this.selectedPaymentMethod);
+      this.$emit("confirm");
       this.closeModal();
     },
     onCancel() {

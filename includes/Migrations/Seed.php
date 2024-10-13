@@ -129,6 +129,8 @@ class ECWP_Tables
             array('meta_key' => 'show_email', 'meta_value' => '1'),
             array('meta_key' => 'show_siren', 'meta_value' => '1'),
             array('meta_key' => 'show_tax_number', 'meta_value' => '1'),
+            array('meta_key' => 'show_watermark', 'meta_value' => '1'),
+            array('meta_key' => 'show_watermark_only_paid', 'meta_value' => '1'),
         );
 
         $articles_categories = array(

@@ -48,6 +48,10 @@ class ECWP_Payments
             return current_user_can('manage_options');
         });
 
+        $this->routes->add_route('/payments/methods', 'GET', $this, 'get_payment_methods', function () {
+            return current_user_can('manage_options');
+        });
+
         $this->routes->add_route('/payments/details/(?P<id>\d+)', 'GET', $this, 'get_payment_details', function () {
             return current_user_can('manage_options');
         });
@@ -58,6 +62,7 @@ class ECWP_Payments
         $this->routes->add_route('/payments/(?P<id>\d+)', 'DELETE', $this, 'delete_payment', function () {
             return current_user_can('manage_options');
         });
+
         $this->routes->register_routes();
     }
 
@@ -213,4 +218,15 @@ class ECWP_Payments
         }
     }
 
+    public function get_payment_methods($request) {
+
+        $nonce = sanitize_text_field(wp_unslash($request->get_header('X-WP-Nonce')));
+        if (!wp_verify_nonce($nonce, 'wp_rest')) {
+            return new WP_Error('invalid_nonce', 'Nonce verification failed.', array('status' => 403));
+        }
+        global $wpdb;
+        $payment_methods = $wpdb->get_results($wpdb->prepare("SELECT * FROM %i", ECWP_TABLE_PAYMENTS_METHODS));
+
+        return new WP_REST_Response($payment_methods, 200);
+    }
 }

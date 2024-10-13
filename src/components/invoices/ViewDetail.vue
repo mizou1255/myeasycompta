@@ -5,6 +5,7 @@
       :currencyDefault="defaultCurrency"
       :currencyClient="clientCurrency"
       :emailActive="settings.easy_compta_email_addon_active"
+      :qrCodeActive="settings.easy_compta_qrcode_addon_active"
       :noItems="no_items"
     />
     <remove-modal
@@ -185,9 +186,14 @@
               <th width="8%" class="text-center">
                 {{ translations.unit_price }}
               </th>
-              <th width="5%" class="text-center">
+              <th
+                v-if="settings.vat_active == 1"
+                width="5%"
+                class="text-center"
+              >
                 {{ translations.vat }}
               </th>
+              <th v-else width="5%"></th>
               <th width="10%" class="text-center">
                 {{ translations.discount }}
               </th>
@@ -219,14 +225,27 @@
                 }}</span>
                 <span v-else>{{ client_currency }}</span>
               </td>
-              <td class="text-center">{{ item.vat_rate }}%</td>
-              <td class="text-center">
+              <td v-if="settings.vat_active == 1" class="text-center">
+                {{ item.vat_rate }}%
+              </td>
+              <td v-else></td>
+              <td v-if="settings.vat_active == 1" class="text-center">
+                {{ item.discount }}% <br />
+                {{
+                  calculateDiscountAmountWithVAT(
+                    item.quantity,
+                    item.unit_price,
+                    item.vat_rate,
+                    item.discount
+                  )
+                }}
+              </td>
+              <td v-else class="text-center">
                 {{ item.discount }}% <br />
                 {{
                   calculateDiscountAmount(
                     item.quantity,
                     item.unit_price,
-                    item.vat_rate,
                     item.discount
                   )
                 }}
@@ -346,11 +365,11 @@
                     </div>
 
                     <input
-                      type="number"
-                      min="1"
+                      type="text"
+                      pattern="([0-9]+.{0,1}[0-9]*,{0,1})*[0-9]"
                       v-model="newItem.quantity"
                       :placeholder="translations.quantity"
-                      class="w-full p-2.5 bg-transparent outline-none max-w-40"
+                      class="w-full p-2.5 bg-transparent outline-none max-w-40 min-w-10"
                       @input="updateTotal"
                     />
 
@@ -366,15 +385,16 @@
               <td class="align-top">
                 <div class="flex items-center border rounded-md">
                   <input
-                    type="number"
+                    type="text"
+                    pattern="([0-9]+.{0,1}[0-9]*,{0,1})*[0-9]"
                     v-model="newItem.unit_price"
                     :placeholder="translations.unit_price"
-                    class="w-full p-2.5 bg-transparent outline-none max-w-40"
+                    class="w-full p-2.5 bg-transparent outline-none max-w-40 min-w-10"
                     @input="updateTotal"
                   />
                 </div>
               </td>
-              <td class="align-top">
+              <td v-if="settings.vat_active == 1" class="align-top">
                 <select
                   v-model="newItem.vat_rate"
                   @change="updateTotal"
@@ -389,6 +409,7 @@
                   </option>
                 </select>
               </td>
+              <td v-else class="align-top"></td>
               <td class="align-top">
                 <div class="flex items-center border rounded-md">
                   <input
@@ -397,7 +418,7 @@
                     min="0"
                     max="100"
                     :placeholder="translations.discount"
-                    class="w-full p-2.5 bg-transparent outline-none max-w-40"
+                    class="w-full p-2.5 bg-transparent outline-none max-w-40 min-w-10"
                     @input="updateTotal"
                   />
                   <div class="px-3 py-2.5 rounded-l-md bg-base-300 border-r">
@@ -405,12 +426,21 @@
                   </div>
                 </div>
               </td>
-              <td class="text-right">
+              <td class="text-right" v-if="settings.vat_active == 1">
+                {{
+                  calculateTotalWithVat(
+                    newItem.quantity,
+                    newItem.unit_price,
+                    newItem.vat_rate,
+                    newItem.discount
+                  )
+                }}
+              </td>
+              <td class="text-right" v-else>
                 {{
                   calculateTotal(
                     newItem.quantity,
                     newItem.unit_price,
-                    newItem.vat_rate,
                     newItem.discount
                   )
                 }}
@@ -453,6 +483,15 @@
                 <td></td>
               </tr>
             </template>
+
+            <tr v-if="invoice.shipping_amount">
+              <td colspan="8" class="text-right no-border">
+                <strong>{{ translations.shipping_fees }}</strong>
+              </td>
+              <td class="text-right no-border">
+                {{ formatShippingAmout(invoice.shipping_amount) }}
+              </td>
+            </tr>
             <tr>
               <td colspan="8" class="text-right no-border font-bold text-xl">
                 <strong>{{ translations.total }}</strong>
@@ -642,7 +681,23 @@ export default {
       let total = this.invoiceItems.reduce((totalAmount, item) => {
         return totalAmount + parseFloat(item.total_amount);
       }, 0);
+      if (this.settings.easy_compta_woo_addon_active == 1) {
+        total += parseFloat(this.invoice.shipping_amount || 0);
+      }
       return this.formatCurrency(total);
+    },
+    formatShippingAmout(amount) {
+      return this.formatShippingCurrency(amount);
+    },
+    formatShippingCurrency(amount) {
+      const numericAmount = parseFloat(amount) || 0;
+      const formattedAmount = numericAmount.toFixed(2);
+      const currencySymbol =
+        this.client_currency !== this.default_currency_symbol
+          ? this.client_currency
+          : this.default_currency_symbol;
+
+      return `${formattedAmount}${currencySymbol}`;
     },
     fetchInvoice() {
       this.loading = true;
@@ -752,17 +807,30 @@ export default {
       const discountAmount =
         (totalBeforeDiscount * this.newItem.discount) / 100;
       const totalAfterDiscount = totalBeforeDiscount - discountAmount;
-      const vatAmount = (totalAfterDiscount * this.newItem.vat_rate) / 100;
-      const totalAmountWithVAT = totalAfterDiscount + vatAmount;
+      var totalAmount = 0;
+      if (this.settings.vat_active == 1) {
+        const vatAmount = (totalAfterDiscount * this.newItem.vat_rate) / 100;
+        totalAmount = totalAfterDiscount + vatAmount;
+      } else {
+        totalAmount = totalAfterDiscount;
+      }
+
       this.newItem.total_price = this.formatCurrency(totalAfterDiscount);
-      this.newItem.total_amount = this.formatCurrency(totalAmountWithVAT);
+      this.newItem.total_amount = this.formatCurrency(totalAmount);
     },
-    calculateTotal(quantity, unitPrice, vat_rate, discount) {
+    calculateTotalWithVat(quantity, unitPrice, vat_rate, discount) {
       const totalBeforeDiscount = quantity * unitPrice;
       const discountAmount = (totalBeforeDiscount * discount) / 100;
       const totalAfterDiscount = totalBeforeDiscount - discountAmount;
       const taxAmount = (totalAfterDiscount * vat_rate) / 100;
       const total = totalAfterDiscount + taxAmount;
+      return this.formatCurrency(total);
+    },
+    calculateTotal(quantity, unitPrice, discount) {
+      const totalBeforeDiscount = quantity * unitPrice;
+      const discountAmount = (totalBeforeDiscount * discount) / 100;
+      const totalAfterDiscount = totalBeforeDiscount - discountAmount;
+      const total = totalAfterDiscount;
       return this.formatCurrency(total);
     },
     submitItems() {
@@ -882,11 +950,19 @@ export default {
           : this.default_currency_symbol;
       return `${formattedAmount}${currencySymbol}`;
     },
-    calculateDiscountAmount(quantity, unitPrice, vat_rate, discount) {
+    calculateDiscountAmountWithVAT(quantity, unitPrice, vat_rate, discount) {
       const totalBeforeDiscount = quantity * unitPrice;
       const discountAmount = (totalBeforeDiscount * discount) / 100;
       const taxAmount = (discountAmount * vat_rate) / 100;
       const totalDiscountAmount = discountAmount + taxAmount;
+
+      return this.formatCurrency(totalDiscountAmount);
+    },
+    calculateDiscountAmount(quantity, unitPrice, discount) {
+      const totalBeforeDiscount = quantity * unitPrice;
+      const discountAmount = (totalBeforeDiscount * discount) / 100;
+      const totalDiscountAmount = discountAmount;
+
       return this.formatCurrency(totalDiscountAmount);
     },
     calculateVAT() {

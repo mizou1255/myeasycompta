@@ -155,6 +155,9 @@ class ECWP_Settings
         $this->routes->add_route('/license/check-license', 'GET', $this, 'check_license', function () {
             return current_user_can('manage_options');
         });
+        $this->routes->add_route('/license/refresh-license', 'GET', $this, 'refresh_license', function () {
+            return current_user_can('manage_options');
+        });
         $this->routes->add_route('/license/delete-license', 'DELETE', $this, 'delete_license', function () {
             return current_user_can('manage_options');
         });
@@ -976,6 +979,7 @@ class ECWP_Settings
 
     public function check_license(\WP_REST_Request $request)
     {
+
         $nonce = sanitize_text_field(wp_unslash($request->get_header('X-WP-Nonce')));
         if (!wp_verify_nonce($nonce, 'wp_rest')) {
             return new \WP_Error('invalid_nonce', 'Nonce verification failed.', array('status' => 403));
@@ -1012,6 +1016,46 @@ class ECWP_Settings
         }
 
         // Construct the response
+        $response_data = [
+            'success' => true,
+            'valid' => true,
+            'license_key' => $license_key,
+            'license_data' => $license_data,
+            'installed_versions' => $installed_versions,
+        ];
+
+        return new \WP_REST_Response($response_data, 200);
+    }
+    public function refresh_license(\WP_REST_Request $request)
+    {
+        $nonce = sanitize_text_field(wp_unslash($request->get_header('X-WP-Nonce')));
+        if (!wp_verify_nonce($nonce, 'wp_rest')) {
+            return new \WP_Error('invalid_nonce', 'Nonce verification failed.', array('status' => 403));
+        }
+
+        $encrypted_license_key = get_option('ecwp_client_license_key');
+        if (empty($encrypted_license_key)) {
+            return new \WP_REST_Response(['success' => false, 'message' => 'License key not found.'], 404);
+        }
+
+        $license_key = openssl_decrypt($encrypted_license_key, 'AES-128-ECB', ECWP_SECRET_KEY);
+
+        $license_data = $this->get_validate_license($license_key);
+
+        if (!$license_data || !$license_data['valid']) {
+            return new \WP_REST_Response(['success' => false, 'message' => 'License validation failed.'], 500);
+        }
+
+        update_option('ecwp_client_license_data', $license_data);
+
+        $installed_plugins = get_plugins();
+        $installed_versions = array();
+
+        foreach ($installed_plugins as $plugin_path => $plugin_data) {
+            $plugin_slug = dirname(plugin_basename($plugin_path));
+            $installed_versions[$plugin_slug] = $plugin_data['Version'];
+        }
+
         $response_data = [
             'success' => true,
             'valid' => true,

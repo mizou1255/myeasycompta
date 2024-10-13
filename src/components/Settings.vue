@@ -146,8 +146,17 @@
             {{ translations.stats_settings }}</a
           >
           <a
+            v-if="form.easy_compta_qrcode_addon_active == 1"
             :class="tabClass(15)"
             @click="selectTab(15)"
+            class="justify-start w-full"
+          >
+            <i class="fas fa-qrcode mr-2"></i>
+            {{ translations.qrcode_settings }}</a
+          >
+          <a
+            :class="tabClass(16)"
+            @click="selectTab(16)"
             class="justify-start w-full"
           >
             <i class="far fa-id-badge mr-2"></i>
@@ -181,7 +190,6 @@
                     id="company-code"
                     v-model="form.company_code"
                     class="ecwp-input input input-bordered"
-                    required
                   />
                 </div>
                 <div class="ecwp-group form-control">
@@ -728,6 +736,37 @@
                     />
                     <span class="label-text mr-2 font-bold">{{
                       translations.show_tax_number
+                    }}</span>
+                  </label>
+                </div>
+                <div class="form-control mt-4 mb-1">
+                  <label class="cursor-pointer">
+                    <input
+                      type="checkbox"
+                      :checked="form.show_watermark == 1"
+                      @change="updateFormField($event, 'show_watermark')"
+                      class="wcpa-ui-toggle"
+                    />
+                    <span class="label-text mr-2 font-bold">{{
+                      translations.show_watermark
+                    }}</span>
+                  </label>
+                </div>
+                <div
+                  class="form-control mt-4 mb-1"
+                  v-if="form.show_watermark == 1"
+                >
+                  <label class="cursor-pointer">
+                    <input
+                      type="checkbox"
+                      :checked="form.show_watermark_only_paid == 1"
+                      @change="
+                        updateFormField($event, 'show_watermark_only_paid')
+                      "
+                      class="wcpa-ui-toggle"
+                    />
+                    <span class="label-text mr-2 font-bold">{{
+                      translations.show_watermark_only_paid
                     }}</span>
                   </label>
                 </div>
@@ -1888,6 +1927,32 @@
           </div>
           <div v-if="selectedTab === 15">
             <h2 class="text-xl font-semibold mb-4">
+              {{ translations.qrcode_settings }}
+            </h2>
+            <form @submit.prevent="handleSubmit">
+              <div class="grid grid-cols-1 gap-4">
+                <div class="ecwp-group form-control mt-2">
+                  <label class="ecwp-label label" for="stripe-api">{{
+                    translations.stripe_api
+                  }}</label>
+                  <input
+                    type="text"
+                    id="stripe-api"
+                    v-model="form.easy_compta_stripe_secret_api"
+                    class="ecwp-input input input-bordered"
+                    required
+                  />
+                </div>
+              </div>
+              <div class="mt-6 flex justify-end">
+                <button type="submit" class="btn btn-primary rounded-full">
+                  <i class="far fa-save"></i> {{ translations.save }}
+                </button>
+              </div>
+            </form>
+          </div>
+          <div v-if="selectedTab === 16">
+            <h2 class="text-xl font-semibold mb-4">
               {{ translations.validation_license }}
             </h2>
             <div class="grid grid-cols-2 gap-4">
@@ -1951,6 +2016,12 @@
                       <td>{{ licenseData.end_date }}</td>
                       <td>{{ licenseData.valid ? "Valid" : "Invalid" }}</td>
                       <td>
+                        <button
+                          @click="refresh_licence()"
+                          class="btn btn-circle text-blue-500 hover:text-blue-700 mx-1"
+                        >
+                          <i class="fas fa-sync"></i>
+                        </button>
                         <button
                           @click="delete_item('licence', '')"
                           class="btn btn-circle text-red-500 hover:text-red-700 mx-1"
@@ -2082,6 +2153,8 @@ export default {
         show_email: "",
         show_siren: "",
         show_tax_number: "",
+        show_watermark: "",
+        show_watermark_only_paid: "",
         invoice_footer: "",
         invoice_terms: "",
         credit_color: "",
@@ -2097,6 +2170,8 @@ export default {
         easy_compta_payment_addon_active: "",
         easy_compta_signature_addon_active: "",
         easy_compta_stats_addon_active: "",
+        easy_compta_qrcode_addon_active: "",
+        easy_compta_stripe_secret_api: "",
         email_quote_subject: "",
         email_invoice_subject: "",
         remind_invoice_subject: "",
@@ -3064,7 +3139,6 @@ export default {
       modal_remove.showModal();
       this.showRemoveModal = true;
     },
-
     getDeletionFunction(type) {
       switch (type) {
         case "licence":
@@ -3088,6 +3162,7 @@ export default {
       }
     },
     async checkLicense() {
+      this.loading = true;
       this.loadingLicense = true;
       this.errorMessage = "";
       this.licenseData = null;
@@ -3112,6 +3187,7 @@ export default {
         if (data.valid) {
           this.licenseData = data;
           await this.storeLicense(data);
+          location.reload();
         } else {
           this.errorMessage = data.message;
         }
@@ -3119,6 +3195,30 @@ export default {
         this.errorMessage = "An error occurred while validating the license.";
       } finally {
         this.loadingLicense = false;
+      }
+    },
+    async refresh_licence() {
+      this.loading = true;
+      try {
+        const response = await fetch(
+          "/wp-json/my-easy-compta/v1/license/refresh-license",
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              "X-WP-Nonce": myEasyComptaAdmin.nonce,
+            },
+          }
+        );
+
+        const data = await response.json();
+        if (data.valid) {
+          location.reload();
+        } else {
+          this.errorMessage = data.message;
+        }
+      } catch (error) {
+        this.errorMessage = "An error occurred while refreshing the license.";
       }
     },
     async storeLicense(data) {
@@ -3172,6 +3272,7 @@ export default {
       }
     },
     async confirmLicense() {
+      this.loading = true;
       try {
         const response = await fetch(
           `/wp-json/my-easy-compta/v1/license/delete-license`,
@@ -3189,6 +3290,7 @@ export default {
           this.showToast(data.message, "alert-success");
           this.licenseData = "";
           this.license_key = "";
+          location.reload();
         } else {
           const error = await response.json();
           this.showToast(error.message, "alert-error");

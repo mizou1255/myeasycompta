@@ -28,6 +28,8 @@ class PDFGenerator
     private $show_email;
     private $show_siren;
     private $show_tax_number;
+    private $show_watermark;
+    private $show_watermark_only_paid;
     private $payment_conditions;
     private $payment_mode;
     private $invoice_iban;
@@ -84,6 +86,8 @@ class PDFGenerator
         $this->show_email = $this->settings_array['show_email'] ?? '1';
         $this->show_siren = $this->settings_array['show_siren'] ?? '1';
         $this->show_tax_number = $this->settings_array['show_tax_number'] ?? '1';
+        $this->show_watermark = $this->settings_array['show_watermark'] ?? '1';
+        $this->show_watermark_only_paid = $this->settings_array['show_watermark_only_paid'] ?? '1';
         $this->payment_conditions = $this->settings_array['payment_conditions'] ?? '';
         $this->payment_mode = $this->settings_array['payment_mode'] ?? '';
         $this->invoice_iban = $this->settings_array['invoice_iban'] ?? '';
@@ -206,10 +210,30 @@ class PDFGenerator
 
         $mpdf->SetTitle(htmlspecialchars($invoice->invoice_number));
         $mpdf->SetAuthor(htmlspecialchars($client->company_name));
-        $mpdf->WriteHTML($html);
 
         $encrypt = new \ECWP\Admin\Encrypt\ECWP_Encrypt();
         $invoice_number = $encrypt->decrypt($invoice->invoice_number);
+        $invoice_status = $encrypt->decrypt($invoice->status);
+        if ($this->show_watermark == 1) {
+            if ($this->show_watermark_only_paid == 1) {
+                if ($invoice_status == 'paid') {
+                    $mpdf->SetWatermarkText(__('PAID', 'my-easy-compta'), 0.1);
+                    $mpdf->showWatermarkText = true;
+                    $mpdf->watermarkTextAlpha = 0.1;
+                }
+            } else {
+                if ($invoice_status == 'draft') {
+                    $invoice_status = __('DRAFT', 'my-easy-compta');
+                } else if ($invoice_status == 'unpaid') {
+                    $invoice_status = __('UNPAID', 'my-easy-compta');
+                }
+                $mpdf->SetWatermarkText($invoice_status, 0.1);
+                $mpdf->showWatermarkText = true;
+                $mpdf->watermarkTextAlpha = 0.1;
+            }
+        }
+
+        $mpdf->WriteHTML($html);
 
         if ($type == 'email') {
             $pdf_dir = ECWP_PATH_DIR . 'uploads/pdfs/';
@@ -439,6 +463,10 @@ ie.item_order ASC",
             $invoice_bic = $this->invoice_bic;
             $footer = $this->invoice_footer;
 
+            if (isset($data->shipping_amount)) {
+                $shipping_fees = $encrypt->decrypt($data->shipping_amount);
+            }
+
         } else if ($type == 'credit_invoice') {
             $show_type = __('Credit', 'my-easy-compta');
             $number = $data->credit_number;
@@ -611,6 +639,9 @@ ie.item_order ASC",
                     $tva_totaux[$vat_rate] = 0;
                 }
                 $tva_totaux[$vat_rate] += $item_total_vat;
+            } else {
+                $discount_amount_with_vat = ($item_total * $discount_percentage) / 100;
+                $total_after_discount_with_vat = $item_total - $discount_amount_with_vat;
             }
 
             $discount_amount = ($item_total * $discount_percentage) / 100;
@@ -636,12 +667,13 @@ ie.item_order ASC",
                 <td width="15%"
                     style="text-align: right;border: 0.2mm solid #ffffff; background-color: #F5F5F5; vertical-align: top;">
                     ' . $this->positionCurrency($this->formatAmount($unit_price), $default_currency_symbol->symbol) . '
-                </td>
-                <td width="15%"
+                </td>';
+            if ($this->vat_active == 1) {
+                $items_html .= '<td width="15%"
                     style="text-align: right;border: 0.2mm solid #ffffff; background-color: #F5F5F5; vertical-align: top;">
                     ' . $this->positionCurrency($this->formatAmount($item_total_vat), $default_currency_symbol->symbol)
-                . '<br /><small>' . $vat_rate . '%</small></td>';
-
+                    . '<br /><small>' . $vat_rate . '%</small></td>';
+            }
             if ($discount_exist) {
                 $items_html .= '<td width="15%"
                     style="text-align: right;border: 0.2mm solid #ffffff; background-color: #F5F5F5; vertical-align: top;">
@@ -676,10 +708,13 @@ ie.item_order ASC",
                     ' . __('Qty', 'my-easy-compta') . '</td>
                 <td width="15%"
                     style="vertical-align: bottom; text-align: center; text-transform: uppercase; font-size: 7pt; font-weight: bold; background-color: #FFFFFF; color: #111111;border-bottom: 0.2mm solid ' . $global_color . '">
-                    ' . __('Unit price', 'my-easy-compta') . '</td>
-                <td width="15%"
+                    ' . __('Unit price', 'my-easy-compta') . '</td>';
+
+        if ($this->vat_active == 1) {
+            $html .= '<td width="15%"
                     style="vertical-align: bottom; text-align: center; text-transform: uppercase; font-size: 7pt; font-weight: bold; background-color: #FFFFFF; color: #111111;border-bottom: 0.2mm solid ' . $global_color . '">
                     ' . __('Vat', 'my-easy-compta') . '</td>';
+        }
         if ($discount_exist) {
             $html .= '<td width="15%"
                     style="vertical-align: bottom; text-align: center; text-transform: uppercase; font-size: 7pt; font-weight: bold; background-color: #FFFFFF; color: #111111;border-bottom: 0.2mm solid ' . $global_color . '">
@@ -703,10 +738,18 @@ ie.item_order ASC",
         if ($sub_total == $sub_total_discounted) {
             $html .= '<tr>';
 
-            if ($discount_exist) {
-                $html .= '<td colspan="3" style="background-color:#ffffff;"></td>';
+            if ($this->vat_active == 1) {
+                if ($discount_exist) {
+                    $html .= '<td colspan="3" style="background-color:#ffffff;"></td>';
+                } else {
+                    $html .= '<td colspan="2" style="background-color:#ffffff;"></td>';
+                }
             } else {
-                $html .= '<td colspan="2" style="background-color:#ffffff;"></td>';
+                if ($discount_exist) {
+                    $html .= '<td colspan="2" style="background-color:#ffffff;"></td>';
+                } else {
+                    $html .= '<td colspan="1" style="background-color:#ffffff;"></td>';
+                }
             }
             $html .= '<td colspan="2"
                     style="border: 0.2mm solid #ffffff; background-color: #F5F5F5;font-size: 8pt; color: #111111;">
@@ -718,10 +761,18 @@ ie.item_order ASC",
             </tr>';
         } else {
             $html .= ' <tr>';
-            if ($discount_exist) {
-                $html .= '<td colspan="3" style="background-color:#ffffff;"></td>';
+            if ($this->vat_active == 1) {
+                if ($discount_exist) {
+                    $html .= '<td colspan="3" style="background-color:#ffffff;"></td>';
+                } else {
+                    $html .= '<td colspan="2" style="background-color:#ffffff;"></td>';
+                }
             } else {
-                $html .= '<td colspan="2" style="background-color:#ffffff;"></td>';
+                if ($discount_exist) {
+                    $html .= '<td colspan="2" style="background-color:#ffffff;"></td>';
+                } else {
+                    $html .= '<td colspan="1" style="background-color:#ffffff;"></td>';
+                }
             }
             $html .= '<td colspan="2"
                     style="border: 0.2mm solid #ffffff; background-color: #F5F5F5;font-size: 8pt; color: #111111;">
@@ -752,13 +803,53 @@ ie.item_order ASC",
             </tr>';
             }
         }
+        if (isset($shipping_fees) && floatval($shipping_fees) > 0) {
+            $shipping_amount = floatval($shipping_fees);
+            $balance_due += $shipping_amount;
+        }
+
+        if (isset($shipping_fees) && floatval($shipping_fees) > 0) {
+            $html .= '<tr>';
+
+            if ($this->vat_active == 1) {
+                if ($discount_exist) {
+                    $html .= '<td colspan="3" style="background-color:#ffffff;"></td>';
+                } else {
+                    $html .= '<td colspan="2" style="background-color:#ffffff;"></td>';
+                }
+            } else {
+                if ($discount_exist) {
+                    $html .= '<td colspan="2" style="background-color:#ffffff;"></td>';
+                } else {
+                    $html .= '<td colspan="1" style="background-color:#ffffff;"></td>';
+                }
+            }
+
+            $html .= '<td colspan="2"
+                        style="border: 0.2mm solid #ffffff; background-color: #F5F5F5;font-size: 8pt; color: #111111;">
+                        <strong>' . __('Shipping fees', 'my-easy-compta') . '</strong></td>
+                    <td colspan="2"
+                        style="border: 0.2mm solid #ffffff; background-color: #F5F5F5;font-weight: bold; color: #111111; text-align: right;">
+                        ' . $this->positionCurrency($this->formatAmount($shipping_fees), $default_currency_symbol->symbol) . '
+                    </td>
+                </tr>';
+        }
         $html .= '<tr>';
 
-        if ($discount_exist) {
-            $html .= '<td colspan="3" style="background-color:#ffffff;"></td>';
+        if ($this->vat_active == 1) {
+            if ($discount_exist) {
+                $html .= '<td colspan="3" style="background-color:#ffffff;"></td>';
+            } else {
+                $html .= '<td colspan="2" style="background-color:#ffffff;"></td>';
+            }
         } else {
-            $html .= '<td colspan="2" style="background-color:#ffffff;"></td>';
+            if ($discount_exist) {
+                $html .= '<td colspan="2" style="background-color:#ffffff;"></td>';
+            } else {
+                $html .= '<td colspan="1" style="background-color:#ffffff;"></td>';
+            }
         }
+
         $html .= '<td colspan="2"
                     style="border: 0.2mm solid #ffffff; background-color: #F5F5F5;font-size: 8pt; color: #111111; background-color: ' . $global_color . '; color:#ffffff;">
                     <strong>' . __('Total', 'my-easy-compta') . '</strong></td>
@@ -814,20 +905,6 @@ ie.item_order ASC",
             $html .= '
     </div>';
         }
-        /* if ($invoice_status == 'paid') {
-        $html .= '<table>
-        <tr>
-        <td text-rotate="10"> <span style="
-        font-size: 3rem;
-        font-weight: 700;
-        display: inline-block;
-        text-transform: uppercase;
-        mix-blend-mode: multiply; color: #0A9928;">
-        Paid
-        </span></td>
-        </tr>
-        </table>';
-        } */
         $html .= '
 </body>
 

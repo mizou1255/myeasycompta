@@ -20,7 +20,18 @@
       :confirmText="translations.yes_confirm_it"
       :cancelText="translations.cancel"
       :status="selectedStatus"
-      @confirm="this.changeInvoiceStatus(selectedStatus)"
+      @confirm="changeInvoiceStatus('unpaid')"
+      @cancel="showConfirmModal = false"
+    />
+
+    <confirm-modal-paid
+      :show-modal="showConfirmModal"
+      :title="translations.are_you_sure"
+      :message="translations.no_turning_back"
+      :confirmText="translations.yes_confirm_it"
+      :cancelText="translations.cancel"
+      :status="selectedStatus"
+      @confirm="changeInvoiceStatusWithPaymentMethod"
       @cancel="showConfirmModal = false"
     />
 
@@ -33,6 +44,31 @@
       @confirm="this.addCreditInvoice()"
       @cancel="showConfirmCreditModal = false"
     />
+    <div v-if="qrCodeActive == 1 && showQrCodeModal" class="modal modal-open">
+      <div class="modal-box">
+        <h3 class="font-bold text-lg">{{ translations.download_qr_code }}</h3>
+        <button
+          class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+          @click="closeQrCodeModal()"
+        >
+          ✕
+        </button>
+
+        <div class="mb-4">
+          <img
+            :src="qrCodeSrc"
+            alt="QR Code"
+            class="max-w-full h-auto mx-auto"
+          />
+        </div>
+
+        <div class="flex justify-end space-x-4">
+          <button @click="downloadQRCode" class="btn btn-primary">
+            {{ translations.download_qr_code }}
+          </button>
+        </div>
+      </div>
+    </div>
     <div
       v-if="loading"
       class="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-gray-900 bg-opacity-50 z-50"
@@ -201,6 +237,40 @@
           </button>
         </div>
 
+        <div v-if="qrCodeActive == 1">
+          <button
+            v-if="invoiceInfo.status == 'unpaid'"
+            class="btn btn-outline btn-accent btn-sm"
+            @click="generateQRCode"
+          >
+            <i class="fas fa-qrcode"></i> {{ translations.generate_qrcode }}
+          </button>
+          <button
+            v-else
+            click="#"
+            class="btn btn-outline btn-primary btn-sm hover:text-white"
+            disabled
+          >
+            <i class="fas fa-qrcode"></i>
+            {{ translations.generate_qrcode }}
+          </button>
+        </div>
+
+        <div
+          v-else
+          class="tooltip tooltip-bottom tooltip-warning"
+          :data-tip="translations.active_qrcode_addon"
+        >
+          <button
+            click="#"
+            class="btn btn-outline btn-primary btn-sm hover:text-white"
+            disabled
+          >
+            <i class="fas fa-qrcode"></i>
+            {{ translations.generate_qrcode }}
+          </button>
+        </div>
+
         <div v-if="currencyDefault.currency_id !== currencyClient.currency_id">
           <div
             class="dropdown dropdown-end"
@@ -291,6 +361,7 @@
 <script>
 import SendInvoiceModal from "@/components/invoices/Send.vue";
 import ConfirmModal from "@/components/ConfirmAlert.vue";
+import ConfirmModalPaid from "@/components/ConfirmAlertPaid.vue";
 import ConfirmModalCredit from "@/components/ConfirmAlertCredit.vue";
 import RemoveModal from "@/components/RemoveAlert.vue";
 export default {
@@ -299,6 +370,7 @@ export default {
     SendInvoiceModal,
     RemoveModal,
     ConfirmModal,
+    ConfirmModalPaid,
     ConfirmModalCredit,
   },
   props: {
@@ -306,6 +378,8 @@ export default {
     currencyDefault: Object,
     currencyClient: Object,
     emailActive: String,
+    qrCodeActive: String,
+    totalAmount: String,
     noItems: Boolean,
   },
   data() {
@@ -320,6 +394,8 @@ export default {
       selectedStatus: null,
       subject: "",
       content: "",
+      showQrCodeModal: false,
+      qrCodeSrc: "",
     };
   },
   computed: {
@@ -328,6 +404,11 @@ export default {
     },
   },
   methods: {
+    changeInvoiceStatusWithPaymentMethod(selectedPaymentMethod) {
+      const status = this.selectedStatus;
+      this.changeInvoiceStatus(status, selectedPaymentMethod);
+      this.showConfirmModal = false;
+    },
     async changeInvoiceStatus(newStatus, methodPayment) {
       this.loading = true;
       try {
@@ -483,12 +564,70 @@ export default {
     },
     confirmValidateInvoice(status) {
       this.selectedStatus = status;
-      modal_confirm.showModal();
+      if (status == "unpaid") {
+        modal_confirm.showModal();
+      } else if (status == "paid") {
+        modal_confirm_paid.showModal();
+      }
+
       this.showConfirmModal = true;
     },
     confirmCreditInvoice() {
       modal_confirm_credit.showModal();
       this.showConfirmCreditModal = true;
+    },
+
+    async generateQRCode() {
+      this.loading = true;
+      try {
+        const response = await fetch(
+          "/wp-json/my-easy-compta/v1/generate-qrcode",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-WP-Nonce": myEasyComptaAdmin.nonce,
+            },
+            body: JSON.stringify({
+              invoice_ref:
+                this.invoiceInfo.invoice_number ||
+                `Facture #${this.invoiceInfo.number}`,
+              price: parseFloat(this.invoiceInfo.total_amount),
+            }),
+          }
+        );
+
+        const data = await response.json();
+
+        if (response.ok && data.qr_code) {
+          this.qrCodeSrc = data.qr_code;
+          this.showQrCodeModal = true;
+        } else {
+          console.error(
+            "Erreur lors de la génération du QR Code :",
+            data.message
+          );
+        }
+      } catch (error) {
+        console.error(
+          "Erreur lors de l'appel à l'API pour générer le QR code :",
+          error
+        );
+      } finally {
+        this.loading = false;
+      }
+    },
+    closeQrCodeModal() {
+      this.showQrCodeModal = false;
+    },
+
+    downloadQRCode() {
+      const link = document.createElement("a");
+      link.href = this.qrCodeSrc;
+      link.download = `qr_code_${
+        this.invoiceInfo.invoice_number || this.invoiceInfo.number
+      }.png`;
+      link.click();
     },
   },
 };

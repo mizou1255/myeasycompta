@@ -441,6 +441,8 @@ class ECWP_APP
             );
         }
 
+        do_action_ref_array('externe_article_results', [ &$results, $search]);
+
         return new \WP_REST_Response($results, 200);
     }
 
