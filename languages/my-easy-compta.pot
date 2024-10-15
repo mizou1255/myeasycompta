@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: myEasyCompta\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-10-13 11:01+0000\n"
+"POT-Creation-Date: 2024-10-15 11:10+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -393,7 +393,7 @@ msgstr ""
 msgid "Database error when inserting attachment:"
 msgstr ""
 
-#: my-easy-compta.php:276
+#: my-easy-compta.php:277
 msgid "Database migration completed successfully."
 msgstr ""
 
@@ -566,19 +566,23 @@ msgstr ""
 msgid "Exchange rate"
 msgstr ""
 
+#: includes/Modules/Expenses.php:262
+msgid "Expense added successfully"
+msgstr ""
+
 #: languages/my-easy-compta-translations.php:118
 msgid "Expense date"
 msgstr ""
 
-#: includes/Modules/Expenses.php:342
+#: includes/Modules/Expenses.php:340
 msgid "Expense deleted successfully"
 msgstr ""
 
-#: includes/Modules/Expenses.php:326
+#: includes/Modules/Expenses.php:324
 msgid "Expense edited successfully"
 msgstr ""
 
-#: includes/Modules/Expenses.php:284
+#: includes/Modules/Expenses.php:282
 msgid "Expense not found."
 msgstr ""
 
@@ -646,7 +650,7 @@ msgstr ""
 msgid "Failed to delete client"
 msgstr ""
 
-#: includes/Modules/Expenses.php:344
+#: includes/Modules/Expenses.php:342
 msgid "Failed to delete expense"
 msgstr ""
 
@@ -662,7 +666,7 @@ msgstr ""
 msgid "Failed to edit client"
 msgstr ""
 
-#: includes/Modules/Expenses.php:324
+#: includes/Modules/Expenses.php:322
 msgid "Failed to edit expense"
 msgstr ""
 
@@ -792,7 +796,7 @@ msgid ""
 "sales, and handle customer invoicing seamlessly."
 msgstr ""
 
-#: includes/Modules/Expenses.php:274
+#: includes/Modules/Expenses.php:272
 msgid "Invalid expense ID."
 msgstr ""
 
@@ -813,8 +817,8 @@ msgid "Invalid item ID."
 msgstr ""
 
 #: includes/Modules/Clients.php:321 includes/Modules/Credits.php:132
-#: includes/Modules/Credits.php:178 includes/Modules/Expenses.php:153
-#: includes/Modules/Expenses.php:334 includes/Modules/Invoices.php:212
+#: includes/Modules/Credits.php:178 includes/Modules/Expenses.php:151
+#: includes/Modules/Expenses.php:332 includes/Modules/Invoices.php:212
 #: includes/Modules/Invoices.php:286 includes/Modules/Invoices.php:428
 #: includes/Modules/Quotes.php:196 includes/Modules/Quotes.php:253
 #: includes/Modules/Quotes.php:404 includes/Modules/Quotes.php:495
@@ -955,7 +959,7 @@ msgstr ""
 msgid "License Addons"
 msgstr ""
 
-#: includes/Modules/Settings.php:1052
+#: includes/Modules/Settings.php:1096
 msgid "License data deleted successfully."
 msgstr ""
 
@@ -1082,7 +1086,7 @@ msgstr ""
 msgid "myEasyCompta Planning"
 msgstr ""
 
-#: my-easy-compta.php:341
+#: my-easy-compta.php:342
 msgid "myEasyCompta requires a database update."
 msgstr ""
 
@@ -1271,11 +1275,11 @@ msgstr ""
 msgid "Planning settings"
 msgstr ""
 
-#: my-easy-compta.php:259
+#: my-easy-compta.php:260
 msgid "Plugin activation error"
 msgstr ""
 
-#: my-easy-compta.php:362
+#: my-easy-compta.php:364
 msgid "Plugin deactivation error"
 msgstr ""
 
@@ -1508,7 +1512,7 @@ msgstr ""
 msgid "Settings"
 msgstr ""
 
-#: includes/Modules/Settings.php:279
+#: includes/Modules/Settings.php:282
 msgid "Settings saved successfully"
 msgstr ""
 
@@ -1665,7 +1669,7 @@ msgid "Text Color"
 msgstr ""
 
 #. %s is the minimum PHP version required
-#: my-easy-compta.php:253
+#: my-easy-compta.php:254
 #, php-format
 msgid ""
 "The <strong>myEasyCompta</strong> plugin requires PHP version %s or higher."
@@ -1763,7 +1767,7 @@ msgstr ""
 msgid "Update available! New version"
 msgstr ""
 
-#: my-easy-compta.php:344
+#: my-easy-compta.php:345
 msgid "Update Database"
 msgstr ""
 
@@ -1815,7 +1819,7 @@ msgstr ""
 msgid "Yes, delete it!"
 msgstr ""
 
-#: my-easy-compta.php:361
+#: my-easy-compta.php:363
 msgid ""
 "You cannot deactivate the myEasyCompta plugin while add-ons are enabled."
 msgstr ""

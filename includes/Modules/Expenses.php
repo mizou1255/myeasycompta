@@ -101,13 +101,11 @@ class ECWP_Expenses
             if (isset($result->expense_date)) {
                 $result->expense_date = date_i18n($format_date, strtotime($result->expense_date));
             }
-
             if (!empty($result->filename)) {
-                $result->attachment_url = ECWP_UPLOADS_URL . '/' . $result->filename;
+                $result->attachment_url = site_url() . '/wp-content/uploads/ecwp_expenses/download.php?file=' . urlencode($result->filename);
             } else {
                 $result->attachment_url = null;
             }
-
         }
 
         $response = array(
@@ -153,6 +151,8 @@ class ECWP_Expenses
             return new WP_Error('rest_nonce_invalid', __('Invalid nonce', 'my-easy-compta'), array('status' => 403));
         }
 
+        $this->maybe_create_custom_files();
+
         $amount = floatval($request->get_param('amount'));
         $expense_date_raw = sanitize_text_field($request->get_param('expense_date'));
         $client_id = absint($request->get_param('client_id'));
@@ -161,7 +161,7 @@ class ECWP_Expenses
         $file_params = $request->get_file_params();
         $attachment = isset($file_params['attachment']) ? $file_params['attachment'] : null;
 
-        if (empty($amount) || empty($expense_date_raw) || empty($category_id)) {
+        if (empty($amount) || empty($expense_date_raw)) {
             return new WP_Error('missing_data', 'Données manquantes', array('status' => 400));
         }
 
@@ -176,7 +176,7 @@ class ECWP_Expenses
             WP_Filesystem();
             global $wp_filesystem;
 
-            $upload_dir = trailingslashit(WP_PLUGIN_DIR . '/my-easy-compta/uploads');
+            $upload_dir = trailingslashit(WP_CONTENT_DIR . '/uploads');
 
             if (!$wp_filesystem->is_dir($upload_dir)) {
                 $wp_filesystem->mkdir($upload_dir, 0755);
@@ -259,9 +259,7 @@ class ECWP_Expenses
             return new WP_Error('db_error', 'Error database: ' . $wpdb->last_error, array('status' => 500));
         }
 
-        $response_data = array_merge(array('id' => $expense_id), $expense_data);
-
-        return rest_ensure_response($response_data);
+        return new WP_REST_Response(array('success' => true, 'message' => __('Expense added successfully', 'my-easy-compta')), 200);
     }
 
     public function get_expense_details(WP_REST_Request $request)
@@ -347,14 +345,62 @@ class ECWP_Expenses
 
     public function set_custom_upload_dir($uploads)
     {
-        $custom_dir = 'uploads';
-        $uploads['path'] = ECWP_PATH . '/' . $custom_dir;
-        $uploads['url'] = ECWP_URL . '/' . $custom_dir;
+        $custom_dir = 'ecwp_expenses';
+        $upload_base = WP_CONTENT_DIR . '/uploads/' . $custom_dir;
+
+        $uploads['path'] = $upload_base;
+        $uploads['url'] = site_url() . '/wp-content/uploads/' . $custom_dir;
         $uploads['subdir'] = '';
-        $uploads['basedir'] = ECWP_PATH . '/' . $custom_dir;
-        $uploads['baseurl'] = ECWP_URL . '/' . $custom_dir;
+        $uploads['basedir'] = $upload_base;
+        $uploads['baseurl'] = site_url() . '/wp-content/uploads/' . $custom_dir;
 
         return $uploads;
+    }
+
+    public function maybe_create_custom_files()
+    {
+        $custom_dir = 'ecwp_expenses';
+        $upload_base = WP_CONTENT_DIR . '/uploads/' . $custom_dir;
+
+        if (!file_exists($upload_base)) {
+            mkdir($upload_base, 0755, true);
+        }
+        $htaccess_file = $upload_base . '/.htaccess';
+        if (!file_exists($htaccess_file)) {
+            $htaccess_content = "Order Allow,Deny\nDeny from all\n<FilesMatch '\.php$'>\n    Order Deny,Allow\n    Allow from all\n</FilesMatch>";
+            file_put_contents($htaccess_file, $htaccess_content);
+        }
+
+        $download_file = $upload_base . '/download.php';
+        if (!file_exists($download_file)) {
+            $download_php_content = "<?php
+            require_once( \$_SERVER['DOCUMENT_ROOT'] . '/wp-load.php' );
+
+            if (!is_user_logged_in()) {
+                wp_die('You do not have permission to access this file.');
+            }
+
+            \$file = isset(\$_GET['file']) ? sanitize_text_field(\$_GET['file']) : '';
+            \$file_path = WP_CONTENT_DIR . '/uploads/{$custom_dir}/' . basename(\$file);
+
+            if (file_exists(\$file_path)) {
+                header('Content-Description: File Transfer');
+                header('Content-Type: application/octet-stream');
+                header('Content-Disposition: attachment; filename=' . basename(\$file_path));
+                header('Expires: 0');
+                header('Cache-Control: must-revalidate');
+                header('Pragma: public');
+                header('Content-Length: ' . filesize(\$file_path));
+
+                readfile(\$file_path);
+                exit;
+            } else {
+                wp_die('File not found.');
+            }
+            ?>";
+            file_put_contents($download_file, $download_php_content);
+        }
+
     }
 
 }

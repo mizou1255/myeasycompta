@@ -1,5 +1,14 @@
 <template>
   <div>
+    <div
+      v-if="toast.visible"
+      :class="['toast', toast.position]"
+      :style="{ zIndex: 9999 }"
+    >
+      <div :class="['alert', toast.type, 'text-white']">
+        <span>{{ toast.message }}</span>
+      </div>
+    </div>
     <dialog id="modal_expenses" class="modal">
       <div class="modal-box">
         <h3 class="font-bold text-lg">{{ translations.add }}</h3>
@@ -158,6 +167,13 @@ export default {
         amount: { label: translations.amount },
         category_id: { label: translations.category },
       },
+
+      toast: {
+        visible: false,
+        message: "",
+        type: "alert-success",
+        position: "toast-bottom toast-end",
+      },
     };
   },
   computed: {
@@ -192,9 +208,14 @@ export default {
           const clients = await responseClients.json();
           this.options.clients = clients;
         } else {
+          this.showToast(
+            "Erreur lors de la récupération des catégories",
+            "alert-error"
+          );
           console.error("Erreur lors de la récupération des catégories");
         }
       } catch (error) {
+        this.showToast(error, "alert-error");
         console.error("Erreur lors de la récupération des options:", error);
       }
     },
@@ -219,20 +240,34 @@ export default {
           },
         });
 
+        const data = await response.json();
         if (response.ok) {
-          const data = await response.json();
           this.loadingBtn = false;
           this.$emit("expenseAdded");
+          this.showToast(data.message, "alert-success");
           this.resetForm();
           this.closeModal();
         } else {
+          this.showToast(
+            data.message || "Erreur lors de l'ajout de la dépense",
+            "alert-error"
+          );
           console.error("Erreur lors de l'ajout de la dépense");
           this.loadingBtn = false;
         }
       } catch (error) {
+        this.showToast(error, "alert-error");
         console.error("Erreur lors de l'ajout de la dépense:", error);
         this.loadingBtn = false;
       }
+    },
+    showToast(message, type) {
+      this.toast.message = message;
+      this.toast.type = type;
+      this.toast.visible = true;
+      setTimeout(() => {
+        this.toast.visible = false;
+      }, 3000);
     },
     closeModal() {
       const modal = document.getElementById("modal_expenses");

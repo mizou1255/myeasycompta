@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: myEasyCompta\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2024-05-28 11:22+0000\n"
-"PO-Revision-Date: 2024-10-13 11:04+0000\n"
+"PO-Revision-Date: 2024-10-15 11:10+0000\n"
 "Last-Translator: \n"
 "Language-Team: Français\n"
 "MIME-Version: 1.0\n"
@@ -12,7 +12,7 @@ msgstr ""
 "Language: fr_FR\n"
 "Plural-Forms: nplurals=2; plural=n > 1;\n"
 "X-Generator: Loco https://localise.biz/\n"
-"X-Loco-Version: 2.6.11; wp-6.6.1"
+"X-Loco-Version: 2.6.11; wp-6.6.2"
 
 #: languages/my-easy-compta-translations.php:264
 msgid "Account"
@@ -398,7 +398,7 @@ msgstr "Paramètres de données créés avec succès"
 msgid "Database error when inserting attachment:"
 msgstr "Erreur de base de données lors de l'insertion d'une pièce jointe :"
 
-#: my-easy-compta.php:276
+#: my-easy-compta.php:277
 msgid "Database migration completed successfully."
 msgstr "La migration de la base de données a bien été effectuée."
 
@@ -575,19 +575,23 @@ msgstr "Titre de l'événement"
 msgid "Exchange rate"
 msgstr "Taux de change"
 
+#: includes/Modules/Expenses.php:262
+msgid "Expense added successfully"
+msgstr "Dépense ajoutée avec succès"
+
 #: languages/my-easy-compta-translations.php:118
 msgid "Expense date"
 msgstr "Date de la dépense"
 
-#: includes/Modules/Expenses.php:342
+#: includes/Modules/Expenses.php:340
 msgid "Expense deleted successfully"
 msgstr "Dépense supprimée avec succès"
 
-#: includes/Modules/Expenses.php:326
+#: includes/Modules/Expenses.php:324
 msgid "Expense edited successfully"
 msgstr "Dépense éditée avec succès"
 
-#: includes/Modules/Expenses.php:284
+#: includes/Modules/Expenses.php:282
 msgid "Expense not found."
 msgstr "Dépense introuvable."
 
@@ -658,7 +662,7 @@ msgstr "Échec de la création de la facture"
 msgid "Failed to delete client"
 msgstr "Échec de la suppression du client"
 
-#: includes/Modules/Expenses.php:344
+#: includes/Modules/Expenses.php:342
 msgid "Failed to delete expense"
 msgstr "Échec de la suppression de la dépense"
 
@@ -674,7 +678,7 @@ msgstr "Échec de la suppression du paiement"
 msgid "Failed to edit client"
 msgstr "Échec de l'édition du client"
 
-#: includes/Modules/Expenses.php:324
+#: includes/Modules/Expenses.php:322
 msgid "Failed to edit expense"
 msgstr "Échec de l'édition de la dépense"
 
@@ -815,7 +819,7 @@ msgstr ""
 "WooCommerce, gérez les transactions, suivez les ventes et gérez la "
 "facturation des clients sans interruption."
 
-#: includes/Modules/Expenses.php:274
+#: includes/Modules/Expenses.php:272
 msgid "Invalid expense ID."
 msgstr "ID de dépense non valide."
 
@@ -836,8 +840,8 @@ msgid "Invalid item ID."
 msgstr "ID de l'article invalide."
 
 #: includes/Modules/Clients.php:321 includes/Modules/Credits.php:132
-#: includes/Modules/Credits.php:178 includes/Modules/Expenses.php:153
-#: includes/Modules/Expenses.php:334 includes/Modules/Invoices.php:212
+#: includes/Modules/Credits.php:178 includes/Modules/Expenses.php:151
+#: includes/Modules/Expenses.php:332 includes/Modules/Invoices.php:212
 #: includes/Modules/Invoices.php:286 includes/Modules/Invoices.php:428
 #: includes/Modules/Quotes.php:196 includes/Modules/Quotes.php:253
 #: includes/Modules/Quotes.php:404 includes/Modules/Quotes.php:495
@@ -978,7 +982,7 @@ msgstr "Allons-y"
 msgid "License Addons"
 msgstr "Licence Addons"
 
-#: includes/Modules/Settings.php:1052
+#: includes/Modules/Settings.php:1096
 msgid "License data deleted successfully."
 msgstr "Les données de licence ont été supprimées avec succès."
 
@@ -1028,7 +1032,7 @@ msgstr "Mai"
 
 #. Author of the plugin
 msgid "MELIOZ.dev"
-msgstr ""
+msgstr "MELIOZ.dev"
 
 #: languages/my-easy-compta-translations.php:34 includes/Modules/Setup.php:197
 msgid "Mobile"
@@ -1115,7 +1119,7 @@ msgstr ""
 msgid "myEasyCompta Planning"
 msgstr "myEasyCompta Planning"
 
-#: my-easy-compta.php:341
+#: my-easy-compta.php:342
 msgid "myEasyCompta requires a database update."
 msgstr "myEasyCompta nécessite une mise à jour de la base de données."
 
@@ -1311,11 +1315,11 @@ msgstr "Téléphone"
 msgid "Planning settings"
 msgstr "Paramètres du planning"
 
-#: my-easy-compta.php:259
+#: my-easy-compta.php:260
 msgid "Plugin activation error"
 msgstr "Erreur d'activation du plugin"
 
-#: my-easy-compta.php:362
+#: my-easy-compta.php:364
 msgid "Plugin deactivation error"
 msgstr "Erreur de désactivation du plugin"
 
@@ -1548,7 +1552,7 @@ msgstr "Septembre"
 msgid "Settings"
 msgstr "Paramètres"
 
-#: includes/Modules/Settings.php:279
+#: includes/Modules/Settings.php:282
 msgid "Settings saved successfully"
 msgstr "Les paramètres ont été sauvegardés avec succès"
 
@@ -1710,7 +1714,7 @@ msgid "Text Color"
 msgstr "Couleur du texte"
 
 #. %s is the minimum PHP version required
-#: my-easy-compta.php:253
+#: my-easy-compta.php:254
 #, php-format
 msgid ""
 "The <strong>myEasyCompta</strong> plugin requires PHP version %s or higher."
@@ -1822,7 +1826,7 @@ msgstr "Mise à jour"
 msgid "Update available! New version"
 msgstr "Mise à jour disponible ! Nouvelle version"
 
-#: my-easy-compta.php:344
+#: my-easy-compta.php:345
 msgid "Update Database"
 msgstr "Mettre à jour la base de données"
 
@@ -1874,7 +1878,7 @@ msgstr "Oui, confirmez !"
 msgid "Yes, delete it!"
 msgstr "Oui, supprimez !"
 
-#: my-easy-compta.php:361
+#: my-easy-compta.php:363
 msgid ""
 "You cannot deactivate the myEasyCompta plugin while add-ons are enabled."
 msgstr ""
