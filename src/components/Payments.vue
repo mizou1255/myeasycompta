@@ -69,19 +69,75 @@
         </select>
       </div>
       <div class="overflow-x-auto">
-        <table v-if="!loading" class="table w-full">
+        <table class="table w-full">
           <thead>
             <tr>
-              <th>{{ translations.invoice_number }}</th>
-              <th>{{ translations.client }}</th>
-              <th>{{ translations.payment_date }}</th>
-              <th>{{ translations.amount }}</th>
-              <th>{{ translations.payment_method }}</th>
-              <th>{{ translations.note }}</th>
+              <th>
+                <div>{{ translations.invoice_number }}</div>
+                <input
+                  v-model="filters.invoice_number"
+                  @input="fetchPaymentsWithFilters()"
+                  type="text"
+                  class="ecwp-input input-xs input-bordered mt-2"
+                />
+              </th>
+              <th>
+                <div>{{ translations.client }}</div>
+                <select
+                  v-model="filters.client"
+                  @change="fetchPaymentsWithFilters()"
+                  class="ecwp-input input-xs input-bordered mt-2"
+                >
+                  <option value="">{{ translations.all }}</option>
+                  <option
+                    v-for="client in clients"
+                    :key="client.id"
+                    :value="client.company_name"
+                  >
+                    {{ client.company_name }}
+                  </option>
+                </select>
+              </th>
+              <th>
+                <div>{{ translations.payment_date }}</div>
+                <input
+                  v-model="filters.payment_date"
+                  @input="fetchPaymentsWithFilters()"
+                  type="date"
+                  class="ecwp-input input-xs input-bordered mt-2"
+                />
+              </th>
+              <th>
+                <div>{{ translations.amount }}</div>
+                <input
+                  v-model="filters.total_amount"
+                  @input="fetchPaymentsWithFilters()"
+                  type="text"
+                  class="ecwp-input input-xs input-bordered mt-2"
+                />
+              </th>
+              <th>
+                <div>{{ translations.payment_method }}</div>
+                <select
+                  v-model="filters.payment_method"
+                  @change="fetchPaymentsWithFilters()"
+                  class="ecwp-input input-xs input-bordered mt-2"
+                >
+                  <option value="">{{ translations.all }}</option>
+                  <option
+                    v-for="method in payments_methods"
+                    :key="method.id"
+                    :value="method.method_name"
+                  >
+                    {{ method.method_name }}
+                  </option>
+                </select>
+              </th>
+              <th class="align-top">{{ translations.note }}</th>
               <th class="flex justify-center">{{ translations.actions }}</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody v-if="!loading">
             <tr v-for="payment in payments" :key="payment.id">
               <td>{{ payment.invoice_number }}</td>
               <td>{{ payment.company_name }}</td>
@@ -97,7 +153,7 @@
                 </div>
               </td>
 
-              <td>{{ payment.method_name }}</td>
+              <td>{{ payment.payment_method }}</td>
               <td>{{ payment.notes }}</td>
               <td class="flex justify-end">
                 <span class="lg:tooltip" :data-tip="translations.edit">
@@ -119,7 +175,7 @@
             </tr>
           </tbody>
         </table>
-        <div v-else>
+        <div v-if="loading">
           <!-- Skeleton loader -->
           <div
             v-for="n in skeletonRows"
@@ -178,6 +234,16 @@ export default {
   data() {
     return {
       payments: [],
+      filteredPayments: [],
+      filters: {
+        invoice_number: "",
+        client: "",
+        payment_date: "",
+        total_amount: "",
+        payment_methods: "",
+      },
+      clients: [],
+      payments_methods: [],
       paymentMethods: [],
       paymentForm: {
         invoice_id: "",
@@ -209,7 +275,9 @@ export default {
     };
   },
   created() {
-    this.fetchPayments();
+    this.fetchPaymentsWithFilters();
+    this.fetchClients();
+    this.fetchPaymentMethods();
     this.loadSettings();
   },
   methods: {
@@ -240,6 +308,64 @@ export default {
           this.loading = false;
         });
     },
+    fetchPaymentsWithFilters(page = 1) {
+      this.loading = true;
+      const { perPage, filters } = this;
+      const query = new URLSearchParams({
+        page,
+        per_page: perPage,
+        ...filters,
+      }).toString();
+
+      fetch(`/wp-json/my-easy-compta/v1/payments?${query}`, {
+        headers: {
+          "X-WP-Nonce": myEasyComptaAdmin.nonce,
+        },
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          this.payments = data.payments;
+          this.totalCount = data.total_count;
+          this.totalPages = data.total_pages;
+          this.currentPage = page;
+          this.perPage = perPage;
+          this.generatePaginationButtons();
+        })
+        .catch((error) => {
+          console.error("Error fetching payments with filters:", error);
+        })
+        .finally(() => {
+          this.loading = false;
+        });
+    },
+    fetchClients() {
+      fetch(`/wp-json/my-easy-compta/v1/clients`, {
+        headers: {
+          "X-WP-Nonce": myEasyComptaAdmin.nonce,
+        },
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          this.clients = data.clients;
+        })
+        .catch((error) => {
+          console.error("Error fetching clients:", error);
+        });
+    },
+    fetchPaymentMethods() {
+      fetch(`/wp-json/my-easy-compta/v1/payments/methods`, {
+        headers: {
+          "X-WP-Nonce": myEasyComptaAdmin.nonce,
+        },
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          this.payments_methods = data;
+        })
+        .catch((error) => {
+          console.error("Error fetching payment Methods:", error);
+        });
+    },
     editPayment(payment) {
       this.loadingModal = true;
       this.editPaymentModal = true;
@@ -256,7 +382,6 @@ export default {
         .then((data) => {
           this.selectedPayment = data;
           this.paymentMethods = data.payment_methods;
-          console.log(this.paymentMethods);
           this.loadingModal = false;
         })
         .catch((error) => {
@@ -274,10 +399,10 @@ export default {
       if (pageNumber === "...") {
         return;
       }
-      this.fetchPayments(pageNumber);
+      this.fetchPaymentsWithFilters(pageNumber);
     },
     perPageChanged() {
-      this.fetchPayments();
+      this.fetchPaymentsWithFilters();
     },
     formatAmount(amount, currency) {
       return formatAmount(amount, currency, this.settings.currency_position);

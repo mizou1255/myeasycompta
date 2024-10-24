@@ -996,6 +996,10 @@ class ECWP_Settings
 
         $license_data = $this->get_validate_license($license_key);
 
+        if (!function_exists('get_plugins')) {
+            require_once ABSPATH . 'wp-admin/includes/plugin.php';
+        }
+
         $installed_plugins = get_plugins();
         $installed_versions = array();
 

@@ -104,10 +104,38 @@ class ECWP_Clients
         $per_page = isset($request['per_page']) ? intval($request['per_page']) : 10;
         $page = isset($request['page']) ? intval($request['page']) : 1;
         $offset = ($page - 1) * $per_page;
-        $total_count = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM %i", ECWP_TABLE_CLIENTS));
+
+        $where_clauses = [];
+        $query_params = [];
+
+        if (!empty($request['company_name'])) {
+            $where_clauses[] = 'company_name LIKE %s';
+            $query_params[] = '%' . $wpdb->esc_like($request['company_name']) . '%';
+        }
+        if (!empty($request['manager_name'])) {
+            $where_clauses[] = 'manager_name LIKE %s';
+            $query_params[] = '%' . $wpdb->esc_like($request['manager_name']) . '%';
+        }
+        if (!empty($request['email'])) {
+            $where_clauses[] = 'email LIKE %s';
+            $query_params[] = '%' . $wpdb->esc_like($request['email']) . '%';
+        }
+        if (!empty($request['phone'])) {
+            $where_clauses[] = 'phone LIKE %s';
+            $query_params[] = '%' . $wpdb->esc_like($request['phone']) . '%';
+        }
+
+        $where_sql = '';
+        if (!empty($where_clauses)) {
+            $where_sql = 'WHERE ' . implode(' AND ', $where_clauses);
+        }
+
+        $total_count = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM %i $where_sql", ECWP_TABLE_CLIENTS, ...$query_params));
+        $query_params[] = $per_page;
+        $query_params[] = $offset;
+
         $results = $wpdb->get_results(
-            $wpdb->prepare("SELECT * FROM %i ORDER BY company_name ASC  LIMIT %d OFFSET %d", ECWP_TABLE_CLIENTS,
-                $per_page, $offset),
+            $wpdb->prepare("SELECT * FROM %i $where_sql ORDER BY company_name ASC LIMIT %d OFFSET %d", ECWP_TABLE_CLIENTS, ...$query_params),
             OBJECT
         );
 

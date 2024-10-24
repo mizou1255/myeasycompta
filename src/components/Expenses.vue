@@ -81,19 +81,67 @@
         </select>
       </div>
       <div class="overflow-x-auto">
-        <table v-if="!loading" class="table w-full">
+        <table class="table w-full">
           <thead>
             <tr>
-              <th>{{ translations.expense_date }}</th>
-              <th>{{ translations.amount }}</th>
-              <th>{{ translations.client }}</th>
-              <th>{{ translations.category }}</th>
-              <th>{{ translations.attachment }}</th>
-              <th>{{ translations.note }}</th>
+              <th>
+                <div>{{ translations.expense_date }}</div>
+                <input
+                  v-model="filters.expense_date"
+                  @input="fetchExpensesWithFilters()"
+                  type="date"
+                  class="ecwp-input input-xs input-bordered mt-2"
+                />
+              </th>
+              <th>
+                <div>{{ translations.amount }}</div>
+                <input
+                  v-model="filters.total_amount"
+                  @input="fetchExpensesWithFilters()"
+                  type="text"
+                  class="ecwp-input input-xs input-bordered mt-2"
+                />
+              </th>
+              <th>
+                <div>{{ translations.client }}</div>
+                <select
+                  v-model="filters.client"
+                  @change="fetchExpensesWithFilters()"
+                  class="ecwp-input input-xs input-bordered mt-2"
+                >
+                  <option value="">{{ translations.all }}</option>
+                  <option
+                    v-for="client in clients"
+                    :key="client.id"
+                    :value="client.company_name"
+                  >
+                    {{ client.company_name }}
+                  </option>
+                </select>
+              </th>
+              <th>
+                <div>{{ translations.category }}</div>
+                <select
+                  v-model="filters.category"
+                  @change="fetchExpensesWithFilters()"
+                  class="ecwp-input input-xs input-bordered mt-2"
+                >
+                  <option value="">{{ translations.all }}</option>
+                  <option
+                    v-for="category in categories_expenses"
+                    :key="category.id"
+                    :value="category.name"
+                  >
+                    {{ category.name }}
+                  </option>
+                </select>
+              </th>
+              <th class="align-top">{{ translations.attachment }}</th>
+              <th class="align-top">{{ translations.note }}</th>
               <th class="flex justify-center">{{ translations.actions }}</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody v-if="!loading">
             <tr v-for="expense in expenses" :key="expense.id">
               <td>{{ expense.expense_date }}</td>
               <td>
@@ -146,7 +194,7 @@
             </tr>
           </tbody>
         </table>
-        <div v-else>
+        <div v-if="loading">
           <!-- Skeleton loader -->
           <div
             v-for="n in skeletonRows"
@@ -207,6 +255,14 @@ export default {
   data() {
     return {
       expenses: [],
+      filteredExpenses: [],
+      filters: {
+        client: "",
+        expense_date: "",
+        total_amount: "",
+        category: "",
+      },
+      categories_expenses: [],
       categoriesExpenses: [],
       listClients: [],
       clientOptions: [],
@@ -232,7 +288,9 @@ export default {
     };
   },
   created() {
-    this.fetchExpenses();
+    this.fetchExpensesWithFilters();
+    this.fetchClients();
+    this.fetchCategoriesExpenses();
     this.loadSettings();
   },
   methods: {
@@ -269,6 +327,64 @@ export default {
           this.loading = false;
         });
     },
+    fetchExpensesWithFilters(page = 1) {
+      this.loading = true;
+      const { perPage, filters } = this;
+      const query = new URLSearchParams({
+        page,
+        per_page: perPage,
+        ...filters,
+      }).toString();
+
+      fetch(`/wp-json/my-easy-compta/v1/expenses?${query}`, {
+        headers: {
+          "X-WP-Nonce": myEasyComptaAdmin.nonce,
+        },
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          this.expenses = data.expenses;
+          this.totalCount = data.total_count;
+          this.totalPages = data.total_pages;
+          this.currentPage = page;
+          this.perPage = perPage;
+          this.generatePaginationButtons();
+        })
+        .catch((error) => {
+          console.error("Error fetching expenses with filters:", error);
+        })
+        .finally(() => {
+          this.loading = false;
+        });
+    },
+    fetchClients() {
+      fetch(`/wp-json/my-easy-compta/v1/clients`, {
+        headers: {
+          "X-WP-Nonce": myEasyComptaAdmin.nonce,
+        },
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          this.clients = data.clients;
+        })
+        .catch((error) => {
+          console.error("Error fetching clients:", error);
+        });
+    },
+    fetchCategoriesExpenses() {
+      fetch(`/wp-json/my-easy-compta/v1/expenses/categories`, {
+        headers: {
+          "X-WP-Nonce": myEasyComptaAdmin.nonce,
+        },
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          this.categories_expenses = data;
+        })
+        .catch((error) => {
+          console.error("Error fetching categories expenses:", error);
+        });
+    },
     async loadSettings() {
       try {
         this.loadingPrice = true;
@@ -292,10 +408,10 @@ export default {
       if (pageNumber === "...") {
         return;
       }
-      this.fetchExpenses(pageNumber);
+      this.fetchExpensesWithFilters(pageNumber);
     },
     perPageChanged() {
-      this.fetchExpenses();
+      this.fetchExpensesWithFilters();
     },
     formatAmount(amount, currency) {
       return formatAmount(amount, currency, this.settings.currency_position);
@@ -327,7 +443,7 @@ export default {
           this.loadingModal = false;
         })
         .catch((error) => {
-          console.error("Error fetching payment details:", error);
+          console.error("Error fetching expense details:", error);
           this.loadingModal = false;
         });
     },

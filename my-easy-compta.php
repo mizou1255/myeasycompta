@@ -2,7 +2,7 @@
 /**
  * Plugin Name: myEasyCompta
  * Description: Streamline your financial management with myEasyCompta, an all-in-one accounting plugin. Effortlessly handle quotes, invoices, expenses, and more, all within a sleek, user-friendly interface. Perfect for freelancers and small businesses looking to simplify their accounting processes.
- * Version: 1.2.4
+ * Version: 1.3.0
  * Author: MELIOZ.dev
  * Author URI: https://myeasycompta.com
  * Text Domain: my-easy-compta
@@ -21,7 +21,7 @@
  * A comprehensive accounting plugin using Vue.js and TailwindCSS. Manage your quotes, invoices, expenses, and more with ease.
  *
  * @package myEasyCompta
- * @since 1.2.4
+ * @since 1.3.0
  */
 
 if (!defined('ABSPATH')) {
@@ -36,7 +36,7 @@ final class ECWP_Easy_Compta
      *
      * @var string
      */
-    public $version = '1.2.4';
+    public $version = '1.3.0';
     private $version_migration_db = false;
 
     /**
@@ -336,7 +336,7 @@ final class ECWP_Easy_Compta
     public function migration_admin_notice()
     {
         $installed_db_version = get_option('ecwp_db_version', '1.0.0');
-        if ($this->version_migration_db == true) {
+        if ($this->version_migration_db == true || version_compare('installed_db_version', '1.2.3', '<')) {
             if (version_compare($installed_db_version, $this->version, '<')) {
                 echo '<div class="notice notice-warning is-dismissible">
                     <p>' . __('myEasyCompta requires a database update.', 'my-easy-compta') . '</p>

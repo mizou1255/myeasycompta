@@ -72,42 +72,84 @@ class ECWP_Payments
         $per_page = isset($request['per_page']) ? intval($request['per_page']) : 10;
         $page = isset($request['page']) ? intval($request['page']) : 1;
         $offset = ($page - 1) * $per_page;
-        $total_count = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM %i", ECWP_TABLE_PAYMENTS));
-        $results = $wpdb->get_results(
-            $wpdb->prepare("SELECT p.*, c.company_name, m.method_name, i.invoice_number, o.symbol
-        FROM %i p
-        LEFT JOIN %i c ON p.client_id = c.id
-        LEFT JOIN %i i ON p.invoice_id = i.id
-        LEFT JOIN %i m ON p.payment_method_id = m.id
-        LEFT JOIN %i o ON c.currency_id = o.id
-        ORDER BY p.id DESC
-        LIMIT %d OFFSET %d",
-                ECWP_TABLE_PAYMENTS, ECWP_TABLE_CLIENTS, ECWP_TABLE_INVOICES, ECWP_TABLE_PAYMENTS_METHODS, ECWP_TABLE_CURRENCY,
-                $per_page, $offset),
-            ARRAY_A
-        );
+
+        $where_clauses = [];
+        $query_params = [];
+
+        $encrypt = new \ECWP\Admin\Encrypt\ECWP_Encrypt();
+
+        // Récupérer toutes les factures sans filtre direct sur les champs chiffrés
+        $payments_table = ECWP_TABLE_PAYMENTS;
+        $clients_table = ECWP_TABLE_CLIENTS;
+        $invoices_table = ECWP_TABLE_INVOICES;
+        $methods_table = ECWP_TABLE_PAYMENTS_METHODS;
+        $currency_table = ECWP_TABLE_CURRENCY;
+
+        // Récupération sans pagination pour filtrage manuel
+        $query = "SELECT p.*, c.company_name, m.method_name, i.invoice_number, o.symbol
+                  FROM {$payments_table} p
+                  LEFT JOIN {$clients_table} c ON p.client_id = c.id
+                  LEFT JOIN {$invoices_table} i ON p.invoice_id = i.id
+                  LEFT JOIN {$methods_table} m ON p.payment_method_id = m.id
+                  LEFT JOIN {$currency_table} o ON c.currency_id = o.id
+                  ORDER BY p.id DESC";
+
+        $payments = $wpdb->get_results($query, OBJECT);
+
         $settings = new \ECWP\Admin\Settings\ECWP_Settings();
         $format_date_response = $settings->get_format_date();
         $format_date = isset($format_date_response->data) ? $format_date_response->data : 'Y-m-d';
 
-        $encrypt = new \ECWP\Admin\Encrypt\ECWP_Encrypt();
-        foreach ($results as &$result) {
-            if (isset($result['invoice_number'])) {
-                $result['invoice_number'] = $encrypt->decrypt($result['invoice_number']);
+        $filtered_data = [];
+        foreach ($payments as $payment) {
+            $decrypted_invoice_number = $encrypt->decrypt($payment->invoice_number);
+            $match = true;
+
+            if (!empty($request['invoice_number']) && stripos($decrypted_invoice_number, $request['invoice_number']) === false) {
+                $match = false;
+            }
+            if (!empty($request['client']) && stripos($payment->company_name, $request['client']) === false) {
+                $match = false;
+            }
+            if (!empty($request['payment_method']) && $payment->method_name !== $request['payment_method']) {
+                $match = false;
+            }
+            if (!empty($request['payment_date']) && date('Y-m-d', strtotime($payment->payment_date)) !== $request['payment_date']) {
+                $match = false;
             }
 
-            if (isset($result['payment_date'])) {
-                $result['payment_date'] = date_i18n($format_date, strtotime($result['payment_date']));
+            if ($match) {
+                $filtered_data[] = [
+                    'id' => $payment->id,
+                    'company_name' => $payment->company_name,
+                    'client_currency' => $payment->symbol,
+                    'invoice_number' => $decrypted_invoice_number,
+                    'amount' => number_format(floatval($payment->amount), 2, '.', ''),
+                    'payment_method' => $payment->method_name,
+                    'payment_date' => date_i18n($format_date, strtotime($payment->payment_date)),
+                    'notes' => $payment->notes,
+                ];
             }
         }
 
+        $total_count = count($filtered_data);
         $total_pages = ceil($total_count / $per_page);
+
+        // Pagination des données filtrées
+        $paged_data = array_slice($filtered_data, $offset, $per_page);
+
         $response = array(
-            'payments' => $results,
+            'payments' => $paged_data,
             'total_count' => $total_count,
             'total_pages' => $total_pages,
             'page' => $page,
             'per_page' => $per_page,
+            'filters' => [
+                'invoice_number' => $request['invoice_number'] ?? '',
+                'client' => $request['client'] ?? '',
+                'payment_method' => $request['payment_method'] ?? '',
+                'payment_date' => $request['payment_date'] ?? '',
+            ],
         );
 
         return rest_ensure_response($response);
@@ -218,7 +260,8 @@ class ECWP_Payments
         }
     }
 
-    public function get_payment_methods($request) {
+    public function get_payment_methods($request)
+    {
 
         $nonce = sanitize_text_field(wp_unslash($request->get_header('X-WP-Nonce')));
         if (!wp_verify_nonce($nonce, 'wp_rest')) {

@@ -80,19 +80,80 @@
         </select>
       </div>
       <div class="overflow-x-auto">
-        <table v-if="!loading" class="table w-full">
+        <table class="table w-full">
           <thead>
             <tr>
-              <th>{{ translations.quote_number }}</th>
-              <th>{{ translations.client }}</th>
-              <th>{{ translations.status }}</th>
-              <th>{{ translations.total }}</th>
-              <th>{{ translations.due_date }}</th>
-              <th>{{ translations.created_at }}</th>
+              <th>
+                <div>{{ translations.quote_number }}</div>
+                <input
+                  v-model="filters.quote_number"
+                  @input="fetchQuotesWithFilters()"
+                  type="text"
+                  class="ecwp-input input-xs input-bordered mt-2"
+                />
+              </th>
+              <th>
+                <div>{{ translations.client }}</div>
+                <select
+                  v-model="filters.client"
+                  @change="fetchQuotesWithFilters()"
+                  class="ecwp-input input-xs input-bordered mt-2"
+                >
+                  <option value="">{{ translations.all }}</option>
+                  <option
+                    v-for="client in clients"
+                    :key="client.id"
+                    :value="client.company_name"
+                  >
+                    {{ client.company_name }}
+                  </option>
+                </select>
+              </th>
+              <th>
+                <div>{{ translations.status }}</div>
+                <select
+                  v-model="filters.status"
+                  @change="fetchQuotesWithFilters()"
+                  class="ecwp-input input-xs input-bordered mt-2"
+                >
+                  <option value="">{{ translations.all_statuses }}</option>
+                  <option value="draft">{{ translations.draft }}</option>
+                  <option value="pending">{{ translations.pending }}</option>
+                  <option value="approved">{{ translations.approved }}</option>
+                  <option value="rejected">{{ translations.rejected }}</option>
+                </select>
+              </th>
+              <th>
+                <div>{{ translations.total }}</div>
+                <input
+                  v-model="filters.total_amount"
+                  @input="fetchQuotesWithFilters()"
+                  type="text"
+                  class="ecwp-input input-xs input-bordered mt-2"
+                />
+              </th>
+              <th>
+                <div>{{ translations.due_date }}</div>
+                <input
+                  v-model="filters.due_date"
+                  @input="fetchQuotesWithFilters()"
+                  type="date"
+                  class="ecwp-input input-xs input-bordered mt-2"
+                />
+              </th>
+              <th>
+                <div>{{ translations.created_at }}</div>
+                <input
+                  v-model="filters.created_at"
+                  @input="fetchQuotesWithFilters()"
+                  type="date"
+                  class="ecwp-input input-xs input-bordered mt-2"
+                />
+              </th>
               <th class="flex justify-center">{{ translations.actions }}</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody v-if="!loading">
             <tr v-for="quote in quotes" :key="quote.id">
               <td>{{ quote.quote_number }}</td>
               <td>{{ quote.client_name }}</td>
@@ -211,7 +272,7 @@
             </tr>
           </tbody>
         </table>
-        <div v-else>
+        <div v-if="loading">
           <div
             v-for="n in skeletonRows"
             :key="n"
@@ -246,7 +307,7 @@
   </div>
 </template>
   
-  <script>
+<script>
 import Card from "@/components/Card.vue";
 import QuoteEditModal from "@/components/quotes/Edit.vue";
 import RemoveModal from "@/components/RemoveAlert.vue";
@@ -271,6 +332,15 @@ export default {
   data() {
     return {
       quotes: [],
+      filteredQuotes: [],
+      filters: {
+        quote_number: "",
+        client: "",
+        status: "",
+        total_amount: "",
+        due_date: "",
+        created_at: "",
+      },
       showQuoteDetailsModal: false,
       editQuoteModal: false,
       selectedQuote: null,
@@ -284,6 +354,7 @@ export default {
       skeletonRows: 5,
       perPage: 10,
       perPageOptions: [5, 10, 20, 50],
+      clients: [],
       client_currency: "",
       default_vat: "",
       default_currency: "",
@@ -298,8 +369,9 @@ export default {
     };
   },
   created() {
-    this.fetchQuotes();
+    this.fetchQuotesWithFilters();
     this.loadSettings();
+    this.fetchClients();
   },
   methods: {
     fetchQuotes(page = 1) {
@@ -327,6 +399,50 @@ export default {
         })
         .finally(() => {
           this.loading = false;
+        });
+    },
+    fetchQuotesWithFilters(page = 1) {
+      this.loading = true;
+      const { perPage, filters } = this;
+      const query = new URLSearchParams({
+        page,
+        per_page: perPage,
+        ...filters,
+      }).toString();
+
+      fetch(`/wp-json/my-easy-compta/v1/quotes?${query}`, {
+        headers: {
+          "X-WP-Nonce": myEasyComptaAdmin.nonce,
+        },
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          this.quotes = data.quotes;
+          this.totalCount = data.total_count;
+          this.totalPages = data.total_pages;
+          this.currentPage = page;
+          this.perPage = perPage;
+          this.generatePaginationButtons();
+        })
+        .catch((error) => {
+          console.error("Error fetching quotes with filters:", error);
+        })
+        .finally(() => {
+          this.loading = false;
+        });
+    },
+    fetchClients() {
+      fetch(`/wp-json/my-easy-compta/v1/clients`, {
+        headers: {
+          "X-WP-Nonce": myEasyComptaAdmin.nonce,
+        },
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          this.clients = data.clients;
+        })
+        .catch((error) => {
+          console.error("Error fetching clients:", error);
         });
     },
     async loadSettings() {
@@ -358,10 +474,10 @@ export default {
       if (pageNumber === "...") {
         return;
       }
-      this.fetchQuotes(pageNumber);
+      this.fetchQuotesWithFilters(pageNumber);
     },
     perPageChanged() {
-      this.fetchQuotes();
+      this.fetchQuotesWithFilters();
     },
     formatAmount(amount, currency) {
       return formatAmount(amount, currency, this.settings.currency_position);
@@ -387,7 +503,7 @@ export default {
         })
         .then((data) => {
           if (data.success) {
-            this.fetchQuotes();
+            this.fetchQuotesWithFilters();
             this.showToast(data.message, "alert-success");
           } else {
             this.showToast(data.message, "alert-error");
@@ -420,7 +536,7 @@ export default {
         })
         .then((data) => {
           if (data.success) {
-            this.fetchQuotes();
+            this.fetchQuotesWithFilters();
             this.showToast(data.message, "alert-success");
           } else {
             this.showToast(data.message, "alert-error");
@@ -449,4 +565,3 @@ export default {
   },
 };
 </script>
-  

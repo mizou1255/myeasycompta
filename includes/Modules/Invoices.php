@@ -103,66 +103,91 @@ class ECWP_Invoices
 
         $encrypt = new \ECWP\Admin\Encrypt\ECWP_Encrypt();
 
-        $invoices = $wpdb->get_results(
-            $wpdb->prepare("SELECT invoices.*,
-                        clients.company_name,
-                        currencies.symbol AS currency_symbole,
-                        invoices.invoice_number,
-                        invoices.amount,
-                        invoices.total_amount,
-                        invoices.status,
-                        invoices.due_date,
-                        invoices.credit,
-                        invoices.created_at
-                FROM %i AS invoices
-                LEFT JOIN %i AS clients ON invoices.client_id = clients.id
-                LEFT JOIN %i AS currencies ON clients.currency_id = currencies.id
-                ORDER BY invoices.id DESC
-                LIMIT %d, %d",
-                ECWP_TABLE_INVOICES, ECWP_TABLE_CLIENTS, ECWP_TABLE_CURRENCY,
-                $offset, $per_page),
-            OBJECT
-        );
+        $invoices_table = ECWP_TABLE_INVOICES;
+        $clients_table = ECWP_TABLE_CLIENTS;
+        $currencies_table = ECWP_TABLE_CURRENCY;
+
+        $query = "SELECT invoices.id,
+                     clients.company_name,
+                     currencies.symbol AS currency_symbol,
+                     invoices.invoice_number,
+                     invoices.amount,
+                     invoices.total_amount,
+                     invoices.status,
+                     invoices.due_date,
+                     invoices.credit,
+                     invoices.created_at
+              FROM {$invoices_table} AS invoices
+              LEFT JOIN {$clients_table} AS clients ON invoices.client_id = clients.id
+              LEFT JOIN {$currencies_table} AS currencies ON clients.currency_id = currencies.id
+              ORDER BY invoices.id DESC";
+
+        $invoices = $wpdb->get_results($query, OBJECT);
 
         $settings = new \ECWP\Admin\Settings\ECWP_Settings();
         $format_date_response = $settings->get_format_date();
         $format_date = isset($format_date_response->data) ? $format_date_response->data : 'Y-m-d';
 
-        $total_count = $wpdb->get_var($wpdb->prepare("SELECT COUNT(id) FROM %i", ECWP_TABLE_INVOICES));
-        $total_pages = ceil($total_count / $per_page);
-
-        $data = array();
+        $filtered_data = [];
         foreach ($invoices as $invoice) {
-            $invoice_data = array(
-                'id' => $invoice->id,
-                'client_name' => $invoice->company_name,
-                'client_currency' => $invoice->currency_symbole,
-                'invoice_number' => $encrypt->decrypt($invoice->invoice_number),
-                'amount' => number_format(floatval($encrypt->decrypt($invoice->amount)), 2, '.', ''),
-                'total_amount' => number_format(floatval($encrypt->decrypt($invoice->total_amount)), 2, '.', ''),
-                'status' => $encrypt->decrypt($invoice->status),
-                'credit' => $invoice->credit,
-                'due_date' => date_i18n($format_date, strtotime($invoice->due_date)),
-                'created' => date_i18n($format_date, strtotime($invoice->created_at)),
-            );
+            $decrypted_invoice_number = $encrypt->decrypt($invoice->invoice_number);
+            $decrypted_status = $encrypt->decrypt($invoice->status);
+            $decrypted_amount = $encrypt->decrypt($invoice->amount);
+            $decrypted_total_amount = $encrypt->decrypt($invoice->total_amount);
 
-            if (isset($invoice->advance)) {
-                $invoice_data['advance'] = $invoice->advance;
+            $match = true;
+
+            if (!empty($request['invoice_number']) && stripos($decrypted_invoice_number, $request['invoice_number']) === false) {
+                $match = false;
             }
-            if (isset($invoice->advance_amount)) {
-                $invoice_data['advance_amount'] = number_format(floatval($encrypt->decrypt($invoice->advance_amount)), 2, '.', '');
+            if (!empty($request['client']) && stripos($invoice->company_name, $request['client']) === false) {
+                $match = false;
+            }
+            if (!empty($request['status']) && $decrypted_status !== $request['status']) {
+                $match = false;
+            }
+            if (!empty($request['due_date']) && date('Y-m-d', strtotime($invoice->due_date)) !== $request['due_date']) {
+                $match = false;
+            }
+            if (!empty($request['created_at']) && date('Y-m-d', strtotime($invoice->created_at)) !== $request['created_at']) {
+                $match = false;
             }
 
-            $data[] = $invoice_data;
+            if ($match) {
+                $filtered_data[] = [
+                    'id' => $invoice->id,
+                    'client_name' => $invoice->company_name,
+                    'client_currency' => $invoice->currency_symbol,
+                    'invoice_number' => $decrypted_invoice_number,
+                    'amount' => number_format(floatval($decrypted_amount), 2, '.', ''),
+                    'total_amount' => number_format(floatval($decrypted_total_amount), 2, '.', ''),
+                    'status' => $decrypted_status,
+                    'credit' => $invoice->credit,
+                    'due_date' => date_i18n($format_date, strtotime($invoice->due_date)),
+                    'created' => date_i18n($format_date, strtotime($invoice->created_at)),
+                ];
+            }
         }
 
-        return rest_ensure_response(array(
-            'invoices' => $data,
+        $total_count = count($filtered_data);
+        $total_pages = ceil($total_count / $per_page);
+
+        $paged_data = array_slice($filtered_data, $offset, $per_page);
+
+        return rest_ensure_response([
+            'invoices' => $paged_data,
             'total_count' => $total_count,
             'total_pages' => $total_pages,
             'page' => $page,
             'per_page' => $per_page,
-        ));
+            'filters' => [
+                'invoice_number' => $request['invoice_number'] ?? '',
+                'client' => $request['client'] ?? '',
+                'status' => $request['status'] ?? '',
+                'due_date' => $request['due_date'] ?? '',
+                'created_at' => $request['created_at'] ?? '',
+            ],
+        ]);
     }
 
     public function get_invoice_details($request)

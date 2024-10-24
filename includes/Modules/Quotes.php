@@ -117,54 +117,101 @@ class ECWP_Quotes
         $per_page = isset($request['per_page']) ? absint($request['per_page']) : 10;
         $offset = ($page - 1) * $per_page;
 
-        $quotes = $wpdb->get_results(
-            $wpdb->prepare("SELECT quotes.id,
-                        clients.company_name,
-                        currencies.symbol AS currency_symbole,
-                        quotes.quote_number,
-                        quotes.total_amount,
-                        quotes.status,
-                        quotes.due_date,
-                        quotes.provisional_start_date,
-                        quotes.created_at
-                FROM %i AS quotes
-                LEFT JOIN %i AS clients ON quotes.client_id = clients.id
-                LEFT JOIN %i AS currencies ON clients.currency_id = currencies.id
-                ORDER BY quotes.id DESC
-                LIMIT %d, %d",
-                ECWP_TABLE_QUOTES, ECWP_TABLE_CLIENTS, ECWP_TABLE_CURRENCY,
-                $offset, $per_page),
-            OBJECT);
+        $where_clauses = [];
+        $query_params = [];
 
-        $total_count = $wpdb->get_var($wpdb->prepare("SELECT COUNT(id) FROM %i", ECWP_TABLE_QUOTES));
+        if (!empty($request['quote_number'])) {
+            $where_clauses[] = 'quotes.quote_number LIKE %s';
+            $query_params[] = '%' . $wpdb->esc_like($request['quote_number']) . '%';
+        }
+        if (!empty($request['client'])) {
+            $where_clauses[] = 'clients.company_name LIKE %s';
+            $query_params[] = '%' . $wpdb->esc_like($request['client']) . '%';
+        }
+        if (!empty($request['status'])) {
+            $where_clauses[] = 'quotes.status = %s';
+            $query_params[] = $request['status'];
+        }
+        if (!empty($request['total_amount'])) {
+            $where_clauses[] = 'quotes.total_amount = %s';
+            $query_params[] = $request['total_amount'];
+        }
+        if (!empty($request['due_date'])) {
+            $where_clauses[] = 'DATE(quotes.due_date) = %s';
+            $query_params[] = $request['due_date'];
+        }
+        if (!empty($request['created_at'])) {
+            $where_clauses[] = 'DATE(quotes.created_at) = %s';
+            $query_params[] = $request['created_at'];
+        }
+
+        $where_sql = '';
+        if (!empty($where_clauses)) {
+            $where_sql = 'WHERE ' . implode(' AND ', $where_clauses);
+        }
+
+        $quotes_table = ECWP_TABLE_QUOTES;
+        $clients_table = ECWP_TABLE_CLIENTS;
+        $currencies_table = ECWP_TABLE_CURRENCY;
+
+        $query = "SELECT quotes.id,
+                     clients.company_name,
+                     currencies.symbol AS currency_symbol,
+                     quotes.quote_number,
+                     quotes.total_amount,
+                     quotes.status,
+                     quotes.due_date,
+                     quotes.provisional_start_date,
+                     quotes.created_at
+              FROM {$quotes_table} AS quotes
+              LEFT JOIN {$clients_table} AS clients ON quotes.client_id = clients.id
+              LEFT JOIN {$currencies_table} AS currencies ON clients.currency_id = currencies.id
+              $where_sql
+              ORDER BY quotes.id DESC
+              LIMIT %d, %d";
+
+        $query_params[] = $offset;
+        $query_params[] = $per_page;
+
+        $quotes = $wpdb->get_results(
+            $wpdb->prepare($query, ...$query_params),
+            OBJECT
+        );
+
+        $count_query = "SELECT COUNT(quotes.id)
+                    FROM {$quotes_table} AS quotes
+                    LEFT JOIN {$clients_table} AS clients ON quotes.client_id = clients.id
+                    $where_sql";
+
+        $total_count = $wpdb->get_var($wpdb->prepare($count_query, ...$query_params));
         $total_pages = ceil($total_count / $per_page);
 
         $settings = new \ECWP\Admin\Settings\ECWP_Settings();
         $format_date_response = $settings->get_format_date();
         $format_date = isset($format_date_response->data) ? $format_date_response->data : 'Y-m-d';
 
-        $data = array();
+        $data = [];
         foreach ($quotes as $quote) {
-            $data[] = array(
+            $data[] = [
                 'id' => $quote->id,
                 'client_name' => $quote->company_name,
-                'client_currency' => $quote->currency_symbole,
+                'client_currency' => $quote->currency_symbol,
                 'quote_number' => $quote->quote_number,
                 'total_amount' => $quote->total_amount,
                 'status' => $quote->status,
                 'due_date' => date_i18n($format_date, strtotime($quote->due_date)),
                 'provisional_start_date' => date_i18n($format_date, strtotime($quote->provisional_start_date)),
                 'created' => date_i18n($format_date, strtotime($quote->created_at)),
-            );
+            ];
         }
 
-        return rest_ensure_response(array(
+        return rest_ensure_response([
             'quotes' => $data,
             'total_count' => $total_count,
             'total_pages' => $total_pages,
             'page' => $page,
             'per_page' => $per_page,
-        ));
+        ]);
     }
 
     public function get_quote_details($request)

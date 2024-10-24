@@ -76,20 +76,58 @@ class ECWP_Expenses
         $page = isset($request['page']) ? intval($request['page']) : 1;
         $offset = ($page - 1) * $per_page;
 
-        $total_count = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM %i", ECWP_TABLE_EXPENSES));
+        $where_clauses = [];
+        $query_params = [];
 
-        $results = $wpdb->get_results(
-            $wpdb->prepare("SELECT e.*, c.company_name, cat.name, a.filename, a.type
-        FROM %i e
-        LEFT JOIN %i c ON e.client_id = c.id
-        LEFT JOIN %i cat ON e.category_id = cat.id
-        LEFT JOIN %i a ON e.attachment_id = a.id
-        ORDER BY e.id DESC
-        LIMIT %d OFFSET %d",
-                ECWP_TABLE_EXPENSES, ECWP_TABLE_CLIENTS, ECWP_TABLE_EXPENSES_CATEGORIES, ECWP_TABLE_EXPENSES_ATTACHMENTS,
-                $per_page, $offset),
-            OBJECT
-        );
+        if (!empty($request['client'])) {
+            $where_clauses[] = 'c.company_name LIKE %s';
+            $query_params[] = '%' . $wpdb->esc_like($request['client']) . '%';
+        }
+        if (!empty($request['category'])) {
+            $where_clauses[] = 'cat.name LIKE %s';
+            $query_params[] = '%' . $wpdb->esc_like($request['category']) . '%';
+        }
+        if (!empty($request['expense_date'])) {
+            $where_clauses[] = 'DATE(e.expense_date) = %s';
+            $query_params[] = $request['expense_date'];
+        }
+        if (!empty($request['total_amount'])) {
+            $where_clauses[] = 'e.amount = %s';
+            $query_params[] = $request['total_amount'];
+        }
+
+        $where_sql = '';
+        if (!empty($where_clauses)) {
+            $where_sql = 'WHERE ' . implode(' AND ', $where_clauses);
+        }
+
+        $expenses_table = ECWP_TABLE_EXPENSES;
+        $clients_table = ECWP_TABLE_CLIENTS;
+        $categories_table = ECWP_TABLE_EXPENSES_CATEGORIES;
+        $attachments_table = ECWP_TABLE_EXPENSES_ATTACHMENTS;
+
+        $query = "SELECT e.*, c.company_name, cat.name, a.filename, a.type
+                  FROM {$expenses_table} e
+                  LEFT JOIN {$clients_table} c ON e.client_id = c.id
+                  LEFT JOIN {$categories_table} cat ON e.category_id = cat.id
+                  LEFT JOIN {$attachments_table} a ON e.attachment_id = a.id
+                  $where_sql
+                  ORDER BY e.id DESC
+                  LIMIT %d OFFSET %d";
+
+        $query_params[] = $per_page;
+        $query_params[] = $offset;
+
+        $results = $wpdb->get_results($wpdb->prepare($query, ...$query_params), OBJECT);
+
+        $total_count_query = "SELECT COUNT(*)
+                              FROM {$expenses_table} e
+                              LEFT JOIN {$clients_table} c ON e.client_id = c.id
+                              LEFT JOIN {$categories_table} cat ON e.category_id = cat.id
+                              LEFT JOIN {$attachments_table} a ON e.attachment_id = a.id
+                              $where_sql";
+
+        $total_count = $wpdb->get_var($wpdb->prepare($total_count_query, ...$query_params));
 
         $settings = new \ECWP\Admin\Settings\ECWP_Settings();
         $format_date_response = $settings->get_format_date();
@@ -114,6 +152,12 @@ class ECWP_Expenses
             'total_pages' => $total_pages,
             'page' => $page,
             'per_page' => $per_page,
+            'filters' => [
+                'client' => $request['client'] ?? '',
+                'category' => $request['category'] ?? '',
+                'expense_date' => $request['expense_date'] ?? '',
+                'total_amount' => $request['total_amount'] ?? '',
+            ],
         );
 
         return rest_ensure_response($response);

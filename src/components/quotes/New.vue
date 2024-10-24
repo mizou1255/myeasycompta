@@ -68,19 +68,26 @@
           </div>
         </div>
         <div class="grid grid-cols-2 gap-4">
-          <div class="ecwp-group form-group mb-4">
-            <label for="client" class="ecwp-label">{{
-              translations.company_name
-            }}</label>
-            <model-select
-              v-model="quote.client_id"
-              :options="clientOptions"
-              label="text"
-              track-by="value"
-              :placeholder="translations.select"
-              class="ecwp-input input input-bordered w-full"
-              :class="[!quote.client_id && showError ? 'input-error' : '']"
-            />
+          <div class="mb-4">
+            <div class="flex gap-2 items-end">
+              <button type="button" class="btn btn-primary" @click="AddNew">
+                <i class="fas fa-plus"></i>
+              </button>
+              <div class="ecwp-group form-group w-full">
+                <label for="client" class="ecwp-label">{{
+                  translations.company_name
+                }}</label>
+                <model-select
+                  v-model="quote.client_id"
+                  :options="clientOptions"
+                  label="text"
+                  track-by="value"
+                  :placeholder="translations.select"
+                  class="ecwp-input input input-bordered w-full"
+                  :class="[!quote.client_id && showError ? 'input-error' : '']"
+                />
+              </div>
+            </div>
           </div>
           <div class="ecwp-group form-group mb-4">
             <label for="status" class="ecwp-label">{{
@@ -125,6 +132,7 @@
         </div>
       </form>
     </Card>
+    <AddClientModal @clientAdded="fetchClients" />
   </div>
 </template>
 
@@ -132,6 +140,7 @@
 import Card from "@/components/Card.vue";
 import { ModelSelect } from "vue-search-select";
 import VueDatePicker from "@vuepic/vue-datepicker";
+import AddClientModal from "@/components/clients/Add.vue";
 
 export default {
   name: "QuoteNew",
@@ -139,6 +148,7 @@ export default {
     Card,
     ModelSelect,
     VueDatePicker,
+    AddClientModal,
   },
   data() {
     return {
@@ -183,6 +193,9 @@ export default {
     this.fetchSettings();
   },
   methods: {
+    AddNew() {
+      modal_clients.showModal();
+    },
     cancelAction() {
       this.$router.push("/quotes");
     },

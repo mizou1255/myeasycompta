@@ -72,19 +72,79 @@
         </select>
       </div>
       <div class="overflow-x-auto">
-        <table v-if="!loading" class="table w-full">
+        <table class="table w-full">
           <thead>
             <tr>
-              <th>{{ translations.invoice_number }}</th>
-              <th>{{ translations.client }}</th>
-              <th>{{ translations.status }}</th>
-              <th>{{ translations.total }}</th>
-              <th>{{ translations.due_date }}</th>
-              <th>{{ translations.created_at }}</th>
+              <th>
+                <div>{{ translations.invoice_number }}</div>
+                <input
+                  v-model="filters.invoice_number"
+                  @input="fetchInvoicesWithFilters()"
+                  type="text"
+                  class="ecwp-input input-xs input-bordered mt-2"
+                />
+              </th>
+              <th>
+                <div>{{ translations.client }}</div>
+                <select
+                  v-model="filters.client"
+                  @change="fetchInvoicesWithFilters()"
+                  class="ecwp-input input-xs input-bordered mt-2"
+                >
+                  <option value="">{{ translations.all }}</option>
+                  <option
+                    v-for="client in clients"
+                    :key="client.id"
+                    :value="client.company_name"
+                  >
+                    {{ client.company_name }}
+                  </option>
+                </select>
+              </th>
+              <th>
+                <div>{{ translations.status }}</div>
+                <select
+                  v-model="filters.status"
+                  @change="fetchInvoicesWithFilters()"
+                  class="ecwp-input input-xs input-bordered mt-2"
+                >
+                  <option value="">{{ translations.all_statuses }}</option>
+                  <option value="draft">{{ translations.draft }}</option>
+                  <option value="unpaid">{{ translations.unpaid }}</option>
+                  <option value="paid">{{ translations.paid }}</option>
+                </select>
+              </th>
+              <th>
+                <div>{{ translations.total }}</div>
+                <input
+                  v-model="filters.total_amount"
+                  @input="fetchInvoicesWithFilters()"
+                  type="text"
+                  class="ecwp-input input-xs input-bordered mt-2"
+                />
+              </th>
+              <th>
+                <div>{{ translations.due_date }}</div>
+                <input
+                  v-model="filters.due_date"
+                  @input="fetchInvoicesWithFilters()"
+                  type="date"
+                  class="ecwp-input input-xs input-bordered mt-2"
+                />
+              </th>
+              <th>
+                <div>{{ translations.created_at }}</div>
+                <input
+                  v-model="filters.created_at"
+                  @input="fetchInvoicesWithFilters()"
+                  type="date"
+                  class="ecwp-input input-xs input-bordered mt-2"
+                />
+              </th>
               <th class="flex justify-center">{{ translations.actions }}</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody v-if="!loading">
             <tr v-for="invoice in invoices" :key="invoice.id">
               <td>
                 <span
@@ -237,7 +297,7 @@
             </tr>
           </tbody>
         </table>
-        <div v-else>
+        <div v-if="loading">
           <div
             v-for="n in skeletonRows"
             :key="n"
@@ -293,6 +353,15 @@ export default {
   data() {
     return {
       invoices: [],
+      filteredInvoices: [],
+      filters: {
+        invoice_number: "",
+        client: "",
+        status: "",
+        total_amount: "",
+        due_date: "",
+        created_at: "",
+      },
       showInvoiceDetailsModal: false,
       editInvoiceModal: false,
       selectedInvoice: null,
@@ -321,6 +390,7 @@ export default {
   },
   created() {
     this.fetchInvoices();
+    this.fetchClients();
     this.loadSettings();
   },
   methods: {
@@ -349,6 +419,50 @@ export default {
         })
         .finally(() => {
           this.loading = false;
+        });
+    },
+    fetchInvoicesWithFilters(page = 1) {
+      this.loading = true;
+      const { perPage, filters } = this;
+      const query = new URLSearchParams({
+        page,
+        per_page: perPage,
+        ...filters,
+      }).toString();
+
+      fetch(`/wp-json/my-easy-compta/v1/invoices?${query}`, {
+        headers: {
+          "X-WP-Nonce": myEasyComptaAdmin.nonce,
+        },
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          this.invoices = data.invoices;
+          this.totalCount = data.total_count;
+          this.totalPages = data.total_pages;
+          this.currentPage = page;
+          this.perPage = perPage;
+          this.generatePaginationButtons();
+        })
+        .catch((error) => {
+          console.error("Error fetching invoices with filters:", error);
+        })
+        .finally(() => {
+          this.loading = false;
+        });
+    },
+    fetchClients() {
+      fetch(`/wp-json/my-easy-compta/v1/clients`, {
+        headers: {
+          "X-WP-Nonce": myEasyComptaAdmin.nonce,
+        },
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          this.clients = data.clients;
+        })
+        .catch((error) => {
+          console.error("Error fetching clients:", error);
         });
     },
     async loadSettings() {
@@ -380,10 +494,10 @@ export default {
       if (pageNumber === "...") {
         return;
       }
-      this.fetchInvoices(pageNumber);
+      this.fetchInvoicesWithFilters(pageNumber);
     },
     perPageChanged() {
-      this.fetchInvoices();
+      this.fetchInvoicesWithFilters();
     },
     formatAmount(amount, currency) {
       return formatAmount(amount, currency, this.settings.currency_position);

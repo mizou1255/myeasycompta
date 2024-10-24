@@ -89,17 +89,49 @@
         </select>
       </div>
       <div class="overflow-x-auto">
-        <table v-if="!loading" class="table w-full">
+        <table class="table w-full">
           <thead>
             <tr>
-              <th>{{ translations.company_name }}</th>
-              <th>{{ translations.manager_name }}</th>
-              <th>{{ translations.email }}</th>
-              <th>{{ translations.phone }}</th>
+              <th>
+                <div>{{ translations.company_name }}</div>
+                <input
+                  v-model="filters.company_name"
+                  @input="() => fetchClientsWithFilters()"
+                  type="text"
+                  class="ecwp-input input-xs input-bordered mt-2"
+                />
+              </th>
+              <th>
+                <div>{{ translations.manager_name }}</div>
+                <input
+                  v-model="filters.manager_name"
+                  @input="() => fetchClientsWithFilters()"
+                  type="text"
+                  class="ecwp-input input-xs input-bordered mt-2"
+                />
+              </th>
+              <th>
+                <div>{{ translations.email }}</div>
+                <input
+                  v-model="filters.email"
+                  @input="() => fetchClientsWithFilters()"
+                  type="text"
+                  class="ecwp-input input-xs input-bordered mt-2"
+                />
+              </th>
+              <th>
+                <div>{{ translations.phone }}</div>
+                <input
+                  v-model="filters.phone"
+                  @input="() => fetchClientsWithFilters()"
+                  type="text"
+                  class="ecwp-input input-xs input-bordered mt-2"
+                />
+              </th>
               <th class="flex justify-center">{{ translations.actions }}</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody v-if="!loading">
             <tr v-for="client in clients" :key="client.id">
               <td>
                 <div class="flex items-center gap-3">
@@ -167,7 +199,7 @@
             </tr>
           </tbody>
         </table>
-        <div v-else>
+        <div v-if="loading">
           <!-- Skeleton loader -->
           <div
             v-for="n in skeletonRows"
@@ -226,6 +258,13 @@ export default {
   data() {
     return {
       clients: [],
+      filteredClients: [],
+      filters: {
+        company_name: "",
+        manager_name: "",
+        email: "",
+        phone: "",
+      },
       showClientDetailsModal: false,
       editClientModal: false,
       showRemoveModal: false,
@@ -269,6 +308,7 @@ export default {
         .then((response) => response.json())
         .then((data) => {
           this.clients = data.clients;
+          this.filteredClients = data.clients;
           this.totalCount = data.total_count;
           this.totalPages = data.total_pages;
           this.currentPage = data.page;
@@ -277,6 +317,40 @@ export default {
         })
         .catch((error) => {
           console.error("Error fetching clients:", error);
+        })
+        .finally(() => {
+          this.loading = false;
+        });
+    },
+    fetchClientsWithFilters(page = 1) {
+      this.loading = true;
+      const { perPage, filters } = this;
+      const query = new URLSearchParams({
+        page,
+        per_page: perPage,
+        company_name: filters.company_name,
+        manager_name: filters.manager_name,
+        email: filters.email,
+        phone: filters.phone,
+      }).toString();
+
+      fetch(`/wp-json/my-easy-compta/v1/clients?${query}`, {
+        headers: {
+          "X-WP-Nonce": myEasyComptaAdmin.nonce,
+        },
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          this.clients = data.clients;
+          this.filteredClients = data.clients;
+          this.totalCount = data.total_count;
+          this.totalPages = data.total_pages;
+          this.currentPage = data.page;
+          this.perPage = perPage;
+          this.generatePaginationButtons();
+        })
+        .catch((error) => {
+          console.error("Error fetching clients with filters:", error);
         })
         .finally(() => {
           this.loading = false;
