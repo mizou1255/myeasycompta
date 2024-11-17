@@ -686,6 +686,23 @@
 
               <div class="divider my-4"></div>
 
+              <div class="grid grid-cols-1 gap-4">
+                <div class="form-control mt-4 mb-1">
+                  <label class="cursor-pointer">
+                    <input
+                      type="checkbox"
+                      :checked="form.active_disbursements == 1"
+                      @change="updateFormField($event, 'active_disbursements')"
+                      class="wcpa-ui-toggle"
+                    />
+                    <span class="label-text mr-2 font-bold">{{
+                      translations.active_disbursements
+                    }}</span>
+                  </label>
+                </div>
+              </div>
+              <div class="divider my-4"></div>
+
               <div class="grid grid-cols-2 gap-4">
                 <div class="form-control mt-4 mb-1">
                   <label class="cursor-pointer">
@@ -2149,6 +2166,7 @@ export default {
         logo_mentions: "",
         invoice_color: "",
         invoice_prefix: "",
+        active_disbursements: "",
         show_phone: "",
         show_email: "",
         show_siren: "",

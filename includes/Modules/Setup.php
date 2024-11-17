@@ -144,7 +144,7 @@ class ECWP_Setup
                             <label class="ecwp-label label"
                                 for="company-code"><?php esc_html_e('SIRET n°', 'my-easy-compta');?></label>
                             <input type="text" id="company-code" name="company_code"
-                                class="ecwp-input input input-bordered" required="">
+                                class="ecwp-input input input-bordered">
                         </div>
                         <div class="ecwp-group form-control">
                             <label class="ecwp-label label"

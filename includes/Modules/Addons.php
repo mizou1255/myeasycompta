@@ -197,6 +197,30 @@ class ECWP_Addons
                 </div>
             </div>
         </div>
+        <div class="card p-6 bg-base-100 shadow-xl flex flex-col">
+            <div class="card-body flex flex-col flex-grow">
+                <h2 class="card-title mb-2"><?php esc_html_e('myEasyCompta QRCode Stripe', 'my-easy-compta');?></h2>
+                <p class="mb-2 flex-grow">
+                <?php esc_html_e('myEasyCompta QRCode Stripe allows you to add a dynamic QR code to your invoices for Stripe payments. Simplify the payment process for your clients by providing a direct link to your Stripe checkout page, ensuring fast and secure transactions.', 'my-easy-compta');?>                </p>
+                <div class="flex card-actions justify-end mt-auto btn-rounded">
+                    <a class="btn btn-primary hover:text-white rounded-full"
+                        href="https://myeasycompta.com/addons-all/myeasycompta-qrcode-stripe/"
+                        target="_blank"><?php esc_html_e('Read more', 'my-easy-compta');?></a>
+                </div>
+            </div>
+        </div>
+        <div class="card p-6 bg-base-100 shadow-xl flex flex-col">
+            <div class="card-body flex flex-col flex-grow">
+                <h2 class="card-title mb-2"><?php esc_html_e('myEasyCompta SureCart', 'my-easy-compta');?></h2>
+                <p class="mb-2 flex-grow">
+                <?php esc_html_e('myEasyCompta SureCart integrates seamlessly with SureCart to automatically generate invoices for your transactions. Keep your invoicing process organized and compliant, with detailed invoices automatically created for each order in SureCart.', 'my-easy-compta');?>                </p>
+                <div class="flex card-actions justify-end mt-auto btn-rounded">
+                    <a class="btn btn-primary hover:text-white rounded-full"
+                        href="https://myeasycompta.com/addons-all/myeasycompta-surecart/"
+                        target="_blank"><?php esc_html_e('Read more', 'my-easy-compta');?></a>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 <?php

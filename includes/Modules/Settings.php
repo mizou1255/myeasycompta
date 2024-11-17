@@ -1052,6 +1052,10 @@ class ECWP_Settings
 
         update_option('ecwp_client_license_data', $license_data);
 
+        if (!function_exists('get_plugins')) {
+            require_once ABSPATH . 'wp-admin/includes/plugin.php';
+        }
+
         $installed_plugins = get_plugins();
         $installed_versions = array();
 

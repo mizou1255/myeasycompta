@@ -12,7 +12,6 @@ class ECWP_Invoices
 
     public function __construct()
     {
-        global $wpdb;
         add_action('admin_menu', array($this, 'add_submenu_page'));
         add_action('admin_enqueue_scripts', array($this, 'enqueue_scripts'));
 
@@ -87,6 +86,14 @@ class ECWP_Invoices
         });
 
         $this->routes->add_route('/invoices/pdf/(?P<id>\d+)', 'GET', $this, 'generate_invoice_pdf', function () {
+            return current_user_can('manage_options');
+        });
+
+        $this->routes->add_route('/invoices/disbursements/(?P<id>\d+)', 'GET', $this, 'get_disbursements_invoice', function () {
+            return current_user_can('manage_options');
+        });
+
+        $this->routes->add_route('/invoices/disbursements', 'POST', $this, 'add_disbursements', function () {
             return current_user_can('manage_options');
         });
 
@@ -683,11 +690,7 @@ class ECWP_Invoices
             ECWP_TABLE_INVOICES,
             $calculate_amount,
             array('id' => $invoice_id),
-            array(
-                '%f',
-                '%d',
-                '%f',
-            ),
+            array('%s', '%s'),
             array('%d')
         );
 
@@ -704,11 +707,13 @@ class ECWP_Invoices
             return new \WP_Error('unauthorized', __('Unauthorized request', 'my-easy-compta'), array('status' => 401));
         }
 
-        $order = absint($request->get_param('order'));
+        $order = $request->get_param('order');
 
         if (!is_array($order)) {
             return new \WP_Error('invalid_order', __('Invalid order data', 'my-easy-compta'), array('status' => 400));
         }
+
+        $order = array_map('absint', $order);
 
         global $wpdb;
 
@@ -818,8 +823,11 @@ class ECWP_Invoices
         $encrypted_prices = $wpdb->get_col($wpdb->prepare("SELECT total_price FROM %i WHERE invoice_id = %d", ECWP_TABLE_INVOICE_ELEMENTS, $invoice_id));
         $encrypted_amounts = $wpdb->get_col($wpdb->prepare("SELECT total_amount FROM %i WHERE invoice_id = %d", ECWP_TABLE_INVOICE_ELEMENTS, $invoice_id));
 
+        $disbursements_prices = $wpdb->get_col($wpdb->prepare("SELECT unit_price FROM %i WHERE invoice_id = %d", ECWP_TABLE_DISBURSEMENTS, $invoice_id));
+
         $amount = 0;
         $totalAmount = 0;
+
         foreach ($encrypted_prices as $encrypted_price) {
             $price = $encrypt->decrypt($encrypted_price);
             $amount += floatval($price);
@@ -827,6 +835,10 @@ class ECWP_Invoices
         foreach ($encrypted_amounts as $encrypted_amount) {
             $amount = $encrypt->decrypt($encrypted_amount);
             $totalAmount += floatval($amount);
+        }
+
+        foreach ($disbursements_prices as $disbursement_price) {
+            $totalAmount += floatval($disbursement_price);
         }
 
         $data = array(
@@ -845,6 +857,76 @@ class ECWP_Invoices
 
         $pdfGenerator = new PDFGenerator($wpdb);
         $pdfGenerator->generateInvoicePDF($invoice_id, $currency_id, "");
+    }
+
+    public function get_disbursements_invoice(\WP_REST_Request $request)
+    {
+        global $wpdb;
+        $params = $request->get_params();
+        $invoice_id = $params['id'];
+
+        $disbursements = $wpdb->get_results(
+            $wpdb->prepare("SELECT * FROM %i WHERE invoice_id = %d", ECWP_TABLE_DISBURSEMENTS, $invoice_id)
+        );
+
+        if (!$disbursements) {
+            return rest_ensure_response([
+                'code' => 'no_disbursements',
+                'message' => __('No disbursements found for this invoice', 'my-easy-compta'),
+                'data' => ['status' => 404],
+            ]);
+        }
+
+        return rest_ensure_response($disbursements);
+    }
+
+    public function add_disbursements(\WP_REST_Request $request)
+    {
+        global $wpdb;
+
+        $invoice_id = $request->get_param('invoice_id');
+        $title = $request->get_param('title');
+        $description = $request->get_param('description');
+        $unit_price = $request->get_param('unit_price');
+
+        $result = $wpdb->insert(
+            ECWP_TABLE_DISBURSEMENTS,
+            array(
+                'invoice_id' => $invoice_id,
+                'title' => $title,
+                'description' => $description,
+                'unit_price' => $unit_price,
+                'created_at' => current_time('mysql'),
+            ),
+            array('%d', '%s', '%s', '%f', '%s')
+        );
+
+        if ($result === false) {
+            return new \WP_Error('db_error', __('Failed to insert disbursement', 'my-easy-compta'), array('status' => 500));
+        }
+        $calculate_amount = $this->calculate_total_amount($invoice_id);
+
+        $update_result = $wpdb->update(
+            ECWP_TABLE_INVOICES,
+            $calculate_amount,
+            array('id' => $invoice_id),
+            array('%s', '%s'),
+            array('%d')
+        );
+
+        if ($update_result === false) {
+            return new \WP_Error('update_failed', __('Failed to update invoice total', 'my-easy-compta'), array('status' => 500));
+        }
+
+        return rest_ensure_response(array(
+            'message' => __('Disbursement added and invoice total updated successfully', 'my-easy-compta'),
+            'id' => $wpdb->insert_id,
+            'invoice_id' => $invoice_id,
+            'title' => $title,
+            'description' => $description,
+            'unit_price' => $unit_price,
+            'updated_totals' => $calculate_amount,
+        ));
     }
 
 }

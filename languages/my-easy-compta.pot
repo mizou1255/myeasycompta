@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: myEasyCompta\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-10-15 11:10+0000\n"
+"POT-Creation-Date: 2024-11-17 12:44+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -14,11 +14,11 @@ msgstr ""
 "Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
 "X-Generator: Loco https://localise.biz/"
 
-#: languages/my-easy-compta-translations.php:264
+#: languages/my-easy-compta-translations.php:265
 msgid "Account"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:217
+#: languages/my-easy-compta-translations.php:218
 msgid "Account settings"
 msgstr ""
 
@@ -26,7 +26,7 @@ msgstr ""
 msgid "Actions"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:225
+#: languages/my-easy-compta-translations.php:226
 msgid "Activate email logs"
 msgstr ""
 
@@ -38,31 +38,39 @@ msgstr ""
 msgid "Activate Vat"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:259
+#: languages/my-easy-compta-translations.php:260
 msgid "Activation date"
+msgstr ""
+
+#: languages/my-easy-compta-translations.php:172
+msgid "Active Disbursements"
 msgstr ""
 
 #: languages/my-easy-compta-translations.php:16
 msgid "Add"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:208
+#: languages/my-easy-compta-translations.php:209
 msgid "Add category"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:199
+#: languages/my-easy-compta-translations.php:200
 msgid "Add currency"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:205
+#: languages/my-easy-compta-translations.php:306
+msgid "Add disbursement"
+msgstr ""
+
+#: languages/my-easy-compta-translations.php:206
 msgid "Add method"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:203
+#: languages/my-easy-compta-translations.php:204
 msgid "Add VAT"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:256
+#: languages/my-easy-compta-translations.php:257
 msgid "Addon name"
 msgstr ""
 
@@ -74,11 +82,11 @@ msgstr ""
 msgid "Address"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:289
+#: languages/my-easy-compta-translations.php:292
 msgid "Advance"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:290
+#: languages/my-easy-compta-translations.php:293
 msgid "Advance invoice"
 msgstr ""
 
@@ -87,8 +95,12 @@ msgid "After amount"
 msgstr ""
 
 #: languages/my-easy-compta-translations.php:99
-#: includes/Modules/PDFGenerator.php:901
+#: includes/Modules/PDFGenerator.php:973
 msgid "Agreement & signature"
+msgstr ""
+
+#: languages/my-easy-compta-translations.php:301
+msgid "All"
 msgstr ""
 
 #: languages/my-easy-compta-translations.php:130
@@ -103,8 +115,8 @@ msgstr ""
 msgid "Annual Payments Overview"
 msgstr ""
 
-#: includes/Modules/Invoices.php:217 includes/Modules/Invoices.php:291
-#: includes/Modules/Quotes.php:201 includes/Modules/Quotes.php:500
+#: includes/Modules/Invoices.php:249 includes/Modules/Invoices.php:323
+#: includes/Modules/Quotes.php:248 includes/Modules/Quotes.php:547
 msgid "API access error"
 msgstr ""
 
@@ -112,11 +124,11 @@ msgstr ""
 msgid "Approved"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:64 includes/Modules/App.php:363
+#: languages/my-easy-compta-translations.php:64 includes/Modules/App.php:366
 msgid "April"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:209
+#: languages/my-easy-compta-translations.php:210
 msgid "Are you sure?"
 msgstr ""
 
@@ -132,7 +144,7 @@ msgstr ""
 msgid "Attachment"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:68 includes/Modules/App.php:367
+#: languages/my-easy-compta-translations.php:68 includes/Modules/App.php:370
 msgid "August"
 msgstr ""
 
@@ -140,19 +152,19 @@ msgstr ""
 msgid "Back"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:196
+#: languages/my-easy-compta-translations.php:197
 msgid "Background"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:238
+#: languages/my-easy-compta-translations.php:239
 msgid "Backup"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:242
+#: languages/my-easy-compta-translations.php:243
 msgid "Backup date"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:241
+#: languages/my-easy-compta-translations.php:242
 msgid "Backup list"
 msgstr ""
 
@@ -160,13 +172,17 @@ msgstr ""
 msgid "Before amount"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:181
-#: includes/Modules/PDFGenerator.php:888
+#: languages/my-easy-compta-translations.php:182
+#: includes/Modules/PDFGenerator.php:960
 msgid "BIC"
 msgstr ""
 
 #: languages/my-easy-compta-translations.php:48
 msgid "Bill to"
+msgstr ""
+
+#: includes/Modules/App.php:464
+msgid "Black Friday Sale - 30% OFF!"
 msgstr ""
 
 #: languages/my-easy-compta-translations.php:60
@@ -177,7 +193,7 @@ msgstr ""
 msgid "Canceled"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:284
+#: languages/my-easy-compta-translations.php:287
 msgid "Card number"
 msgstr ""
 
@@ -189,12 +205,16 @@ msgstr ""
 msgid "Category"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:255
+#: languages/my-easy-compta-translations.php:256
 msgid "Check update"
 msgstr ""
 
 #: languages/my-easy-compta-translations.php:29 includes/Modules/Setup.php:175
 msgid "City"
+msgstr ""
+
+#: includes/Modules/App.php:469
+msgid "Claim Your Discount"
 msgstr ""
 
 #: languages/my-easy-compta-translations.php:100
@@ -205,15 +225,15 @@ msgstr ""
 msgid "Client"
 msgstr ""
 
-#: includes/Modules/Clients.php:277
+#: includes/Modules/Clients.php:305
 msgid "Client added successfully"
 msgstr ""
 
-#: includes/Modules/Clients.php:231
+#: includes/Modules/Clients.php:259
 msgid "Client already exists"
 msgstr ""
 
-#: includes/Modules/Clients.php:359
+#: includes/Modules/Clients.php:387
 msgid "Client deleted successfully"
 msgstr ""
 
@@ -221,11 +241,11 @@ msgstr ""
 msgid "Client details"
 msgstr ""
 
-#: includes/Modules/Clients.php:308
+#: includes/Modules/Clients.php:336
 msgid "Client edited successfully"
 msgstr ""
 
-#: includes/Modules/Clients.php:171
+#: includes/Modules/Clients.php:199
 msgid "Client not found."
 msgstr ""
 
@@ -234,15 +254,19 @@ msgstr ""
 msgid "Clients"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:194
-msgid "Code"
+#: includes/Modules/App.php:474
+msgid "Close & never show again"
 msgstr ""
 
 #: languages/my-easy-compta-translations.php:195
+msgid "Code"
+msgstr ""
+
+#: languages/my-easy-compta-translations.php:196
 msgid "Color"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:224
+#: languages/my-easy-compta-translations.php:225
 msgid "Coming soon"
 msgstr ""
 
@@ -258,11 +282,11 @@ msgstr ""
 msgid "Company name"
 msgstr ""
 
-#: includes/Modules/PDFGenerator.php:868
+#: includes/Modules/PDFGenerator.php:940
 msgid "Conditions terms"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:216
+#: languages/my-easy-compta-translations.php:217
 msgid "Confirm new password"
 msgstr ""
 
@@ -274,11 +298,11 @@ msgstr ""
 msgid "Convert to invoice"
 msgstr ""
 
-#: includes/Modules/Invoices.php:262 includes/Modules/Invoices.php:272
+#: includes/Modules/Invoices.php:294 includes/Modules/Invoices.php:304
 msgid "Could not insert invoice into database"
 msgstr ""
 
-#: includes/Modules/Quotes.php:228 includes/Modules/Quotes.php:239
+#: includes/Modules/Quotes.php:275 includes/Modules/Quotes.php:286
 msgid "Could not insert quote into database"
 msgstr ""
 
@@ -286,7 +310,7 @@ msgstr ""
 msgid "Country"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:239
+#: languages/my-easy-compta-translations.php:240
 msgid "Create backup"
 msgstr ""
 
@@ -297,25 +321,25 @@ msgid ""
 "through a dedicated dashboard."
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:213
+#: languages/my-easy-compta-translations.php:214
 msgid "Create user"
 msgstr ""
 
 #: languages/my-easy-compta-translations.php:47
-#: includes/Modules/PDFGenerator.php:457 includes/Modules/PDFGenerator.php:475
+#: includes/Modules/PDFGenerator.php:459 includes/Modules/PDFGenerator.php:477
 msgid "Created at"
 msgstr ""
 
 #: languages/my-easy-compta-translations.php:75
-#: includes/Modules/PDFGenerator.php:471
+#: includes/Modules/PDFGenerator.php:473
 msgid "Credit"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:184
+#: languages/my-easy-compta-translations.php:185
 msgid "Credit color"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:186
+#: languages/my-easy-compta-translations.php:187
 msgid "Credit footer"
 msgstr ""
 
@@ -327,7 +351,7 @@ msgstr ""
 msgid "Credit invoice removed successfully"
 msgstr ""
 
-#: includes/Modules/PDFGenerator.php:269
+#: includes/Modules/PDFGenerator.php:271
 msgid "Credit not found"
 msgstr ""
 
@@ -335,11 +359,11 @@ msgstr ""
 msgid "Credit number"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:185
+#: languages/my-easy-compta-translations.php:186
 msgid "Credit prefix"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:187
+#: languages/my-easy-compta-translations.php:188
 msgid "Credit terms"
 msgstr ""
 
@@ -352,7 +376,7 @@ msgstr ""
 msgid "Credits settings"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:198
+#: languages/my-easy-compta-translations.php:199
 msgid "Currencies"
 msgstr ""
 
@@ -364,7 +388,7 @@ msgstr ""
 msgid "Currency"
 msgstr ""
 
-#: includes/Modules/Clients.php:239
+#: includes/Modules/Clients.php:267
 msgid "Currency ID is invalid"
 msgstr ""
 
@@ -376,8 +400,8 @@ msgstr ""
 msgid "Current month"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:263 includes/Modules/App.php:33
-#: includes/Modules/App.php:34
+#: languages/my-easy-compta-translations.php:264 includes/Modules/App.php:36
+#: includes/Modules/App.php:37
 msgid "Dashboard"
 msgstr ""
 
@@ -389,23 +413,23 @@ msgstr ""
 msgid "Data settings created successfully"
 msgstr ""
 
-#: includes/Modules/Expenses.php:209
+#: includes/Modules/Expenses.php:253
 msgid "Database error when inserting attachment:"
 msgstr ""
 
-#: my-easy-compta.php:277
+#: my-easy-compta.php:280
 msgid "Database migration completed successfully."
 msgstr ""
 
-#: includes/Modules/PDFGenerator.php:443
+#: includes/Modules/PDFGenerator.php:445
 msgid "Date planned"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:228
+#: languages/my-easy-compta-translations.php:229
 msgid "Date sent"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:72 includes/Modules/App.php:371
+#: languages/my-easy-compta-translations.php:72 includes/Modules/App.php:374
 msgid "December"
 msgstr ""
 
@@ -425,16 +449,29 @@ msgstr ""
 msgid "Delete"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:247
+#: languages/my-easy-compta-translations.php:248
 msgid "Deleted successfully"
 msgstr ""
 
 #: languages/my-easy-compta-translations.php:140
+#: languages/my-easy-compta-translations.php:304
 msgid "Description"
 msgstr ""
 
+#: includes/Modules/PDFGenerator.php:757
+msgid "Disbursement"
+msgstr ""
+
+#: includes/Modules/Invoices.php:922
+msgid "Disbursement added and invoice total updated successfully"
+msgstr ""
+
+#: languages/my-easy-compta-translations.php:302
+msgid "Disbursements"
+msgstr ""
+
 #: languages/my-easy-compta-translations.php:144
-#: includes/Modules/PDFGenerator.php:721
+#: includes/Modules/PDFGenerator.php:725
 msgid "Discount"
 msgstr ""
 
@@ -442,23 +479,23 @@ msgstr ""
 msgid "Display per page"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:260
+#: languages/my-easy-compta-translations.php:261
 msgid "Domain"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:236
+#: languages/my-easy-compta-translations.php:237
 msgid "Done"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:243
+#: languages/my-easy-compta-translations.php:244
 msgid "Download"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:296
+#: languages/my-easy-compta-translations.php:299
 msgid "Download QRCode Stripe payment link"
 msgstr ""
 
-#: includes/Modules/PDFGenerator.php:226
+#: includes/Modules/PDFGenerator.php:228
 msgid "DRAFT"
 msgstr ""
 
@@ -467,7 +504,7 @@ msgid "Draft"
 msgstr ""
 
 #: languages/my-easy-compta-translations.php:50
-#: includes/Modules/PDFGenerator.php:442
+#: includes/Modules/PDFGenerator.php:444
 msgid "Due date"
 msgstr ""
 
@@ -508,23 +545,23 @@ msgid "Edit quote"
 msgstr ""
 
 #: languages/my-easy-compta-translations.php:32
-#: includes/Modules/PDFGenerator.php:586 includes/Modules/Setup.php:185
+#: includes/Modules/PDFGenerator.php:588 includes/Modules/Setup.php:185
 msgid "Email"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:220
+#: languages/my-easy-compta-translations.php:221
 msgid "Emails Invoices"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:226
+#: languages/my-easy-compta-translations.php:227
 msgid "Emails logs"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:221
+#: languages/my-easy-compta-translations.php:222
 msgid "Emails Quotes"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:219
+#: languages/my-easy-compta-translations.php:220
 msgid "Emails settings"
 msgstr ""
 
@@ -535,30 +572,30 @@ msgid ""
 "Ideal for maintaining smooth email communication with clients."
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:237
+#: languages/my-easy-compta-translations.php:238
 msgid "Error"
 msgstr ""
 
-#: includes/Modules/Clients.php:194 includes/Modules/Invoices.php:634
-#: includes/Modules/Quotes.php:258 includes/Modules/Quotes.php:620
+#: includes/Modules/Clients.php:222 includes/Modules/Invoices.php:666
+#: includes/Modules/Quotes.php:305 includes/Modules/Quotes.php:667
 msgid "Error API access"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:230
+#: languages/my-easy-compta-translations.php:231
 msgid "Event category"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:233
 #: languages/my-easy-compta-translations.php:234
+#: languages/my-easy-compta-translations.php:235
 msgid "Event end time"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:231
 #: languages/my-easy-compta-translations.php:232
+#: languages/my-easy-compta-translations.php:233
 msgid "Event start date"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:229
+#: languages/my-easy-compta-translations.php:230
 msgid "Event title"
 msgstr ""
 
@@ -566,7 +603,7 @@ msgstr ""
 msgid "Exchange rate"
 msgstr ""
 
-#: includes/Modules/Expenses.php:262
+#: includes/Modules/Expenses.php:306
 msgid "Expense added successfully"
 msgstr ""
 
@@ -574,15 +611,15 @@ msgstr ""
 msgid "Expense date"
 msgstr ""
 
-#: includes/Modules/Expenses.php:340
+#: includes/Modules/Expenses.php:384
 msgid "Expense deleted successfully"
 msgstr ""
 
-#: includes/Modules/Expenses.php:324
+#: includes/Modules/Expenses.php:368
 msgid "Expense edited successfully"
 msgstr ""
 
-#: includes/Modules/Expenses.php:282
+#: includes/Modules/Expenses.php:326
 msgid "Expense not found."
 msgstr ""
 
@@ -591,7 +628,7 @@ msgstr ""
 msgid "Expenses"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:207
+#: languages/my-easy-compta-translations.php:208
 msgid "Expenses categories"
 msgstr ""
 
@@ -599,11 +636,11 @@ msgstr ""
 msgid "Expenses settings"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:285
+#: languages/my-easy-compta-translations.php:288
 msgid "Expiration date"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:258
+#: languages/my-easy-compta-translations.php:259
 msgid "Expiry date"
 msgstr ""
 
@@ -622,87 +659,95 @@ msgid ""
 "expenses, and statistics."
 msgstr ""
 
-#: includes/Modules/Clients.php:272
+#: includes/Modules/Clients.php:300
 msgid "Failed to add client"
 msgstr ""
 
-#: includes/Modules/Invoices.php:373
+#: includes/Modules/Invoices.php:405
 msgid "Failed to add invoice item"
 msgstr ""
 
-#: includes/Modules/Invoices.php:781
+#: includes/Modules/Invoices.php:811
 msgid "Failed to add payment to database"
 msgstr ""
 
-#: includes/Modules/Quotes.php:324
+#: includes/Modules/Quotes.php:371
 msgid "Failed to add quote item"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:254
+#: languages/my-easy-compta-translations.php:255
 msgid "Failed to check for updates."
 msgstr ""
 
-#: includes/Modules/Quotes.php:757
+#: includes/Modules/Quotes.php:804
 msgid "Failed to create invoice"
 msgstr ""
 
-#: includes/Modules/Clients.php:361
+#: includes/Modules/Clients.php:389
 msgid "Failed to delete client"
 msgstr ""
 
-#: includes/Modules/Expenses.php:342
+#: includes/Modules/Expenses.php:386
 msgid "Failed to delete expense"
 msgstr ""
 
-#: includes/Modules/Invoices.php:652
+#: includes/Modules/Invoices.php:684
 msgid "Failed to delete invoice item."
 msgstr ""
 
-#: includes/Modules/Payments.php:217
+#: includes/Modules/Payments.php:259
 msgid "Failed to delete payment"
 msgstr ""
 
-#: includes/Modules/Clients.php:306
+#: includes/Modules/Clients.php:334
 msgid "Failed to edit client"
 msgstr ""
 
-#: includes/Modules/Expenses.php:322
+#: includes/Modules/Expenses.php:366
 msgid "Failed to edit expense"
 msgstr ""
 
-#: includes/Modules/Quotes.php:584
+#: includes/Modules/Quotes.php:631
 msgid "Failed to edit Item"
 msgstr ""
 
-#: includes/Modules/Invoices.php:597
+#: includes/Modules/Invoices.php:629
 msgid "Failed to edit item"
 msgstr ""
 
-#: includes/Modules/Payments.php:193
+#: includes/Modules/Payments.php:235
 msgid "Failed to edit payment"
 msgstr ""
 
-#: includes/Modules/Invoices.php:753
+#: includes/Modules/Invoices.php:905
+msgid "Failed to insert disbursement"
+msgstr ""
+
+#: includes/Modules/Invoices.php:783
 msgid "Failed to retrieve exchange rate for client currency"
 msgstr ""
 
-#: includes/Modules/Credits.php:202 includes/Modules/Invoices.php:413
+#: includes/Modules/Credits.php:202 includes/Modules/Invoices.php:445
 msgid "Failed to update invoice"
 msgstr ""
 
-#: includes/Modules/Invoices.php:737
+#: includes/Modules/Invoices.php:767
 msgid "Failed to update invoice status in database"
 msgstr ""
 
-#: includes/Modules/Quotes.php:703
+#: includes/Modules/Invoices.php:918
+msgid "Failed to update invoice total"
+msgstr ""
+
+#: includes/Modules/Quotes.php:750
 msgid "Failed to update quote status"
 msgstr ""
 
-#: includes/Modules/Invoices.php:447
+#: includes/Modules/Invoices.php:479
 msgid "Failure to delete invoice and/or associated items"
 msgstr ""
 
-#: includes/Modules/Quotes.php:423
+#: includes/Modules/Quotes.php:470
 msgid "Failure to delete Quote and/or associated items"
 msgstr ""
 
@@ -710,15 +755,15 @@ msgstr ""
 msgid "Fax"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:62 includes/Modules/App.php:361
+#: languages/my-easy-compta-translations.php:62 includes/Modules/App.php:364
 msgid "February"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:240
+#: languages/my-easy-compta-translations.php:241
 msgid "File name"
 msgstr ""
 
-#: includes/Modules/Expenses.php:212
+#: includes/Modules/Expenses.php:256
 msgid "File upload failed:"
 msgstr ""
 
@@ -749,12 +794,12 @@ msgstr ""
 msgid "https://myeasycompta.com"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:180
-#: includes/Modules/PDFGenerator.php:885
+#: languages/my-easy-compta-translations.php:181
+#: includes/Modules/PDFGenerator.php:957
 msgid "IBAN"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:206
+#: languages/my-easy-compta-translations.php:207
 msgid "ID"
 msgstr ""
 
@@ -778,7 +823,7 @@ msgstr ""
 msgid "Install settings datas"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:251
+#: languages/my-easy-compta-translations.php:252
 msgid "Installed"
 msgstr ""
 
@@ -796,57 +841,57 @@ msgid ""
 "sales, and handle customer invoicing seamlessly."
 msgstr ""
 
-#: includes/Modules/Expenses.php:272
+#: includes/Modules/Expenses.php:316
 msgid "Invalid expense ID."
 msgstr ""
 
-#: includes/Modules/Invoices.php:714
+#: includes/Modules/Invoices.php:744
 msgid "Invalid ID provided"
 msgstr ""
 
-#: includes/Modules/Invoices.php:385
+#: includes/Modules/Invoices.php:417
 msgid "Invalid invoice ID"
 msgstr ""
 
-#: includes/Modules/Invoices.php:434
+#: includes/Modules/Invoices.php:466
 msgid "Invalid invoice ID."
 msgstr ""
 
-#: includes/Modules/Invoices.php:547
+#: includes/Modules/Invoices.php:579
 msgid "Invalid item ID."
 msgstr ""
 
-#: includes/Modules/Clients.php:321 includes/Modules/Credits.php:132
-#: includes/Modules/Credits.php:178 includes/Modules/Expenses.php:151
-#: includes/Modules/Expenses.php:332 includes/Modules/Invoices.php:212
-#: includes/Modules/Invoices.php:286 includes/Modules/Invoices.php:428
-#: includes/Modules/Quotes.php:196 includes/Modules/Quotes.php:253
-#: includes/Modules/Quotes.php:404 includes/Modules/Quotes.php:495
-#: includes/Modules/Quotes.php:723
+#: includes/Modules/Clients.php:349 includes/Modules/Credits.php:132
+#: includes/Modules/Credits.php:178 includes/Modules/Expenses.php:195
+#: includes/Modules/Expenses.php:376 includes/Modules/Invoices.php:244
+#: includes/Modules/Invoices.php:318 includes/Modules/Invoices.php:460
+#: includes/Modules/Quotes.php:243 includes/Modules/Quotes.php:300
+#: includes/Modules/Quotes.php:451 includes/Modules/Quotes.php:542
+#: includes/Modules/Quotes.php:770
 msgid "Invalid nonce"
 msgstr ""
 
-#: includes/Modules/Invoices.php:685 includes/Modules/Quotes.php:663
+#: includes/Modules/Invoices.php:713 includes/Modules/Quotes.php:710
 msgid "Invalid order data"
 msgstr ""
 
-#: includes/Modules/Payments.php:123
+#: includes/Modules/Payments.php:165
 msgid "Invalid payment ID."
 msgstr ""
 
-#: includes/Modules/Quotes.php:409
+#: includes/Modules/Quotes.php:456
 msgid "Invalid quote ID."
 msgstr ""
 
-#: includes/Modules/PDFGenerator.php:455
+#: includes/Modules/PDFGenerator.php:457
 msgid "Invoice"
 msgstr ""
 
-#: includes/Modules/Invoices.php:269
+#: includes/Modules/Invoices.php:301
 msgid "Invoice added successfully"
 msgstr ""
 
-#: includes/Modules/Invoices.php:444
+#: includes/Modules/Invoices.php:476
 msgid "Invoice and related items successfully deleted"
 msgstr ""
 
@@ -854,7 +899,7 @@ msgstr ""
 msgid "Invoice color"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:182
+#: languages/my-easy-compta-translations.php:183
 msgid "Invoice footer"
 msgstr ""
 
@@ -862,24 +907,24 @@ msgstr ""
 msgid "Invoice in"
 msgstr ""
 
-#: includes/Modules/Invoices.php:669
+#: includes/Modules/Invoices.php:697
 msgid "Invoice item deleted."
 msgstr ""
 
-#: includes/Modules/Invoices.php:371
+#: includes/Modules/Invoices.php:403
 msgid "Invoice item successfully added"
 msgstr ""
 
-#: includes/Modules/Invoices.php:698
+#: includes/Modules/Invoices.php:728
 msgid "Invoice items order updated successfully"
 msgstr ""
 
 #: includes/Modules/Credits.php:138 includes/Modules/Credits.php:186
-#: includes/Modules/Invoices.php:719
+#: includes/Modules/Invoices.php:749
 msgid "Invoice not found"
 msgstr ""
 
-#: includes/Modules/Invoices.php:180
+#: includes/Modules/Invoices.php:212
 msgid "Invoice not found."
 msgstr ""
 
@@ -887,7 +932,7 @@ msgstr ""
 msgid "Invoice number"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:271
+#: languages/my-easy-compta-translations.php:272
 msgid "Invoice Overdue"
 msgstr ""
 
@@ -895,30 +940,30 @@ msgstr ""
 msgid "Invoice prefix"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:222
+#: languages/my-easy-compta-translations.php:223
 msgid "Invoice reminder"
 msgstr ""
 
-#: includes/Modules/Invoices.php:785
+#: includes/Modules/Invoices.php:815
 msgid "Invoice status updated successfully"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:183
+#: languages/my-easy-compta-translations.php:184
 msgid "Invoice terms"
 msgstr ""
 
-#: includes/Modules/Invoices.php:418
+#: includes/Modules/Invoices.php:450
 msgid "Invoice updated successfully"
 msgstr ""
 
 # Exemple de chaînes de caractères à traduire pour le plugin myEasyCompta
 # Les commentaires commencent par le symbole '#'
-#: languages/my-easy-compta-translations.php:9 includes/Modules/Invoices.php:27
-#: includes/Modules/Invoices.php:28
+#: languages/my-easy-compta-translations.php:9 includes/Modules/Invoices.php:26
+#: includes/Modules/Invoices.php:27
 msgid "Invoices"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:274
+#: languages/my-easy-compta-translations.php:275
 msgid "Invoices in draft status cannot be sent."
 msgstr ""
 
@@ -926,28 +971,28 @@ msgstr ""
 msgid "Invoices settings"
 msgstr ""
 
-#: includes/Modules/Invoices.php:618 includes/Modules/Quotes.php:605
+#: includes/Modules/Invoices.php:650 includes/Modules/Quotes.php:652
 msgid "Item edited successfully"
 msgstr ""
 
 #: languages/my-easy-compta-translations.php:138
-#: includes/Modules/PDFGenerator.php:705
+#: includes/Modules/PDFGenerator.php:709
 msgid "Item name"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:61 includes/Modules/App.php:360
+#: languages/my-easy-compta-translations.php:61 includes/Modules/App.php:363
 msgid "January"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:67 includes/Modules/App.php:366
+#: languages/my-easy-compta-translations.php:67 includes/Modules/App.php:369
 msgid "July"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:66 includes/Modules/App.php:365
+#: languages/my-easy-compta-translations.php:66 includes/Modules/App.php:368
 msgid "June"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:214
+#: languages/my-easy-compta-translations.php:215
 msgid "Last invoices"
 msgstr ""
 
@@ -959,15 +1004,15 @@ msgstr ""
 msgid "License Addons"
 msgstr ""
 
-#: includes/Modules/Settings.php:1096
+#: includes/Modules/Settings.php:1104
 msgid "License data deleted successfully."
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:248
+#: languages/my-easy-compta-translations.php:249
 msgid "License key"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:279
+#: languages/my-easy-compta-translations.php:282
 msgid "Live mode"
 msgstr ""
 
@@ -975,7 +1020,7 @@ msgstr ""
 msgid "Logo mentions"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:265
+#: languages/my-easy-compta-translations.php:266
 msgid "Logout"
 msgstr ""
 
@@ -983,7 +1028,7 @@ msgstr ""
 msgid "Manager name"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:63 includes/Modules/App.php:362
+#: languages/my-easy-compta-translations.php:63 includes/Modules/App.php:365
 msgid "March"
 msgstr ""
 
@@ -1003,7 +1048,7 @@ msgstr ""
 msgid "Mark as rejected"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:65 includes/Modules/App.php:364
+#: languages/my-easy-compta-translations.php:65 includes/Modules/App.php:367
 msgid "May"
 msgstr ""
 
@@ -1015,8 +1060,12 @@ msgstr ""
 msgid "Mobile"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:277
+#: languages/my-easy-compta-translations.php:280
 msgid "Mode"
+msgstr ""
+
+#: my-easy-compta.php:364
+msgid "Modify permalinks"
 msgstr ""
 
 #: languages/my-easy-compta-translations.php:127
@@ -1024,7 +1073,7 @@ msgid "Monthly Payments"
 msgstr ""
 
 #. Name of the plugin
-#: includes/Modules/App.php:25 includes/Modules/App.php:26
+#: includes/Modules/App.php:28 includes/Modules/App.php:29
 msgid "myEasyCompta"
 msgstr ""
 
@@ -1086,7 +1135,19 @@ msgstr ""
 msgid "myEasyCompta Planning"
 msgstr ""
 
-#: my-easy-compta.php:342
+#: includes/Modules/Addons.php:202
+msgid "myEasyCompta QRCode Stripe"
+msgstr ""
+
+#: includes/Modules/Addons.php:204
+msgid ""
+"myEasyCompta QRCode Stripe allows you to add a dynamic QR code to your "
+"invoices for Stripe payments. Simplify the payment process for your clients "
+"by providing a direct link to your Stripe checkout page, ensuring fast and "
+"secure transactions."
+msgstr ""
+
+#: my-easy-compta.php:346
 msgid "myEasyCompta requires a database update."
 msgstr ""
 
@@ -1108,6 +1169,18 @@ msgstr ""
 msgid "myEasyCompta Stats"
 msgstr ""
 
+#: includes/Modules/Addons.php:214
+msgid "myEasyCompta SureCart"
+msgstr ""
+
+#: includes/Modules/Addons.php:216
+msgid ""
+"myEasyCompta SureCart integrates seamlessly with SureCart to automatically "
+"generate invoices for your transactions. Keep your invoicing process "
+"organized and compliant, with detailed invoices automatically created for "
+"each order in SureCart."
+msgstr ""
+
 #: includes/Modules/Addons.php:111
 msgid "myEasyCompta User"
 msgstr ""
@@ -1116,7 +1189,7 @@ msgstr ""
 msgid "myEasyCompta Woo"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:192
+#: languages/my-easy-compta-translations.php:193
 msgid "Name"
 msgstr ""
 
@@ -1128,7 +1201,7 @@ msgstr ""
 msgid "New invoice"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:215
+#: languages/my-easy-compta-translations.php:216
 msgid "New password"
 msgstr ""
 
@@ -1140,40 +1213,44 @@ msgstr ""
 msgid "No data for the moment"
 msgstr ""
 
-#: includes/Modules/Invoices.php:602 includes/Modules/Invoices.php:642
+#: includes/Modules/Invoices.php:875
+msgid "No disbursements found for this invoice"
+msgstr ""
+
+#: includes/Modules/Invoices.php:634 includes/Modules/Invoices.php:674
 msgid "No invoice found for the given item."
 msgstr ""
 
-#: includes/Modules/Invoices.php:523
+#: includes/Modules/Invoices.php:555
 msgid "No item details found."
 msgstr ""
 
-#: includes/Modules/Invoices.php:490
+#: includes/Modules/Invoices.php:522
 msgid "No items found for this invoice."
 msgstr ""
 
-#: includes/Modules/Quotes.php:374 includes/Modules/Quotes.php:394
+#: includes/Modules/Quotes.php:421 includes/Modules/Quotes.php:441
 msgid "No items found for this quote."
 msgstr ""
 
-#: includes/Modules/Quotes.php:589 includes/Modules/Quotes.php:627
+#: includes/Modules/Quotes.php:636 includes/Modules/Quotes.php:674
 msgid "No quote found for the given item."
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:252
+#: languages/my-easy-compta-translations.php:253
 msgid "No update available."
 msgstr ""
 
-#: includes/Modules/Clients.php:189 includes/Modules/Invoices.php:629
-#: includes/Modules/Quotes.php:616
+#: includes/Modules/Clients.php:217 includes/Modules/Invoices.php:661
+#: includes/Modules/Quotes.php:663
 msgid "Nonce invalide"
 msgstr ""
 
-#: includes/Modules/Invoices.php:381
+#: includes/Modules/Invoices.php:413
 msgid "Nonce verification failed."
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:250
+#: languages/my-easy-compta-translations.php:251
 msgid "Not installed"
 msgstr ""
 
@@ -1181,15 +1258,19 @@ msgstr ""
 msgid "Note"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:71 includes/Modules/App.php:370
+#: languages/my-easy-compta-translations.php:71 includes/Modules/App.php:373
 msgid "November"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:70 includes/Modules/App.php:369
+#: languages/my-easy-compta-translations.php:70 includes/Modules/App.php:372
 msgid "October"
 msgstr ""
 
-#: includes/Modules/PDFGenerator.php:220
+#: includes/Modules/App.php:466
+msgid "Offer valid until November 30!"
+msgstr ""
+
+#: includes/Modules/PDFGenerator.php:222
 msgid "PAID"
 msgstr ""
 
@@ -1209,21 +1290,21 @@ msgstr ""
 msgid "Payed"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:178
-#: includes/Modules/PDFGenerator.php:871
+#: languages/my-easy-compta-translations.php:179
+#: includes/Modules/PDFGenerator.php:943
 msgid "Payment conditions"
 msgstr ""
 
 #: languages/my-easy-compta-translations.php:112
-#: includes/Modules/PDFGenerator.php:456 includes/Modules/PDFGenerator.php:474
+#: includes/Modules/PDFGenerator.php:458 includes/Modules/PDFGenerator.php:476
 msgid "Payment date"
 msgstr ""
 
-#: includes/Modules/Payments.php:215
+#: includes/Modules/Payments.php:257
 msgid "Payment deleted successfully"
 msgstr ""
 
-#: includes/Modules/Payments.php:195
+#: includes/Modules/Payments.php:237
 msgid "Payment edited successfully"
 msgstr ""
 
@@ -1231,20 +1312,20 @@ msgstr ""
 msgid "Payment method"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:179
-#: includes/Modules/PDFGenerator.php:874
+#: languages/my-easy-compta-translations.php:180
+#: includes/Modules/PDFGenerator.php:946
 msgid "Payment mode"
 msgstr ""
 
-#: includes/Modules/Payments.php:140
+#: includes/Modules/Payments.php:182
 msgid "Payment not found."
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:223
+#: languages/my-easy-compta-translations.php:224
 msgid "Payment received"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:287
+#: languages/my-easy-compta-translations.php:290
 msgid "Payment successful"
 msgstr ""
 
@@ -1253,7 +1334,7 @@ msgstr ""
 msgid "Payments"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:204
+#: languages/my-easy-compta-translations.php:205
 msgid "Payments methods"
 msgstr ""
 
@@ -1266,20 +1347,20 @@ msgid "Pending"
 msgstr ""
 
 #: languages/my-easy-compta-translations.php:33
-#: includes/Modules/PDFGenerator.php:561 includes/Modules/PDFGenerator.php:583
+#: includes/Modules/PDFGenerator.php:563 includes/Modules/PDFGenerator.php:585
 #: includes/Modules/Setup.php:191
 msgid "Phone"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:218
+#: languages/my-easy-compta-translations.php:219
 msgid "Planning settings"
 msgstr ""
 
-#: my-easy-compta.php:260
+#: my-easy-compta.php:263
 msgid "Plugin activation error"
 msgstr ""
 
-#: my-easy-compta.php:364
+#: my-easy-compta.php:381
 msgid "Plugin deactivation error"
 msgstr ""
 
@@ -1291,28 +1372,32 @@ msgstr ""
 msgid "Preview PDF"
 msgstr ""
 
+#: languages/my-easy-compta-translations.php:305
+msgid "Price"
+msgstr ""
+
 #: languages/my-easy-compta-translations.php:51
 msgid "Provisional start date"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:281
+#: languages/my-easy-compta-translations.php:284
 msgid "Public key (Live mode)"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:283
+#: languages/my-easy-compta-translations.php:286
 msgid "Public key (Test mode)"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:293
+#: languages/my-easy-compta-translations.php:296
 msgid "QRCode Settings"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:295
+#: languages/my-easy-compta-translations.php:298
 msgid "QRCode Stripe"
 msgstr ""
 
 #: languages/my-easy-compta-translations.php:142
-#: includes/Modules/PDFGenerator.php:708
+#: includes/Modules/PDFGenerator.php:712
 msgid "Qty"
 msgstr ""
 
@@ -1320,51 +1405,55 @@ msgstr ""
 msgid "Quantity"
 msgstr ""
 
-#: includes/Modules/PDFGenerator.php:441
+#: includes/Modules/PDFGenerator.php:443
 msgid "Quote"
 msgstr ""
 
-#: includes/Modules/Quotes.php:235
+#: includes/Modules/Quotes.php:282
 msgid "Quote added successfully"
 msgstr ""
 
-#: includes/Modules/Quotes.php:420
+#: includes/Modules/Quotes.php:467
 msgid "Quote and related items successfully deleted"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:188
+#: languages/my-easy-compta-translations.php:189
 msgid "Quote color"
 msgstr ""
 
-#: includes/Modules/Quotes.php:795
+#: includes/Modules/Quotes.php:842
 msgid "Quote converted to invoice successfully"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:270
+#: languages/my-easy-compta-translations.php:271
 msgid "Quote expired"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:190
+#: languages/my-easy-compta-translations.php:191
 msgid "Quote footer"
 msgstr ""
 
-#: includes/Modules/Quotes.php:647
+#: languages/my-easy-compta-translations.php:276
+msgid "Quote in draft status cannot be sent."
+msgstr ""
+
+#: includes/Modules/Quotes.php:694
 msgid "Quote item deleted."
 msgstr ""
 
-#: includes/Modules/Quotes.php:322
+#: includes/Modules/Quotes.php:369
 msgid "Quote item successfully added"
 msgstr ""
 
-#: includes/Modules/Quotes.php:675
+#: includes/Modules/Quotes.php:722
 msgid "Quote items order updated successfully"
 msgstr ""
 
-#: includes/Modules/Quotes.php:730
+#: includes/Modules/Quotes.php:777
 msgid "Quote not found"
 msgstr ""
 
-#: includes/Modules/Quotes.php:182
+#: includes/Modules/Quotes.php:229
 msgid "Quote not found."
 msgstr ""
 
@@ -1372,15 +1461,15 @@ msgstr ""
 msgid "Quote number"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:189 includes/Modules/Setup.php:248
+#: languages/my-easy-compta-translations.php:190 includes/Modules/Setup.php:248
 msgid "Quote prefix"
 msgstr ""
 
-#: includes/Modules/Quotes.php:712
+#: includes/Modules/Quotes.php:759
 msgid "Quote status updated successfully"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:191
+#: languages/my-easy-compta-translations.php:192
 msgid "Quote terms"
 msgstr ""
 
@@ -1393,7 +1482,7 @@ msgstr ""
 msgid "Quotes settings"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:200
+#: languages/my-easy-compta-translations.php:201
 msgid "Rate"
 msgstr ""
 
@@ -1402,11 +1491,12 @@ msgstr ""
 #: includes/Modules/Addons.php:118 includes/Modules/Addons.php:131
 #: includes/Modules/Addons.php:144 includes/Modules/Addons.php:157
 #: includes/Modules/Addons.php:170 includes/Modules/Addons.php:183
-#: includes/Modules/Addons.php:196
+#: includes/Modules/Addons.php:196 includes/Modules/Addons.php:208
+#: includes/Modules/Addons.php:220
 msgid "Read more"
 msgstr ""
 
-#: includes/Modules/PDFGenerator.php:546
+#: includes/Modules/PDFGenerator.php:548
 msgid "Received From"
 msgstr ""
 
@@ -1418,20 +1508,20 @@ msgstr ""
 msgid "Recently Paid Invoices"
 msgstr ""
 
-#: includes/Modules/PDFGenerator.php:550
+#: includes/Modules/PDFGenerator.php:552
 msgid "Recipient"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:227
+#: languages/my-easy-compta-translations.php:228
 msgid "Recipient email"
 msgstr ""
 
 #: languages/my-easy-compta-translations.php:137
-#: includes/Modules/PDFGenerator.php:702
+#: includes/Modules/PDFGenerator.php:706
 msgid "Ref"
 msgstr ""
 
-#: includes/Modules/PDFGenerator.php:516
+#: includes/Modules/PDFGenerator.php:518
 msgid "Reference No"
 msgstr ""
 
@@ -1447,11 +1537,11 @@ msgstr ""
 msgid "Resend invoice"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:244
+#: languages/my-easy-compta-translations.php:245
 msgid "Restore"
 msgstr ""
 
-#: includes/Modules/PDFGenerator.php:882
+#: includes/Modules/PDFGenerator.php:954
 msgid "RIB"
 msgstr ""
 
@@ -1463,15 +1553,15 @@ msgstr ""
 msgid "Search"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:280
+#: languages/my-easy-compta-translations.php:283
 msgid "Secret key (Live mode)"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:282
+#: languages/my-easy-compta-translations.php:285
 msgid "Secret key (Test mode)"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:286
+#: languages/my-easy-compta-translations.php:289
 msgid "Security code"
 msgstr ""
 
@@ -1479,7 +1569,7 @@ msgstr ""
 msgid "Select"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:235
+#: languages/my-easy-compta-translations.php:236
 msgid "Select / Unselect All"
 msgstr ""
 
@@ -1503,7 +1593,7 @@ msgstr ""
 msgid "Send quote"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:69 includes/Modules/App.php:368
+#: languages/my-easy-compta-translations.php:69 includes/Modules/App.php:371
 msgid "September"
 msgstr ""
 
@@ -1520,32 +1610,32 @@ msgstr ""
 msgid "Setup complete!"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:292
-#: includes/Modules/PDFGenerator.php:830
+#: languages/my-easy-compta-translations.php:295
+#: includes/Modules/PDFGenerator.php:874
 msgid "Shipping fees"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:173
+#: languages/my-easy-compta-translations.php:174
 msgid "Show Email"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:172
+#: languages/my-easy-compta-translations.php:173
 msgid "Show Phone"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:174
+#: languages/my-easy-compta-translations.php:175
 msgid "Show SIREN n°"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:175
+#: languages/my-easy-compta-translations.php:176
 msgid "Show TAX n°"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:176
+#: languages/my-easy-compta-translations.php:177
 msgid "Show Watermark"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:177
+#: languages/my-easy-compta-translations.php:178
 msgid "Show Watermark only for Paid status"
 msgstr ""
 
@@ -1562,12 +1652,12 @@ msgid "Signed"
 msgstr ""
 
 #: languages/my-easy-compta-translations.php:24
-#: includes/Modules/PDFGenerator.php:589
+#: includes/Modules/PDFGenerator.php:591
 msgid "SIREN n°"
 msgstr ""
 
 #: languages/my-easy-compta-translations.php:23
-#: includes/Modules/PDFGenerator.php:567 includes/Modules/Setup.php:145
+#: includes/Modules/PDFGenerator.php:569 includes/Modules/Setup.php:145
 msgid "SIRET n°"
 msgstr ""
 
@@ -1575,7 +1665,7 @@ msgstr ""
 msgid "Skip"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:257
+#: languages/my-easy-compta-translations.php:258
 msgid "Slug"
 msgstr ""
 
@@ -1583,7 +1673,7 @@ msgstr ""
 msgid "Statistics"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:276
+#: languages/my-easy-compta-translations.php:279
 msgid "Stats settings"
 msgstr ""
 
@@ -1604,12 +1694,12 @@ msgid ""
 "small businesses looking to simplify their accounting processes."
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:294
+#: languages/my-easy-compta-translations.php:297
 msgid "Stripe secret key"
 msgstr ""
 
 #: languages/my-easy-compta-translations.php:150
-#: languages/my-easy-compta-translations.php:275
+#: languages/my-easy-compta-translations.php:278
 msgid "Stripe settings"
 msgstr ""
 
@@ -1625,15 +1715,15 @@ msgstr ""
 msgid "Submit"
 msgstr ""
 
-#: includes/Modules/PDFGenerator.php:756 includes/Modules/PDFGenerator.php:779
+#: includes/Modules/PDFGenerator.php:800 includes/Modules/PDFGenerator.php:823
 msgid "Subtotal"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:262
+#: languages/my-easy-compta-translations.php:263
 msgid "Success"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:193
+#: languages/my-easy-compta-translations.php:194
 msgid "Symbol"
 msgstr ""
 
@@ -1650,26 +1740,33 @@ msgid "Tables created successfully"
 msgstr ""
 
 #: languages/my-easy-compta-translations.php:45
-#: includes/Modules/PDFGenerator.php:799
+#: includes/Modules/PDFGenerator.php:843
 msgid "Tax"
 msgstr ""
 
 #: languages/my-easy-compta-translations.php:22
-#: includes/Modules/PDFGenerator.php:570 includes/Modules/PDFGenerator.php:592
+#: includes/Modules/PDFGenerator.php:572 includes/Modules/PDFGenerator.php:594
 #: includes/Modules/Setup.php:151
 msgid "Tax number"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:278
+#: languages/my-easy-compta-translations.php:281
 msgid "Test mode"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:197
+#: languages/my-easy-compta-translations.php:198
 msgid "Text Color"
 msgstr ""
 
+#: my-easy-compta.php:363
+msgid ""
+"The <b>myEasyCompta</b> plugin requires the permalink structure to be set to "
+"\"/%postname%/\". Please modify it for proper functionality by clicking the "
+"button below."
+msgstr ""
+
 #. %s is the minimum PHP version required
-#: my-easy-compta.php:254
+#: my-easy-compta.php:257
 #, php-format
 msgid ""
 "The <strong>myEasyCompta</strong> plugin requires PHP version %s or higher."
@@ -1683,34 +1780,38 @@ msgid ""
 "Easy-Compta system."
 msgstr ""
 
-#: includes/Modules/Clients.php:219
+#: includes/Modules/Clients.php:247
 msgid "The email address is invalid"
 msgstr ""
 
 #. %s: is the field name.
 #. %s is the field name
-#: includes/Modules/Clients.php:206 includes/Modules/Invoices.php:303
-#: includes/Modules/Quotes.php:270
+#: includes/Modules/Clients.php:234 includes/Modules/Invoices.php:335
+#: includes/Modules/Quotes.php:317
 #, php-format
 msgid "The field %s is required"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:212
+#: languages/my-easy-compta-translations.php:213
 msgid "There's no turning back!"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:245
+#: languages/my-easy-compta-translations.php:246
 msgid ""
 "This will automatically create a backup and delete all data to restore the "
 "backup."
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:246
+#: languages/my-easy-compta-translations.php:303
+msgid "Title"
+msgstr ""
+
+#: languages/my-easy-compta-translations.php:247
 msgid "Token api SIREN v 3.11"
 msgstr ""
 
 #: languages/my-easy-compta-translations.php:43
-#: includes/Modules/PDFGenerator.php:725 includes/Modules/PDFGenerator.php:855
+#: includes/Modules/PDFGenerator.php:729 includes/Modules/PDFGenerator.php:926
 msgid "Total"
 msgstr ""
 
@@ -1718,15 +1819,20 @@ msgstr ""
 msgid "Total amount"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:267
-msgid "Total invoices"
+#: languages/my-easy-compta-translations.php:307
+#: includes/Modules/PDFGenerator.php:898
+msgid "Total disbursements"
 msgstr ""
 
 #: languages/my-easy-compta-translations.php:268
+msgid "Total invoices"
+msgstr ""
+
+#: languages/my-easy-compta-translations.php:269
 msgid "Total paid invoices"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:266
+#: languages/my-easy-compta-translations.php:267
 msgid "Total quotes"
 msgstr ""
 
@@ -1738,16 +1844,16 @@ msgstr ""
 msgid "Type"
 msgstr ""
 
-#: includes/Modules/Invoices.php:679 includes/Modules/Quotes.php:657
+#: includes/Modules/Invoices.php:707 includes/Modules/Quotes.php:704
 msgid "Unauthorized request"
 msgstr ""
 
 #: languages/my-easy-compta-translations.php:143
-#: includes/Modules/PDFGenerator.php:711
+#: includes/Modules/PDFGenerator.php:715
 msgid "Unit price"
 msgstr ""
 
-#: includes/Modules/PDFGenerator.php:228
+#: includes/Modules/PDFGenerator.php:230
 msgid "UNPAID"
 msgstr ""
 
@@ -1755,7 +1861,7 @@ msgstr ""
 msgid "Unpaid"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:269
+#: languages/my-easy-compta-translations.php:270
 msgid "Unpaid invoices"
 msgstr ""
 
@@ -1763,19 +1869,24 @@ msgstr ""
 msgid "Update"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:253
+#: languages/my-easy-compta-translations.php:254
 msgid "Update available! New version"
 msgstr ""
 
-#: my-easy-compta.php:345
+#: my-easy-compta.php:349
 msgid "Update Database"
+msgstr ""
+
+#: includes/Modules/App.php:465
+msgid ""
+"Upgrade to myEasyCompta PREMIUM now and enjoy 30% off with the promo code"
 msgstr ""
 
 #: languages/my-easy-compta-translations.php:159
 msgid "Users settings"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:249
+#: languages/my-easy-compta-translations.php:250
 msgid "Validate"
 msgstr ""
 
@@ -1787,19 +1898,19 @@ msgstr ""
 msgid "Validate quote"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:201
+#: languages/my-easy-compta-translations.php:202
 msgid "VAT"
 msgstr ""
 
-#: includes/Modules/PDFGenerator.php:716
+#: includes/Modules/PDFGenerator.php:720
 msgid "Vat"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:202
+#: languages/my-easy-compta-translations.php:203
 msgid "VAT Rates"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:261
+#: languages/my-easy-compta-translations.php:262
 msgid "Version"
 msgstr ""
 
@@ -1811,37 +1922,41 @@ msgstr ""
 msgid "Website"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:211
+#: languages/my-easy-compta-translations.php:212
 msgid "Yes, confirm it!"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:210
+#: languages/my-easy-compta-translations.php:211
 msgid "Yes, delete it!"
 msgstr ""
 
-#: my-easy-compta.php:363
+#: my-easy-compta.php:380
 msgid ""
 "You cannot deactivate the myEasyCompta plugin while add-ons are enabled."
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:291
+#: languages/my-easy-compta-translations.php:294
 msgid "You must have at least one article"
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:272
+#: languages/my-easy-compta-translations.php:273
 msgid "You need to activate the Email addon to benefit from this feature."
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:273
+#: languages/my-easy-compta-translations.php:274
 msgid "You need to activate the Export addon to benefit from this feature."
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:297
+#: languages/my-easy-compta-translations.php:300
 msgid ""
 "You need to activate the QRCode Stripe addon to benefit from this feature."
 msgstr ""
 
-#: languages/my-easy-compta-translations.php:288
+#: languages/my-easy-compta-translations.php:277
+msgid "You need to activate the Signature addon to benefit from this feature."
+msgstr ""
+
+#: languages/my-easy-compta-translations.php:291
 msgid ""
 "Your payment is secure, and no card details are stored by our platform. The "
 "transaction is protected by Stripe's service."

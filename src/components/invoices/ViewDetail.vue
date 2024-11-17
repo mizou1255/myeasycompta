@@ -321,6 +321,10 @@
                   </option>
                 </select>
                 <div class="flex items-center border rounded-md relative">
+                  <span
+                    id="loader_articles"
+                    class="loading loading-spinner loading-xs absolute right-2 hidden"
+                  ></span>
                   <input
                     type="text"
                     v-model="newItem.item_name"
@@ -459,7 +463,102 @@
                 ></span>
               </td>
             </tr>
-            <tr>
+            <tr v-if="settings.active_disbursements == 1">
+              <td colspan="12" class="font-bold text-lg pt-10">
+                <button
+                  v-if="invoice.status == 'draft'"
+                  @click.prevent="toggleDisbursements"
+                  class="btn btn-primary py-2 px-4 rounded text-white"
+                >
+                  <i
+                    :class="{
+                      'fas fa-plus': !showDisbursements,
+                      'fas fa-minus': showDisbursements,
+                    }"
+                  ></i>
+                </button>
+                <span
+                  class="ml-2"
+                  v-if="invoice.status == 'draft' || disbursementsExist"
+                >
+                  {{ translations.disbursements }}
+                </span>
+              </td>
+            </tr>
+            <tr
+              v-for="disbursement in disbursementsList"
+              :key="disbursement.id"
+            >
+              <td class="p-2" colspan="3">{{ disbursement.title }}</td>
+              <td class="p-2">
+                {{ disbursement.description }}
+              </td>
+              <td class="p-2">
+                {{ calculateTotal(1, disbursement.unit_price, 0) }}
+              </td>
+            </tr>
+            <tr
+              v-if="
+                settings.active_disbursements == 1 &&
+                showDisbursements &&
+                invoice.status == 'draft'
+              "
+            >
+              <td class="align-top px-2" colspan="3">
+                <div class="flex items-center border rounded-md">
+                  <input
+                    type="text"
+                    v-model="disbursementsItem.title"
+                    :placeholder="translations.title"
+                    class="w-full p-2.5 bg-transparent input-xs outline-none"
+                  />
+                </div>
+              </td>
+              <td class="align-top px-2">
+                <div class="flex items-center rounded-md">
+                  <textarea
+                    v-model="disbursementsItem.description"
+                    :placeholder="translations.description"
+                    class="textarea textarea-bordered input-xs w-full"
+                  ></textarea>
+                </div>
+              </td>
+              <td class="align-top">
+                <div class="flex items-center border rounded-md">
+                  <input
+                    type="text"
+                    pattern="([0-9]+.{0,1}[0-9]*,{0,1})*[0-9]"
+                    v-model="disbursementsItem.unit_price"
+                    :placeholder="translations.price"
+                    class="w-full p-2.5 bg-transparent input-xs outline-none"
+                  />
+                </div>
+              </td>
+              <td class="align-top" colspan="3"></td>
+              <td class="text-right">
+                {{ calculateTotal(1, disbursementsItem.unit_price, 0) }}
+              </td>
+              <td>
+                <span
+                  class="lg:tooltip"
+                  :data-tip="translations.add_disbursements"
+                >
+                  <button
+                    type="submit"
+                    class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+                    @click.prevent="addDisbursements"
+                  >
+                    <i v-if="!loading_add_disbursements" class="fa fa-plus"></i>
+                    <span
+                      v-if="loading_add_disbursements"
+                      class="loading loading-spinner loading-xs"
+                    ></span>
+                  </button>
+                </span>
+              </td>
+            </tr>
+
+            <tr class="border-t-4">
               <td colspan="8" class="text-right no-border">
                 <strong>{{ translations.subtotal }}</strong>
               </td>
@@ -491,6 +590,15 @@
               <td class="text-right no-border">
                 {{ formatShippingAmout(invoice.shipping_amount) }}
               </td>
+            </tr>
+            <tr v-if="settings.active_disbursements == 1 && disbursementsExist">
+              <td colspan="8" class="text-right no-border">
+                <strong>{{ translations.total_disbursements }}</strong>
+              </td>
+              <td class="text-right no-border">
+                {{ totalDisbursements() }}
+              </td>
+              <td></td>
             </tr>
             <tr>
               <td colspan="8" class="text-right no-border font-bold text-xl">
@@ -587,6 +695,15 @@ export default {
         type: "alert-success",
         position: "toast-bottom toast-end",
       },
+      showDisbursements: false,
+      disbursementsExist: false,
+      disbursementsItem: {
+        title: "",
+        description: "",
+        unit_price: "",
+      },
+      loading_add_disbursements: false,
+      disbursementsList: [],
     };
   },
   computed: {
@@ -677,10 +794,35 @@ export default {
       return this.formatCurrency(totalVAT);
     },
 
+    totalDisbursements() {
+      let total = 0;
+      if (this.disbursementsList && this.disbursementsList.length > 0) {
+        total += this.disbursementsList.reduce(
+          (totalDisbursements, disbursement) => {
+            return (
+              totalDisbursements + parseFloat(disbursement.unit_price || 0)
+            );
+          },
+          0
+        );
+      }
+      return this.formatCurrency(total);
+    },
+
     calculateTotalAmountWithVAT() {
       let total = this.invoiceItems.reduce((totalAmount, item) => {
         return totalAmount + parseFloat(item.total_amount);
       }, 0);
+      if (this.disbursementsList && this.disbursementsList.length > 0) {
+        total += this.disbursementsList.reduce(
+          (totalDisbursements, disbursement) => {
+            return (
+              totalDisbursements + parseFloat(disbursement.unit_price || 0)
+            );
+          },
+          0
+        );
+      }
       if (this.settings.easy_compta_woo_addon_active == 1) {
         total += parseFloat(this.invoice.shipping_amount || 0);
       }
@@ -773,6 +915,37 @@ export default {
         })
         .catch((error) => {
           console.error("Error fetching items:", error);
+          this.loading = false;
+        });
+    },
+    fetchDisbursements() {
+      this.loading = true;
+
+      fetch(
+        `/wp-json/my-easy-compta/v1/invoices/disbursements/${this.$route.params.id}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            "X-WP-Nonce": myEasyComptaAdmin.nonce,
+          },
+        }
+      )
+        .then((response) => {
+          return response.json();
+        })
+        .then((data) => {
+          if (data.code === "no_disbursements") {
+            console.error("No disbursements found");
+            this.disbursementsList = [];
+            this.disbursementsExist = false;
+          } else {
+            this.disbursementsList = data;
+            this.disbursementsExist = true;
+          }
+          this.loading = false;
+        })
+        .catch((error) => {
+          console.error("Error fetching disbursements:", error);
           this.loading = false;
         });
     },
@@ -1026,6 +1199,9 @@ export default {
         this.articles = [];
         return;
       }
+
+      const loader = document.getElementById("loader_articles");
+      loader.classList.remove("hidden");
       fetch(
         `/wp-json/my-easy-compta/v1/articles?search=${this.newItem.item_name}&method=name`,
         {
@@ -1038,7 +1214,51 @@ export default {
         .then((data) => {
           this.articles = data;
         })
-        .catch((error) => console.error("Error fetching articles:", error));
+        .catch((error) => console.error("Error fetching articles:", error))
+        .finally(() => {
+          loader.classList.add("hidden");
+        });
+    },
+    toggleDisbursements() {
+      this.showDisbursements = !this.showDisbursements;
+    },
+    addDisbursements() {
+      this.loading_add_disbursements = true;
+
+      fetch("/wp-json/my-easy-compta/v1/invoices/disbursements", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-WP-Nonce": myEasyComptaAdmin.nonce,
+        },
+        body: JSON.stringify({
+          invoice_id: this.invoice.id,
+          title: this.disbursementsItem.title,
+          description: this.disbursementsItem.description,
+          unit_price: parseFloat(this.disbursementsItem.unit_price),
+        }),
+      })
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then((data) => {
+          this.disbursementsItem = {
+            title: "",
+            description: "",
+            unit_price: "",
+          };
+          this.disbursementsList.push(data);
+          this.disbursementsExist = true;
+        })
+        .catch((error) => {
+          console.error("Erreur lors de l'ajout du débours :", error);
+        })
+        .finally(() => {
+          this.loading_add_disbursements = false;
+        });
     },
     selectItem(item) {
       this.newItem.item_ref = item.ref;
@@ -1124,6 +1344,7 @@ export default {
     this.fetchItems();
     this.loadSettings();
     this.fetchCategoriesArticles();
+    this.fetchDisbursements();
     document.addEventListener("click", this.handleClickOutside);
 
     const tbody = document.querySelector("tbody");

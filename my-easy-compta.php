@@ -2,7 +2,7 @@
 /**
  * Plugin Name: myEasyCompta
  * Description: Streamline your financial management with myEasyCompta, an all-in-one accounting plugin. Effortlessly handle quotes, invoices, expenses, and more, all within a sleek, user-friendly interface. Perfect for freelancers and small businesses looking to simplify their accounting processes.
- * Version: 1.3.0
+ * Version: 1.4.0
  * Author: MELIOZ.dev
  * Author URI: https://myeasycompta.com
  * Text Domain: my-easy-compta
@@ -10,7 +10,7 @@
  * License: GPLv2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Requires at least: 6.2
- * Tested up to: 6.6.1
+ * Tested up to: 6.7
  * Requires PHP: 8.0
  * Tags: accounting, quotes, invoices, expenses, Vue.js, TailwindCSS
  */
@@ -21,7 +21,7 @@
  * A comprehensive accounting plugin using Vue.js and TailwindCSS. Manage your quotes, invoices, expenses, and more with ease.
  *
  * @package myEasyCompta
- * @since 1.3.0
+ * @since 1.4.0
  */
 
 if (!defined('ABSPATH')) {
@@ -36,8 +36,8 @@ final class ECWP_Easy_Compta
      *
      * @var string
      */
-    public $version = '1.3.0';
-    private $version_migration_db = false;
+    public $version = '1.4.0';
+    private $version_migration_db = true;
 
     /**
      * Minimum PHP version required
@@ -145,6 +145,8 @@ final class ECWP_Easy_Compta
         define('ECWP_TABLE_EXPENSES_ATTACHMENTS', ECWP_PREFIX . 'ecwp_expenses_attachments');
         define('ECWP_TABLE_CURRENCY', ECWP_PREFIX . 'ecwp_currency');
         define('ECWP_TABLE_VATS', ECWP_PREFIX . 'ecwp_vat');
+
+        define('ECWP_TABLE_DISBURSEMENTS', ECWP_PREFIX . 'ecwp_disbursements');
     }
 
     /**
@@ -216,6 +218,7 @@ final class ECWP_Easy_Compta
 
         add_action('admin_init', [$this, 'maybe_run_migration']);
         add_action('admin_notices', [$this, 'migration_admin_notice']);
+        add_action('admin_notices', [$this, 'custom_permalink_structure_notice']);
 
     }
 
@@ -318,6 +321,7 @@ final class ECWP_Easy_Compta
         $migrations = [
             '1.1.0' => ECWP_INCLUDES . '/Migrations/migration_1_1_0.php',
             '1.2.3' => ECWP_INCLUDES . '/Migrations/migration_1_2_3.php',
+            '1.4.0' => ECWP_INCLUDES . '/Migrations/migration_1_4_0.php',
         ];
 
         $installed_db_version = get_option('ecwp_db_version', '1.0.0');
@@ -336,7 +340,7 @@ final class ECWP_Easy_Compta
     public function migration_admin_notice()
     {
         $installed_db_version = get_option('ecwp_db_version', '1.0.0');
-        if ($this->version_migration_db == true || version_compare('installed_db_version', '1.2.3', '<')) {
+        if ($this->version_migration_db == true && version_compare('installed_db_version', '1.4.0', '<')) {
             if (version_compare($installed_db_version, $this->version, '<')) {
                 echo '<div class="notice notice-warning is-dismissible">
                     <p>' . __('myEasyCompta requires a database update.', 'my-easy-compta') . '</p>
@@ -346,6 +350,19 @@ final class ECWP_Easy_Compta
                     </form>
                 </div>';
             }
+        }
+    }
+    public function custom_permalink_structure_notice()
+    {
+        $current_permalink_structure = get_option('permalink_structure');
+
+        if ($current_permalink_structure !== '/%postname%/') {
+            $permalink_page_url = admin_url('options-permalink.php');
+
+            echo '<div class="notice notice-error is-dismissible">';
+            echo '<p>' . __('The <b>myEasyCompta</b> plugin requires the permalink structure to be set to "/%postname%/". Please modify it for proper functionality by clicking the button below.', 'my-easy-compta') . '</p>';
+            echo '<p><a href="' . esc_url($permalink_page_url) . '" class="button button-primary">' . __('Modify permalinks', 'my-easy-compta') . '</a></p>';
+            echo '</div>';
         }
     }
 

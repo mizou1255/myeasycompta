@@ -314,6 +314,10 @@
                   </option>
                 </select>
                 <div class="flex items-center border rounded-md relative">
+                  <span
+                    id="loader_articles"
+                    class="loading loading-spinner loading-xs absolute right-2 hidden"
+                  ></span>
                   <input
                     type="text"
                     v-model="newItem.item_name"
@@ -1002,6 +1006,9 @@ export default {
         this.articles = [];
         return;
       }
+      const loader = document.getElementById("loader_articles");
+      loader.classList.remove("hidden");
+
       fetch(
         `/wp-json/my-easy-compta/v1/articles?search=${this.newItem.item_name}&method=name`,
         {
@@ -1014,7 +1021,10 @@ export default {
         .then((data) => {
           this.articles = data;
         })
-        .catch((error) => console.error("Error fetching articles:", error));
+        .catch((error) => console.error("Error fetching articles:", error))
+        .finally(() => {
+          loader.classList.add("hidden");
+        });
     },
     selectItem(item) {
       this.newItem.item_ref = item.ref;

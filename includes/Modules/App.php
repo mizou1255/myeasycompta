@@ -11,6 +11,9 @@ class ECWP_APP
     {
         load_plugin_textdomain('my-easy-compta', false, ECWP_PATH . '/languages');
         add_action('admin_menu', array($this, 'add_admin_menu'));
+        add_action('admin_notices', array($this, 'my_easy_compta_admin_notification'));
+        add_action('admin_footer', array($this, 'my_easy_compta_admin_notification_script'));
+        add_action('wp_ajax_my_easy_compta_admin_notification_hide', array($this, 'my_easy_compta_admin_notification_hide'));
         add_action('admin_enqueue_scripts', array($this, 'enqueue_scripts'));
 
         $this->routes = new Routes();
@@ -445,5 +448,82 @@ class ECWP_APP
 
         return new \WP_REST_Response($results, 200);
     }
+
+    public function my_easy_compta_admin_notification()
+    {
+        if (get_user_meta(get_current_user_id(), 'my_easy_compta_banner_dismissed', true)) {
+            return;
+        }
+        if (isset($_COOKIE['my_easy_compta_banner_closed'])) {
+            return;
+        }
+        ?>
+    <div class="my-easy-compta-banner-container">
+        <div class="my-easy-compta-banner-content">
+            <div class="my-easy-compta-banner-text">
+                <h3>🎉 <?php esc_html_e('Black Friday Sale - 30% OFF!', 'my-easy-compta');?> 🎉</h3>
+                <p><?php esc_html_e('Upgrade to myEasyCompta PREMIUM now and enjoy 30% off with the promo code', 'my-easy-compta');?>
+                    <strong>BF</strong>. <?php esc_html_e('Offer valid until November 30!', 'my-easy-compta');?></p>
+
+                <a href="https://myeasycompta.com/produit/myeasycompta-premium/" target="_blank" class="my-easy-compta-banner-button">
+                    <?php esc_html_e('Claim Your Discount', 'my-easy-compta');?>
+                </a>
+            </div>
+            <div class="my-easy-compta-banner-never-show">
+                <a href="#">
+                    <?php esc_html_e('Close & never show again', 'my-easy-compta');?>
+                </a>
+            </div>
+        </div>
+        <div class="my-easy-compta-banner-close">
+            <button type="button" class="my-easy-compta-banner-close">
+                <span class="dashicons dashicons-no"></span>
+            </button>
+        </div>
+    </div>
+    <?php
+}
+
+    public function my_easy_compta_admin_notification_hide()
+    {
+        if (isset($_POST['never_show'])) {
+            update_user_meta(get_current_user_id(), 'my_easy_compta_banner_dismissed', true);
+        }
+        wp_die();
+    }
+    public function my_easy_compta_admin_notification_script()
+    {
+        ?>
+    <script>
+    (function($) {
+        $(document).ready(function() {
+            $('.my-easy-compta-banner-close').on('click', function() {
+                var banner = $(this).closest('.my-easy-compta-banner-container');
+                banner.fadeOut('slow', function() {
+                    document.cookie = "my_easy_compta_banner_closed=1; path=/";
+                });
+            });
+
+            $('.my-easy-compta-banner-never-show').on('click', function() {
+                var banner = $(this).closest('.my-easy-compta-banner-container');
+                banner.fadeOut('slow', function() {
+                    $.post(ajaxurl, { action: 'my_easy_compta_admin_notification_hide', never_show: true });
+                });
+            });
+        });
+
+        function getCookie(name) {
+            var value = "; " + document.cookie;
+            var parts = value.split("; " + name + "=");
+            if (parts.length === 2) return parts.pop().split(";").shift();
+        }
+
+        if (getCookie('my_easy_compta_banner_closed')) {
+            $('.my-easy-compta-banner-banner').hide();
+        }
+    })(jQuery);
+    </script>
+    <?php
+}
 
 }

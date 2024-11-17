@@ -214,18 +214,22 @@
       </div>
       <div class="flex gap-2">
         <button
-          v-if="emailActive == 1 && !noItems"
           @click.prevent="sendQuote(quoteInfo.client_id)"
           class="btn btn-outline btn-primary btn-sm hover:text-white"
+          v-if="emailActive == 1 && quoteInfo.status != 'draft'"
         >
           <i class="fas fa-paper-plane"></i>
-          {{ translations.send_quote }}
+          <span v-if="quoteInfo.sent == 1">{{
+            translations.resend_quote
+          }}</span>
+          <span v-else>{{ translations.send_quote }}</span>
           <i class="far fa-envelope" v-if="quoteInfo.sent == 1"></i>
         </button>
+
         <div
-          v-else-if="emailActive == 0"
+          v-else-if="emailActive == 1 && quoteInfo.status == 'draft'"
           class="tooltip tooltip-bottom tooltip-warning"
-          :data-tip="translations.active_email_addon"
+          :data-tip="translations.quote_draft_cannot_send"
         >
           <button
             click="#"
@@ -236,10 +240,11 @@
             {{ translations.send_quote }}
           </button>
         </div>
+
         <div
-          v-else-if="emailActive == 1 && noItems"
+          v-else
           class="tooltip tooltip-bottom tooltip-warning"
-          :data-tip="translations.min_article"
+          :data-tip="translations.active_email_addon"
         >
           <button
             click="#"

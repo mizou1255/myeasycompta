@@ -46,6 +46,7 @@ class PDFGenerator
     private $currency_position;
     private $vat_rate = 0;
     private $signature_active = 0;
+    private $active_disbursements;
 
     /**
      * @param mixed $wpdb
@@ -104,6 +105,7 @@ class PDFGenerator
         $this->default_vat = $this->settings_array['default_vat'] ?? '1';
         $this->currency_position = $this->settings_array['currency_position'] ?? 'after';
         $this->signature_active = $this->settings_array['easy_compta_signature_addon_active'] ?? 0;
+        $this->active_disbursements = $this->settings_array['active_disbursements'] ?? 0; // version 1.4.0
     }
 
     /**
@@ -609,7 +611,7 @@ ie.item_order ASC",
         }
         foreach ($items as $item) {
             if ($type == 'invoice' || $type == 'credit_invoice') {
-                $quantity = intval($encrypt->decrypt($item->quantity));
+                $quantity = $encrypt->decrypt($item->quantity);
                 $unit_price = floatval($encrypt->decrypt($item->unit_price));
                 $discount_percentage = intval($encrypt->decrypt($item->discount));
                 $vat_rate = intval($encrypt->decrypt($item->vat_rate));
@@ -617,7 +619,7 @@ ie.item_order ASC",
                 $item_name = $encrypt->decrypt($item->item_name);
                 $item_description = $encrypt->decrypt($item->item_description);
             } else {
-                $quantity = intval($item->quantity);
+                $quantity = $item->quantity;
                 $unit_price = floatval($item->unit_price);
                 $discount_percentage = intval($item->discount);
                 $vat_rate = intval($item->vat_rate);
@@ -630,9 +632,11 @@ ie.item_order ASC",
             $item_total = $quantity * $unit_price;
 
             if ($this->vat_active == 1) {
-                $item_total_vat = ($item_total * $vat_rate) / 100;
-                $discount_amount_with_vat = (($item_total + $item_total_vat) * $discount_percentage) / 100;
-                $total_after_discount_with_vat = $item_total - $discount_amount_with_vat + $item_total_vat;
+                $discount_amount = ($item_total * $discount_percentage) / 100;
+                $item_total_after_discount = $item_total - $discount_amount;
+                $item_total_vat = ($item_total_after_discount * $vat_rate) / 100;
+                $total_after_discount_with_vat = $item_total_after_discount + $item_total_vat;
+
                 $sub_total_discounted_with_vat += $total_after_discount_with_vat;
 
                 if (!isset($tva_totaux[$vat_rate])) {
@@ -727,13 +731,53 @@ ie.item_order ASC",
         </thead>
         <tbody>';
 
-        $html .= $items_html;
-
         if ($this->vat_active == 1) {
             $balance_due = $sub_total_discounted_with_vat;
         } else {
             $balance_due = $sub_total_discounted;
         }
+
+        if ($this->active_disbursements == 1) {
+            global $wpdb;
+            $disbursements = $wpdb->get_results(
+                $wpdb->prepare("SELECT * FROM %i WHERE invoice_id = %d", ECWP_TABLE_DISBURSEMENTS, $data->id)
+            );
+
+            $disbursement_total = 0;
+            $disbursement_html = '';
+
+            foreach ($disbursements as $disbursement) {
+                $disbursement_title = $disbursement->title;
+                $disbursement_description = $disbursement->description;
+                $disbursement_price = floatval($disbursement->unit_price);
+
+                $disbursement_total += $disbursement_price;
+
+                $disbursement_html .= '<tr>
+                    <td width="10%" style="border: 0.2mm solid #ffffff; background-color: #F5F5F5; vertical-align: top;font-size: 0.8rem">' . __('Disbursement', 'my-easy-compta') . '</td>
+                    <td width="45%" style="text-align: left; border: 0.2mm solid #ffffff; background-color: #F5F5F5; vertical-align: top;">
+                        <div style="margin-bottom:6px; font-weight:bold; color: #111111; vertical-align: top;">' .
+                nl2br($disbursement_title) . '</div>
+                        ' . nl2br($disbursement_description) . '
+                    </td>
+                    <td width="15%" style="text-align: right;border: 0.2mm solid #ffffff; background-color: #F5F5F5; vertical-align: top;">&nbsp;</td>
+                    <td width="10%" style="text-align: center;border: 0.2mm solid #ffffff; background-color: #F5F5F5; vertical-align: top;">&nbsp;</td>';
+                if ($this->vat_active == 1) {
+                    $disbursement_html .= '<td width="10%" style="text-align: center;border: 0.2mm solid #ffffff; background-color: #F5F5F5; vertical-align: top;">&nbsp;</td>';
+                }
+                if ($discount_exist) {
+                    $disbursement_html .= '<td width="10%" style="text-align: center;border: 0.2mm solid #ffffff; background-color: #F5F5F5; vertical-align: top;">&nbsp;</td>';
+                }
+                $disbursement_html .= '<td width="15%" style="text-align: right;border: 0.2mm solid #ffffff; background-color: #F5F5F5; vertical-align: top;">
+                        ' . $this->positionCurrency($this->formatAmount($disbursement_price), $default_currency_symbol->symbol) . '
+                    </td>
+                </tr>';
+            }
+
+            $items_html .= $disbursement_html;
+        }
+
+        $html .= $items_html;
 
         if ($sub_total == $sub_total_discounted) {
             $html .= '<tr>';
@@ -834,6 +878,33 @@ ie.item_order ASC",
                     </td>
                 </tr>';
         }
+
+        if ($this->active_disbursements == 1) {
+            $html .= '<tr>';
+            if ($this->vat_active == 1) {
+                if ($discount_exist) {
+                    $html .= '<td colspan="3" style="background-color:#ffffff;"></td>';
+                } else {
+                    $html .= '<td colspan="2" style="background-color:#ffffff;"></td>';
+                }
+            } else {
+                if ($discount_exist) {
+                    $html .= '<td colspan="2" style="background-color:#ffffff;"></td>';
+                } else {
+                    $html .= '<td colspan="1" style="background-color:#ffffff;"></td>';
+                }
+            }
+            $html .= '<td colspan="2" style="border: 0.2mm solid #ffffff; background-color: #F5F5F5;font-size: 8pt; color: #111111;">
+                        <strong>' . __('Total disbursements', 'my-easy-compta') . '</strong>
+                    </td>
+                    <td colspan="2" style="border: 0.2mm solid #ffffff; background-color: #F5F5F5;font-weight: bold; color: #111111; text-align: right;">
+                        ' . $this->positionCurrency($this->formatAmount($disbursement_total), $default_currency_symbol->symbol) . '
+                    </td>
+                </tr>';
+
+            $balance_due += $disbursement_total;
+        }
+
         $html .= '<tr>';
 
         if ($this->vat_active == 1) {
@@ -861,8 +932,9 @@ ie.item_order ASC",
 
         $html .= '
         </tbody>
-    </table>
-    <div style="margin-top:40px; font-family: dejavusanscondensed;font-size: 8pt;line-height: 13pt;color: #777777;">
+    </table>';
+        $html .= '<div style="page-break-before: always; margin-top:40px; font-family: dejavusanscondensed;font-size: 8pt;line-height: 13pt;color: #777777;">';
+        $html .= '<div style="margin-top:40px; font-family: dejavusanscondensed;font-size: 8pt;line-height: 13pt;color: #777777;">
         <h4
             style="padding:5px 0; color: #111111; border-bottom: 0.2mm solid ' . $global_color . '; font-size:9pt; text-transform: uppercase;">
             ' . __('Conditions terms', 'my-easy-compta') . '</h4>';

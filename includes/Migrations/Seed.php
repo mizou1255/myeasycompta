@@ -22,6 +22,7 @@ class ECWP_Tables
             'expenses.php',
             'expenses-attachments.php',
             'expenses-categories.php',
+            'disbursements.php', //version 1.4.0
         ];
 
         foreach ($table_files as $file) {
