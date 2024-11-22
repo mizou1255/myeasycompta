@@ -4013,6 +4013,9 @@ input.tab:checked + .tab-content,
 .pb-6{
   padding-bottom: 1.5rem;
 }
+.pl-0{
+  padding-left: 0px;
+}
 .pr-4{
   padding-right: 1rem;
 }

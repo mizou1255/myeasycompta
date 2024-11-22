@@ -9,6 +9,7 @@ $charset_collate = $wpdb->get_charset_collate();
 $sql = "CREATE TABLE IF NOT EXISTS " . ECWP_TABLE_DISBURSEMENTS . " (
     id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
     invoice_id BIGINT(20) UNSIGNED NOT NULL,
+    ref VARCHAR(255) NOT NULL,
     title VARCHAR(255) NOT NULL,
     description TEXT NULL,
     unit_price DECIMAL(10, 2) NOT NULL DEFAULT 0.00,

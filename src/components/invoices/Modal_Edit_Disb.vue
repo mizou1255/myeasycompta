@@ -43,7 +43,7 @@
                 }}</label>
                 <input
                   :id="key"
-                  v-model="editedItem[key]"
+                  v-model="editedDisb[key]"
                   :class="[
                     'ecwp-input input input-bordered',
                     field.class || 'w-full',
@@ -54,7 +54,7 @@
                 <label :for="key" class="form-label">{{ field.label }}</label>
                 <vue-editor
                   :id="key"
-                  v-model="editedItem[key]"
+                  v-model="editedDisb[key]"
                   :editorToolbar="toolbarOptions"
                 ></vue-editor>
               </div>
@@ -90,12 +90,12 @@ export default {
     showModal: Boolean,
     modalId: String,
     modalTitle: String,
-    item: Object,
+    disb: Object,
   },
   data() {
     const translations = window.myEasyComptaAdmin.easyComptaTranslations;
     return {
-      editedItem: { ...this.item },
+      editedDisb: { ...this.disb },
       loading: this.loading,
       loadingBtn: false,
       toast: {
@@ -105,15 +105,12 @@ export default {
         position: "toast-bottom toast-end",
       },
       fields: {
-        item_name: { label: translations.item_name },
-        item_description: {
+        title: { label: translations.item_name },
+        description: {
           label: translations.item_description,
           type: "textarea",
         },
-        quantity: { label: translations.quantity, type: "number" },
-        vat_rate: { label: translations.vat, type: "number" },
         unit_price: { label: translations.unit_price, type: "number" },
-        discount: { label: translations.discount, type: "number" },
       },
     };
   },
@@ -134,14 +131,14 @@ export default {
       this.loadingBtn = true;
       try {
         const response = await fetch(
-          `/wp-json/my-easy-compta/v1/invoices/edit-item/${this.editedItem.id}`,
+          `/wp-json/my-easy-compta/v1/invoices/edit-disb/${this.editedDisb.id}`,
           {
             method: "PUT",
             headers: {
               "Content-Type": "application/json",
               "X-WP-Nonce": myEasyComptaAdmin.nonce,
             },
-            body: JSON.stringify(this.editedItem),
+            body: JSON.stringify(this.editedDisb),
           }
         );
 
@@ -150,7 +147,7 @@ export default {
           this.loadingBtn = false;
           this.closeModal();
           this.showToast(data.message, "alert-success");
-          this.$emit("itemEdited");
+          this.$emit("disbEdited");
         } else {
           const errorMessage = `Error editing item: ${response.statusText}`;
           this.showToast(errorMessage, "alert-error");
@@ -185,9 +182,9 @@ export default {
     },
   },
   watch: {
-    item: {
+    disb: {
       handler(newVal) {
-        this.editedItem = { ...newVal };
+        this.editedDisb = { ...newVal };
       },
       immediate: true,
     },

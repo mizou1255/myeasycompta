@@ -12,7 +12,6 @@ class ECWP_APP
         load_plugin_textdomain('my-easy-compta', false, ECWP_PATH . '/languages');
         add_action('admin_menu', array($this, 'add_admin_menu'));
         add_action('admin_notices', array($this, 'my_easy_compta_admin_notification'));
-        add_action('admin_footer', array($this, 'my_easy_compta_admin_notification_script'));
         add_action('wp_ajax_my_easy_compta_admin_notification_hide', array($this, 'my_easy_compta_admin_notification_hide'));
         add_action('admin_enqueue_scripts', array($this, 'enqueue_scripts'));
 
@@ -69,7 +68,7 @@ class ECWP_APP
         wp_enqueue_style('my-easy-compta-admin-style', ECWP_URL . '/assets/dist/style.min.css', array(), ECWP_VERSION);
         wp_enqueue_style('fontawesome', ECWP_URL . '/assets/css/all.min.css', array(), ECWP_VERSION);
         wp_enqueue_script('my-easy-compta-admin', ECWP_URL . '/assets/dist/app.min.js', array(), ECWP_VERSION, true);
-        wp_enqueue_script('my-easy-compta-custom', ECWP_URL . '/assets/js/custom.js', array(), ECWP_VERSION, true);
+        wp_enqueue_script('my-easy-compta-custom', ECWP_URL . '/assets/js/notif-ads.js', array(), ECWP_VERSION, true);
         wp_enqueue_script('chartjs', ECWP_URL . '/assets/js/chart.min.js', array(), ECWP_VERSION, true);
         add_filter('script_loader_tag', array($this, 'add_type_attribute'), 10, 2);
         require_once ECWP_PATH . '/languages/my-easy-compta-translations.php';
@@ -451,9 +450,30 @@ class ECWP_APP
 
     public function my_easy_compta_admin_notification()
     {
+        $allowed_pages = array(
+            'toplevel_page_my-easy-compta',
+            'myeasycompta_page_my-easy-compta-clients',
+            'myeasycompta_page_my-easy-compta-quotes',
+            'myeasycompta_page_my-easy-compta-invoices',
+            'myeasycompta_page_my-easy-compta-planning',
+            'myeasycompta_page_my-easy-compta-credits',
+            'myeasycompta_page_my-easy-compta-payments',
+            'myeasycompta_page_my-easy-compta-expenses',
+            'myeasycompta_page_my-easy-compta-settings',
+            'myeasycompta_page_my-easy-compta-addons',
+            'dashboard_page_my-easy-compta-setup',
+        );
+
+        $current_screen = get_current_screen();
+
+        if (!in_array($current_screen->id, $allowed_pages)) {
+            return;
+        }
+
         if (get_user_meta(get_current_user_id(), 'my_easy_compta_banner_dismissed', true)) {
             return;
         }
+
         if (isset($_COOKIE['my_easy_compta_banner_closed'])) {
             return;
         }
@@ -491,39 +511,5 @@ class ECWP_APP
         }
         wp_die();
     }
-    public function my_easy_compta_admin_notification_script()
-    {
-        ?>
-    <script>
-    (function($) {
-        $(document).ready(function() {
-            $('.my-easy-compta-banner-close').on('click', function() {
-                var banner = $(this).closest('.my-easy-compta-banner-container');
-                banner.fadeOut('slow', function() {
-                    document.cookie = "my_easy_compta_banner_closed=1; path=/";
-                });
-            });
-
-            $('.my-easy-compta-banner-never-show').on('click', function() {
-                var banner = $(this).closest('.my-easy-compta-banner-container');
-                banner.fadeOut('slow', function() {
-                    $.post(ajaxurl, { action: 'my_easy_compta_admin_notification_hide', never_show: true });
-                });
-            });
-        });
-
-        function getCookie(name) {
-            var value = "; " + document.cookie;
-            var parts = value.split("; " + name + "=");
-            if (parts.length === 2) return parts.pop().split(";").shift();
-        }
-
-        if (getCookie('my_easy_compta_banner_closed')) {
-            $('.my-easy-compta-banner-banner').hide();
-        }
-    })(jQuery);
-    </script>
-    <?php
-}
 
 }

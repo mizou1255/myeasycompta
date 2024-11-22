@@ -11,6 +11,7 @@
     </div>
 
     <remove-modal
+      modal-id="modal_credit_remove"
       :show-modal="showRemoveModal"
       :title="translations.are_you_sure"
       :message="translations.no_turning_back"
@@ -233,7 +234,7 @@ export default {
     },
     confirmDeleteCredit(credit) {
       this.selectedCredit = credit;
-      modal_remove.showModal();
+      modal_credit_remove.showModal();
       this.showRemoveModal = true;
     },
     deleteCredit(creditId) {

@@ -19,6 +19,7 @@
       @cancel="showConfirmModal = false"
     />
     <remove-modal
+      modal-id="modal_quotes_remove"
       :show-modal="showRemoveModal"
       :title="translations.are_you_sure"
       :message="translations.no_turning_back"
@@ -517,7 +518,7 @@ export default {
     },
     confirmDeleteQuote(quote) {
       this.selectedQuote = quote;
-      modal_remove.showModal();
+      modal_quotes_remove.showModal();
       this.showRemoveModal = true;
     },
     deleteQuote(quote_id) {

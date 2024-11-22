@@ -3,7 +3,7 @@ Tags: accounting, quotes, invoices, expenses, freelancers
 Requires at least: 6.2
 Tested up to: 6.6.1
 Requires PHP: 8.0
-Stable tag: 1.3.1
+Stable tag: 1.4.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -78,6 +78,15 @@ We welcome contributions from the community! You can contribute by submitting a 
 6. **Addons** - Addons page.
 
 == Changelog ==
+
+= 1.4.2 =
+* Fix: Resolved issues with item field editing.
+* Add: Ability to edit a disbursement directly in the invoice details.
+* Add: Ability to delete a disbursement with confirmation.
+* Fix: Corrected deletion notifications to display properly and consistently.
+
+= 1.4.1 =
+* Fix: Resolved an issue where the banner notification was displayed on unintended admin pages.
 
 = 1.4.0 =
 * Add: Loader during auto-completion in quotes and invoices.

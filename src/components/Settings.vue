@@ -12,6 +12,7 @@
     </div>
 
     <remove-modal
+      modal-id="modal_settings_remove"
       :show-modal="showRemoveModal"
       :title="translations.are_you_sure"
       :message="translations.no_turning_back"
@@ -3154,7 +3155,7 @@ export default {
     delete_item(type, id) {
       this.deleteType = type;
       this.selectedId = id;
-      modal_remove.showModal();
+      modal_settings_remove.showModal();
       this.showRemoveModal = true;
     },
     getDeletionFunction(type) {

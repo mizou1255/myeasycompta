@@ -84,6 +84,15 @@ class ECWP_Invoices
         $this->routes->add_route('/invoices/item-details/(?P<id>\d+)', 'GET', $this, 'get_item_details_for_edit', function () {
             return current_user_can('manage_options');
         });
+        $this->routes->add_route('/invoices/disb-details/(?P<id>\d+)', 'GET', $this, 'get_disb_details_for_edit', function () {
+            return current_user_can('manage_options');
+        });
+        $this->routes->add_route('/invoices/edit-disb/(?P<id>\d+)', 'PUT', $this, 'edit_invoice_disb', function () {
+            return current_user_can('manage_options');
+        });
+        $this->routes->add_route('/invoices/disb-delete/(?P<id>\d+)', 'DELETE', $this, 'delete_invoice_disb', function () {
+            return current_user_can('manage_options');
+        });
 
         $this->routes->add_route('/invoices/pdf/(?P<id>\d+)', 'GET', $this, 'generate_invoice_pdf', function () {
             return current_user_can('manage_options');
@@ -927,6 +936,133 @@ class ECWP_Invoices
             'unit_price' => $unit_price,
             'updated_totals' => $calculate_amount,
         ));
+    }
+
+    public function get_disb_details_for_edit(\WP_REST_Request $request)
+    {
+        global $wpdb;
+        $params = $request->get_params();
+        $item_id = $params['id'];
+
+        $item_details = $wpdb->get_row(
+            $wpdb->prepare("SELECT id, title, description, unit_price FROM %i WHERE id = %d", ECWP_TABLE_DISBURSEMENTS,
+                $item_id),
+            ARRAY_A
+        );
+
+        if (!$item_details) {
+            return new \WP_Error('no_item_details_found', __('No item details found.', 'my-easy-compta'), array('status' => 404));
+        }
+
+        $item_details['title'] = $item_details['title'];
+        $item_details['description'] = $item_details['description'];
+        $item_details['unit_price'] = $item_details['unit_price'];
+
+        return rest_ensure_response($item_details);
+    }
+
+    public function edit_invoice_disb(\WP_REST_Request $request)
+    {
+        global $wpdb;
+        $disb_id = $request['id'];
+
+        if (empty($disb_id) || !is_numeric($disb_id)) {
+            return new \WP_Error('invalid_item_id', __('Invalid item ID.', 'my-easy-compta'), array('status' => 400));
+        }
+        $disb_id = absint($disb_id);
+
+        $title = sanitize_text_field($request['title']);
+        $description = wp_kses_post($request['description']);
+        $unit_price = floatval($request['unit_price']);
+
+        $data = array(
+            'title' => $title,
+            'description' => $description,
+            'unit_price' => $unit_price,
+        );
+
+        $result = $wpdb->update(
+            ECWP_TABLE_DISBURSEMENTS,
+            $data,
+            array('id' => $disb_id),
+            array(
+                '%s',
+                '%s',
+                '%f',
+            ),
+            array('%d')
+        );
+
+        if ($result === false) {
+            return new \WP_REST_Response(array('success' => false, 'message' => __('Failed to edit item', 'my-easy-compta')), 500);
+        }
+
+        $invoice_id = $wpdb->get_var($wpdb->prepare("SELECT invoice_id FROM %i WHERE id = %d", ECWP_TABLE_DISBURSEMENTS, $disb_id));
+        if (!$invoice_id) {
+            return new \WP_Error('no_invoice_found', __('No invoice found for the given item.', 'my-easy-compta'), array('status' => 404));
+        }
+
+        $calculate_amount = $this->calculate_total_amount($invoice_id);
+
+        $result_invoice = $wpdb->update(
+            ECWP_TABLE_INVOICES,
+            $calculate_amount,
+            array('id' => $invoice_id),
+            array(
+                '%s',
+                '%s',
+            ),
+            array('%d')
+        );
+
+        return new \WP_REST_Response(array('success' => true, 'message' => __('Item edited successfully', 'my-easy-compta')), 200);
+    }
+
+    public function delete_invoice_disb($request)
+    {
+        $nonce = sanitize_text_field(wp_unslash($request->get_header('X-WP-Nonce')));
+        $valid_nonce = wp_verify_nonce($nonce, 'wp_rest');
+        $has_permission = current_user_can('manage_options');
+
+        if (!$valid_nonce) {
+            error_log('Invalid Nonce: ' . $nonce);
+            return new \WP_Error('rest_nonce_invalid', __('Nonce invalide', 'my-easy-compta'), array('status' => 403));
+        }
+
+        if (!$has_permission) {
+            error_log('Permission Denied for User: ' . get_current_user_id());
+            return new \WP_Error('rest_forbidden', __('Error API access', 'my-easy-compta'), array('status' => 403));
+        }
+
+        global $wpdb;
+        $disb_id = absint($request->get_param('id'));
+
+        $invoice_id = $wpdb->get_var($wpdb->prepare("SELECT invoice_id FROM %i WHERE id = %d", ECWP_TABLE_DISBURSEMENTS, $disb_id));
+        if (!$invoice_id) {
+            return new \WP_Error('no_invoice_found', __('No invoice found for the given item.', 'my-easy-compta'), array('status' => 404));
+        }
+
+        $result = $wpdb->delete(
+            ECWP_TABLE_DISBURSEMENTS,
+            array('id' => $disb_id),
+            array('%d')
+        );
+
+        if ($result === false) {
+            return new \WP_Error('db_error', __('Failed to delete invoice item.', 'my-easy-compta'), array('status' => 500));
+        }
+
+        $calculate_amount = $this->calculate_total_amount($invoice_id);
+
+        $result_invoice = $wpdb->update(
+            ECWP_TABLE_INVOICES,
+            $calculate_amount,
+            array('id' => $invoice_id),
+            array('%s', '%s'),
+            array('%d')
+        );
+
+        return rest_ensure_response(array('success' => true, 'message' => __('Invoice item deleted.', 'my-easy-compta')));
     }
 
 }

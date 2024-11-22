@@ -596,3 +596,119 @@ input:focus {
     transform: scale(1);
   }
 }
+
+.notice-wrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999999999; /* Assure que tout est au-dessus */
+}
+
+.bg-blur {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(5px); /* Plus fluide */
+  -webkit-backdrop-filter: blur(5px);
+  z-index: 999999998; /* Derrière la notice */
+}
+
+.ecwp-notice.notice-warning {
+  position: relative;
+  background: #fffbeb;
+  border: 1px solid #ffc107;
+  border-radius: 10px;
+  padding: 20px;
+  margin: 20px 0;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  z-index: 999999999;
+}
+
+.ecwp-notice.notice-warning p {
+  font-size: 16px;
+  color: #856404;
+  margin-bottom: 10px;
+}
+
+.ecwp-notice.notice-warning .button-primary {
+  background-color: #ffc107;
+  border-color: #ffc107;
+  color: #000;
+  text-transform: uppercase;
+  padding: 10px 15px;
+  border-radius: 5px;
+  font-weight: bold;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.ecwp-notice.notice-warning .button-primary:hover {
+  background-color: #e0a800;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.ecwp-notice.notice-error {
+  position: relative;
+  background: #f8d7da; /* Rouge clair */
+  border: 1px solid #dc3545;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  max-width: 500px;
+  z-index: 999999999;
+}
+
+.ecwp-notice.notice-error p {
+  font-size: 16px;
+  color: #842029; /* Rouge sombre */
+  margin-bottom: 10px;
+}
+
+.ecwp-notice.notice-error a.button-primary {
+  background-color: #dc3545; /* Bouton rose-rouge */
+  border-color: #dc3545;
+  color: #fff;
+  text-transform: uppercase;
+  padding: 10px 15px;
+  border-radius: 5px;
+  font-weight: bold;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.ecwp-notice.notice-error a.button-primary:hover {
+  background-color: #b02a37;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.ecwp-notice.notice-success {
+  position: relative;
+  background: #d4edda; /* Vert clair pour succès */
+  border: 1px solid #c3e6cb; /* Bordure verte */
+  border-radius: 10px;
+  padding: 10px 35px;
+  margin: 20px 0;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  z-index: 999999999;
+}
+
+.ecwp-notice.notice-success p {
+  font-size: 16px;
+  color: #155724; /* Vert sombre pour le texte */
+  margin-bottom: 10px;
+}
+
+.ecwp-notice.notice-success.is-dismissible:before {
+  content: "\2713"; /* Icône check */
+  font-size: 30px;
+  color: #155724;
+  position: absolute;
+  top: 10px;
+  left: 10px;
+}

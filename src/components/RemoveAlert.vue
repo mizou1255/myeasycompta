@@ -1,6 +1,6 @@
 <template>
   <div>
-    <dialog id="modal_remove" class="modal" :open="showModal">
+    <dialog :id="modalId" class="modal" :open="showModal">
       <div class="modal-box">
         <h3 class="font-bold text-lg">{{ modalTitle }}</h3>
         <button
@@ -33,6 +33,7 @@
   <script>
 export default {
   props: {
+    modalId: String,
     isVisible: {
       type: Boolean,
       default: false,
@@ -64,7 +65,7 @@ export default {
       this.closeModal();
     },
     closeModal() {
-      const modal = document.getElementById("modal_remove");
+      const modal = document.getElementById(this.modalId);
       modal.close();
     },
   },

@@ -30,6 +30,7 @@
     />
 
     <remove-modal
+      modal-id="modal_client_remove"
       :show-modal="showRemoveModal"
       :title="translations.are_you_sure"
       :message="translations.no_turning_back"
@@ -402,7 +403,7 @@ export default {
     },
     confirmDeleteClient(client) {
       this.selectedClient = client;
-      modal_remove.showModal();
+      modal_client_remove.showModal();
       this.showRemoveModal = true;
     },
 

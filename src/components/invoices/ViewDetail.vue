@@ -9,6 +9,7 @@
       :noItems="no_items"
     />
     <remove-modal
+      modal-id="modal_remove_item"
       :show-modal="showRemoveModal"
       :title="translations.are_you_sure"
       :message="translations.no_turning_back"
@@ -16,6 +17,16 @@
       :cancelText="translations.cancel"
       @confirm="this.removeItem(selectedItem, SelectedInvoiceId)"
       @cancel="showRemoveModal = false"
+    />
+    <remove-modal
+      modal-id="modal_remove_disb"
+      :show-modal="showRemoveModalDisb"
+      :title="translations.are_you_sure"
+      :message="translations.no_turning_back"
+      :confirmText="translations.yes_delete_it"
+      :cancelText="translations.cancel"
+      @confirm="this.removeDisb(selectedDisb, SelectedInvoiceId)"
+      @cancel="showRemoveModalDisb = false"
     />
     <div v-if="settings.easy_compta_email_addon_active == 1">
       <remind-invoice-modal
@@ -170,6 +181,16 @@
         :item="selectedItem"
         @close="editItemsModal = false"
         @itemEdited="fetchItems"
+      />
+
+      <edit-disb-modal
+        :loading="loadingModal"
+        :show-modal="editDisbModal"
+        modal-id="modal_edit_disb"
+        :modal-title="translations.edit_item"
+        :disb="selectedDisb"
+        @close="editDisbModal = false"
+        @disbEdited="fetchDisbursements"
       />
 
       <form @submit.prevent="submitItems">
@@ -450,21 +471,23 @@
                 }}
               </td>
               <td>
-                <span class="lg:tooltip" :data-tip="translations.add">
-                  <button
-                    type="submit"
-                    class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
-                  >
-                    <i v-if="!loading_add" class="fa fa-plus"></i>
-                    <span
-                      v-if="loading_add"
-                      class="loading loading-spinner loading-xs"
-                    ></span></button
-                ></span>
+                <div v-if="invoice.status == 'draft'">
+                  <span class="lg:tooltip" :data-tip="translations.add">
+                    <button
+                      type="submit"
+                      class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+                    >
+                      <i v-if="!loading_add" class="fa fa-plus"></i>
+                      <span
+                        v-if="loading_add"
+                        class="loading loading-spinner loading-xs"
+                      ></span></button
+                  ></span>
+                </div>
               </td>
             </tr>
             <tr v-if="settings.active_disbursements == 1">
-              <td colspan="12" class="font-bold text-lg pt-10">
+              <td colspan="12" class="font-bold text-lg pl-0 pt-10">
                 <button
                   v-if="invoice.status == 'draft'"
                   @click.prevent="toggleDisbursements"
@@ -486,15 +509,51 @@
               </td>
             </tr>
             <tr
+              v-if="
+                settings.active_disbursements == 1 &&
+                disbursementsList &&
+                disbursementsList.length > 0
+              "
+            >
+              <th class="p-2" colspan="3">{{ translations.item_name }}</th>
+              <th class="p-2">{{ translations.description }}</th>
+              <th class="p-2" colspan="1">
+                {{ translations.unit_price }}
+              </th>
+            </tr>
+            <tr
               v-for="disbursement in disbursementsList"
               :key="disbursement.id"
             >
               <td class="p-2" colspan="3">{{ disbursement.title }}</td>
-              <td class="p-2">
-                {{ disbursement.description }}
-              </td>
+              <td class="p-2" v-html="nl2br(disbursement.description)"></td>
               <td class="p-2">
                 {{ calculateTotal(1, disbursement.unit_price, 0) }}
+              </td>
+              <td class="p-2" colspan="2">
+                <span class="lg:tooltip" :data-tip="translations.edit">
+                  <button
+                    @click.prevent="editDisb(disbursement.id)"
+                    class="bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-3 rounded"
+                  >
+                    <i class="far fa-edit"></i></button
+                ></span>
+                <span class="lg:tooltip" :data-tip="translations.delete">
+                  <button
+                    @click.prevent="
+                      confirmremoveDisb(disbursement.id, invoice.id)
+                    "
+                    class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-3 mx-2 rounded"
+                  >
+                    <i
+                      v-if="!disbursement.loading_del"
+                      class="far fa-trash-alt"
+                    ></i>
+                    <span
+                      v-if="disbursement.loading_del"
+                      class="loading loading-spinner loading-xs"
+                    ></span></button
+                ></span>
               </td>
             </tr>
             <tr
@@ -639,6 +698,7 @@
 import Card from "@/components/Card.vue";
 import InvoiceNavBar from "@/components/invoices/NavBar.vue";
 import EditItemModal from "@/components/invoices/Modal_Edit_Item.vue";
+import EditDisbModal from "@/components/invoices/Modal_Edit_Disb.vue";
 import RemoveModal from "@/components/RemoveAlert.vue";
 import Sortable from "sortablejs";
 import { fetchSettings } from "@/api/api";
@@ -650,14 +710,17 @@ export default {
     Card,
     InvoiceNavBar,
     EditItemModal,
+    EditDisbModal,
     RemoveModal,
     RemindInvoiceModal,
   },
   data() {
     return {
       selectedItem: null,
+      selectedDisb: null,
       SelectedInvoiceId: null,
       editItemsModal: false,
+      editDisbModal: false,
       RemindInvoiceModal: false,
       no_items: true,
       loading: false,
@@ -1062,7 +1125,7 @@ export default {
     confirmremoveItem(itemId, invoiceId) {
       this.selectedItem = itemId;
       this.SelectedInvoiceId = invoiceId;
-      modal_remove.showModal();
+      modal_remove_item.showModal();
       this.showRemoveModal = true;
     },
     removeItem(itemId, invoiceId) {
@@ -1113,6 +1176,64 @@ export default {
         .catch((error) => {
           console.error("Error fetching item details:", error);
           this.loading = false;
+        });
+    },
+    editDisb(disbID) {
+      this.loadingModal = true;
+      this.editDisbModal = true;
+      modal_edit_disb.showModal();
+      this.fetchDisbDetails(disbID);
+    },
+    fetchDisbDetails(disbID) {
+      fetch(`/wp-json/my-easy-compta/v1/invoices/disb-details/${disbID}`, {
+        headers: {
+          "X-WP-Nonce": myEasyComptaAdmin.nonce,
+        },
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          this.selectedDisb = data;
+          this.loading = false;
+        })
+        .catch((error) => {
+          console.error("Error fetching item details:", error);
+          this.loading = false;
+        });
+    },
+    confirmremoveDisb(disbId, invoiceId) {
+      this.selectedDisb = disbId;
+      this.SelectedInvoiceId = invoiceId;
+      modal_remove_disb.showModal();
+      this.showRemoveModalDisb = true;
+    },
+    removeDisb(disbId, invoiceId) {
+      const disbToRemove = this.disbursementsList.find(
+        (disb) => disb.id === disbId
+      );
+      disbToRemove.loading_del = true;
+      fetch(`/wp-json/my-easy-compta/v1/invoices/disb-delete/${disbId}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          "X-WP-Nonce": myEasyComptaAdmin.nonce,
+        },
+        body: JSON.stringify({ invoice_id: invoiceId }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.success) {
+            disbToRemove.loading_del = false;
+            this.fetchDisbursements();
+          } else {
+            this.showToast(data.message, "alert-error");
+            console.error("Error removing item:", data.message);
+            disbToRemove.loading_del = false;
+          }
+        })
+        .catch((error) => {
+          this.showToast(error.message, "alert-error");
+          console.error("Error removing item:", error);
+          disbToRemove.loading_del = false;
         });
     },
     formatCurrency(amount) {

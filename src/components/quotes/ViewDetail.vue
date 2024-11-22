@@ -17,6 +17,7 @@
       </div>
     </div>
     <remove-modal
+      modal-id="modal_item_remove"
       :show-modal="showRemoveModal"
       :title="translations.are_you_sure"
       :message="translations.no_turning_back"
@@ -869,7 +870,7 @@ export default {
     confirmremoveItem(itemId, quoteId) {
       this.selectedItem = itemId;
       this.selectedInvoiceId = quoteId;
-      modal_remove.showModal();
+      modal_item_remove.showModal();
       this.showRemoveModal = true;
     },
     removeItem(itemId, quoteId) {

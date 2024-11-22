@@ -2,7 +2,7 @@
 /**
  * Plugin Name: myEasyCompta
  * Description: Streamline your financial management with myEasyCompta, an all-in-one accounting plugin. Effortlessly handle quotes, invoices, expenses, and more, all within a sleek, user-friendly interface. Perfect for freelancers and small businesses looking to simplify their accounting processes.
- * Version: 1.4.0
+ * Version: 1.4.2
  * Author: MELIOZ.dev
  * Author URI: https://myeasycompta.com
  * Text Domain: my-easy-compta
@@ -21,7 +21,7 @@
  * A comprehensive accounting plugin using Vue.js and TailwindCSS. Manage your quotes, invoices, expenses, and more with ease.
  *
  * @package myEasyCompta
- * @since 1.4.0
+ * @since 1.4.2
  */
 
 if (!defined('ABSPATH')) {
@@ -36,7 +36,7 @@ final class ECWP_Easy_Compta
      *
      * @var string
      */
-    public $version = '1.4.0';
+    public $version = '1.4.2';
     private $version_migration_db = true;
 
     /**
@@ -276,7 +276,7 @@ final class ECWP_Easy_Compta
         if (isset($_POST['run_migration_now']) && check_admin_referer('run_migration_action', 'run_migration_nonce')) {
             $this->run_migrations();
             add_action('admin_notices', function () {
-                echo '<div class="notice notice-success is-dismissible">
+                echo '<div class="ecwp-notice notice notice-success is-dismissible">
                         <p>' . __('Database migration completed successfully.', 'my-easy-compta') . '</p>
                       </div>';
             });
@@ -342,13 +342,13 @@ final class ECWP_Easy_Compta
         $installed_db_version = get_option('ecwp_db_version', '1.0.0');
         if ($this->version_migration_db == true && version_compare('installed_db_version', '1.4.0', '<')) {
             if (version_compare($installed_db_version, $this->version, '<')) {
-                echo '<div class="notice notice-warning is-dismissible">
+                echo '<div class="ecwp-notice notice notice-warning">
                     <p>' . __('myEasyCompta requires a database update.', 'my-easy-compta') . '</p>
                     <form method="post">
                         ' . wp_nonce_field('run_migration_action', 'run_migration_nonce') . '
                         <p><input type="submit" name="run_migration_now" class="button button-primary" value="' . esc_attr__('Update Database', 'my-easy-compta') . '" /></p>
                     </form>
-                </div>';
+                </div><div class="bg-blur"></div>';
             }
         }
     }
@@ -359,9 +359,12 @@ final class ECWP_Easy_Compta
         if ($current_permalink_structure !== '/%postname%/') {
             $permalink_page_url = admin_url('options-permalink.php');
 
-            echo '<div class="notice notice-error is-dismissible">';
-            echo '<p>' . __('The <b>myEasyCompta</b> plugin requires the permalink structure to be set to "/%postname%/". Please modify it for proper functionality by clicking the button below.', 'my-easy-compta') . '</p>';
-            echo '<p><a href="' . esc_url($permalink_page_url) . '" class="button button-primary">' . __('Modify permalinks', 'my-easy-compta') . '</a></p>';
+            echo '<div class="notice-wrapper">';
+            echo '  <div class="ecwp-notice notice notice-error">';
+            echo '      <p>' . __('The <b>myEasyCompta</b> plugin requires the permalink structure to be set to "/%postname%/". Please modify it for proper functionality by clicking the button below.', 'my-easy-compta') . '</p>';
+            echo '      <p><a href="' . esc_url($permalink_page_url) . '" class="button button-primary">' . __('Modify permalinks', 'my-easy-compta') . '</a></p>';
+            echo '  </div>';
+            echo '  <div class="bg-blur"></div>';
             echo '</div>';
         }
     }

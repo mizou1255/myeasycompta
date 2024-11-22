@@ -20,6 +20,7 @@
       @paymentEdited="fetchPayments"
     />
     <remove-modal
+      modal-id="modal_payment_remove"
       :show-modal="showRemoveModal"
       :title="translations.are_you_sure"
       :message="translations.no_turning_back"
@@ -415,7 +416,7 @@ export default {
     },
     confirmDeletePayment(payment) {
       this.selectedPayment = payment;
-      modal_remove.showModal();
+      modal_payment_remove.showModal();
       this.showRemoveModal = true;
     },
     deletePayment(paymentId) {

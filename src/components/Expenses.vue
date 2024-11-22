@@ -24,6 +24,7 @@
     />
 
     <remove-modal
+      modal-id="modal_expense_remove"
       :show-modal="showRemoveModal"
       :title="translations.are_you_sure"
       :message="translations.no_turning_back"
@@ -449,7 +450,7 @@ export default {
     },
     confirmDeleteExpense(expense) {
       this.selectedExpense = expense;
-      modal_remove.showModal();
+      modal_expense_remove.showModal();
       this.showRemoveModal = true;
     },
     deleteExpense(expenseId) {
