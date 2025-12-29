@@ -5,11 +5,14 @@
       topMargin || 'mt-9',
     ]"
   >
-    <label class="ecwp-swap swap swap-rotate bg-base-100 p-2">
-      <input type="checkbox" class="theme-controller" @change="toggleTheme" />
-      <i class="swap-off far fa-sun text-xl"></i>
-      <i class="swap-on far fa-moon text-xl"></i>
-    </label>
+    <div class="flex gap-2">
+      <label class="ecwp-swap swap swap-rotate bg-base-100 p-2">
+        <input type="checkbox" class="theme-controller" @change="toggleTheme" />
+        <i class="swap-off far fa-sun text-xl"></i>
+        <i class="swap-on far fa-moon text-xl"></i>
+      </label>
+    </div>
+    
     <div>
       <slot></slot>
     </div>
@@ -31,6 +34,12 @@ export default {
       } else {
         this.setTheme("dark");
       }
+    },
+    openSearch() {
+      this.searchOpen = true;
+    },
+    closeSearch() {
+      this.searchOpen = false;
     },
   },
   mounted() {

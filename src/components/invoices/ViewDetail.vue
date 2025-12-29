@@ -6,6 +6,7 @@
       :currencyClient="clientCurrency"
       :emailActive="settings.easy_compta_email_addon_active"
       :qrCodeActive="settings.easy_compta_qrcode_addon_active"
+      :recurringActive="settings.easy_compta_recurring_invoices_addon_active"
       :noItems="no_items"
     />
     <remove-modal
@@ -28,6 +29,15 @@
       @confirm="this.removeDisb(selectedDisb, SelectedInvoiceId)"
       @cancel="showRemoveModalDisb = false"
     />
+
+    <article-modal
+      :show-modal="showArticlesModal"
+      modal-id="modal_articles"
+      :modal-title="translations.select"
+      @select-article="applySelectedArticle"
+      @close="showArticlesModal = false"
+    />
+
     <div v-if="settings.easy_compta_email_addon_active == 1">
       <remind-invoice-modal
         :loading="loadingModal"
@@ -225,7 +235,7 @@
           <tbody>
             <tr v-for="(item, index) in invoiceItems" :key="item.id || index">
               <td class="draggable-item drag-handle px-2">
-                <i class="fas fa-bars"></i>
+                <i v-if="invoice.status == 'draft'" class="fas fa-sort"></i>
               </td>
               <td>{{ item.item_ref }}</td>
               <td>
@@ -302,7 +312,11 @@
               </td>
             </tr>
             <tr v-if="invoice.status == 'draft'">
-              <td class="px-2"></td>
+              <td class="align-top px-2">
+                <span class="cursor-pointer" @click.prevent="ShowModalArticles">
+                  <i class="fas fa-list-ul"></i>
+                </span>
+              </td>
               <td class="align-top px-2">
                 <div class="flex items-center border rounded-md relative">
                   <input
@@ -531,29 +545,31 @@
                 {{ calculateTotal(1, disbursement.unit_price, 0) }}
               </td>
               <td class="p-2" colspan="2">
-                <span class="lg:tooltip" :data-tip="translations.edit">
-                  <button
-                    @click.prevent="editDisb(disbursement.id)"
-                    class="bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-3 rounded"
-                  >
-                    <i class="far fa-edit"></i></button
-                ></span>
-                <span class="lg:tooltip" :data-tip="translations.delete">
-                  <button
-                    @click.prevent="
-                      confirmremoveDisb(disbursement.id, invoice.id)
-                    "
-                    class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-3 mx-2 rounded"
-                  >
-                    <i
-                      v-if="!disbursement.loading_del"
-                      class="far fa-trash-alt"
-                    ></i>
-                    <span
-                      v-if="disbursement.loading_del"
-                      class="loading loading-spinner loading-xs"
-                    ></span></button
-                ></span>
+                <div v-if="invoice.status == 'draft'">
+                  <span class="lg:tooltip" :data-tip="translations.edit">
+                    <button
+                      @click.prevent="editDisb(disbursement.id)"
+                      class="bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-3 rounded"
+                    >
+                      <i class="far fa-edit"></i></button
+                  ></span>
+                  <span class="lg:tooltip" :data-tip="translations.delete">
+                    <button
+                      @click.prevent="
+                        confirmremoveDisb(disbursement.id, invoice.id)
+                      "
+                      class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-3 mx-2 rounded"
+                    >
+                      <i
+                        v-if="!disbursement.loading_del"
+                        class="far fa-trash-alt"
+                      ></i>
+                      <span
+                        v-if="disbursement.loading_del"
+                        class="loading loading-spinner loading-xs"
+                      ></span></button
+                  ></span>
+                </div>
               </td>
             </tr>
             <tr
@@ -700,6 +716,7 @@ import InvoiceNavBar from "@/components/invoices/NavBar.vue";
 import EditItemModal from "@/components/invoices/Modal_Edit_Item.vue";
 import EditDisbModal from "@/components/invoices/Modal_Edit_Disb.vue";
 import RemoveModal from "@/components/RemoveAlert.vue";
+import ArticleModal from "@/components/ArticlesModal.vue";
 import Sortable from "sortablejs";
 import { fetchSettings } from "@/api/api";
 import RemindInvoiceModal from "@/components/invoices/Remind.vue";
@@ -713,6 +730,7 @@ export default {
     EditDisbModal,
     RemoveModal,
     RemindInvoiceModal,
+    ArticleModal,
   },
   data() {
     return {
@@ -747,6 +765,7 @@ export default {
       default_vat: "",
       default_currency: "",
       default_currency_symbol: "",
+      showArticlesModal: false,
       articles: [],
       categories: [],
       refs: [],
@@ -1314,6 +1333,16 @@ export default {
           this.categories = data;
         })
         .catch((error) => console.error("Error fetching categories:", error));
+    },
+    ShowModalArticles() {
+      this.showArticlesModal = true;
+      modal_articles.showModal();
+    },
+    applySelectedArticle(article) {
+      this.newItem.item_ref = article.ref;
+      this.newItem.item_name = article.name;
+      this.newItem.item_description = article.description || "";
+      this.newItem.unit_price = article.unit_price || 0;
     },
     fetchArticles() {
       if (this.newItem.item_name.length < 1) {

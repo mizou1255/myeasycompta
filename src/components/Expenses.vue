@@ -1,5 +1,6 @@
 <template>
   <div class="pt-2 pr-4">
+    <GlobalSearch />
     <div
       v-if="toast.visible"
       :class="['toast', toast.position]"
@@ -143,7 +144,12 @@
             </tr>
           </thead>
           <tbody v-if="!loading">
-            <tr v-for="expense in expenses" :key="expense.id">
+            <tr 
+              v-for="expense in expenses" 
+              :key="expense.id"
+              :class="{ 'highlight-row': highlightId && expense.id == highlightId }"
+              :id="highlightId && expense.id == highlightId ? 'highlighted-row' : null"
+            >
               <td>{{ expense.expense_date }}</td>
               <td>
                 <div v-if="!loadingPrice">
@@ -238,6 +244,7 @@ import Card from "@/components/Card.vue";
 import AddExpenseModal from "@/components/expenses/Add.vue";
 import ExpenseEditModal from "@/components/expenses/Edit.vue";
 import RemoveModal from "@/components/RemoveAlert.vue";
+import GlobalSearch from "@/components/GlobalSearch.vue";
 import { fetchSettings } from "@/api/api";
 import {
   generatePaginationButtons,
@@ -252,6 +259,7 @@ export default {
     AddExpenseModal,
     ExpenseEditModal,
     RemoveModal,
+    GlobalSearch,
   },
   data() {
     return {
@@ -286,13 +294,41 @@ export default {
       editExpenseModal: false,
       showRemoveModal: false,
       selectedExpense: null,
+      highlightId: null,
     };
   },
   created() {
-    this.fetchExpensesWithFilters();
+    // Récupérer le paramètre highlight depuis l'URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const highlight = urlParams.get('highlight');
+    if (highlight) {
+      this.highlightId = parseInt(highlight);
+      // Trouver la page où se trouve cette dépense
+      this.findExpensePage(parseInt(highlight));
+    } else {
+      this.fetchExpensesWithFilters();
+    }
+    
     this.fetchClients();
     this.fetchCategoriesExpenses();
     this.loadSettings();
+  },
+  mounted() {
+    // Scroll vers la ligne mise en surbrillance après le chargement
+    if (this.highlightId) {
+      this.$nextTick(() => {
+        setTimeout(() => {
+          const highlightedRow = document.getElementById('highlighted-row');
+          if (highlightedRow) {
+            highlightedRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // Retirer la surbrillance après 3 secondes
+            setTimeout(() => {
+              this.highlightId = null;
+            }, 3000);
+          }
+        }, 500); // Attendre un peu que les données soient chargées
+      });
+    }
   },
   methods: {
     AddNew() {
@@ -327,6 +363,27 @@ export default {
         .finally(() => {
           this.loading = false;
         });
+    },
+    async findExpensePage(expenseId) {
+      try {
+        const response = await fetch(
+          `/wp-json/my-easy-compta/v1/expenses/find-page/${expenseId}?per_page=${this.perPage}`,
+          {
+            headers: {
+              "X-WP-Nonce": myEasyComptaAdmin.nonce,
+            },
+          }
+        );
+        const data = await response.json();
+        if (data.page) {
+          this.fetchExpensesWithFilters(data.page);
+        } else {
+          this.fetchExpensesWithFilters();
+        }
+      } catch (error) {
+        console.error("Error finding expense page:", error);
+        this.fetchExpensesWithFilters();
+      }
     },
     fetchExpensesWithFilters(page = 1) {
       this.loading = true;

@@ -1,11 +1,9 @@
+@import "./tailwind.css";
 @import "vue-search-select/dist/VueSearchSelect.css";
 @import "@vuepic/vue-datepicker/dist/main.css";
 
-*:focus {
-  outline: none;
-}
 
-.text-base-content {
+.text-base-content{
   color: var(
     --fallback-bc,
     oklch(var(--bc) / var(--tw-text-opacity))
@@ -597,6 +595,21 @@ input:focus {
   }
 }
 
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out;
+}
+
 .notice-wrapper {
   position: fixed;
   top: 0;
@@ -711,4 +724,31 @@ input:focus {
   position: absolute;
   top: 10px;
   left: 10px;
+}
+
+/* Highlight row for search results */
+.highlight-row {
+  background-color: oklch(var(--p) / 0.2) !important;
+  animation: highlightPulse 1s ease-in-out;
+  border-left: 4px solid oklch(var(--p));
+  box-shadow: 0 0 10px oklch(var(--p) / 0.3);
+}
+
+.highlight-row td {
+  font-weight: 600;
+}
+
+@keyframes highlightPulse {
+  0% {
+    background-color: oklch(var(--p) / 0.4);
+    box-shadow: 0 0 20px oklch(var(--p) / 0.5);
+  }
+  50% {
+    background-color: oklch(var(--p) / 0.25);
+    box-shadow: 0 0 15px oklch(var(--p) / 0.4);
+  }
+  100% {
+    background-color: oklch(var(--p) / 0.2);
+    box-shadow: 0 0 10px oklch(var(--p) / 0.3);
+  }
 }

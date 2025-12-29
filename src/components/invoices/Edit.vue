@@ -73,8 +73,6 @@
               :class="[!invoice.status && showError ? 'input-error' : '']"
             >
               <option value="draft" selected>{{ translations.draft }}</option>
-              <option value="unpaid">{{ translations.unpaid }}</option>
-              <option value="paid">{{ translations.paid }}</option>
             </select>
           </div>
           <div v-if="currencyMismatch" class="ecwp-group form-group mb-4">

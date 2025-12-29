@@ -66,6 +66,11 @@ class ECWP_Expenses
         $this->routes->add_route('/expenses/(?P<id>\d+)', 'DELETE', $this, 'delete_expense', function () {
             return current_user_can('manage_options');
         });
+        
+        $this->routes->add_route('/expenses/find-page/(?P<id>\d+)', 'GET', $this, 'find_expense_page', function () {
+            return current_user_can('manage_options');
+        });
+        
         $this->routes->register_routes();
     }
 
@@ -163,10 +168,41 @@ class ECWP_Expenses
         return rest_ensure_response($response);
     }
 
+    /**
+     * Trouve la page où se trouve une dépense spécifique
+     */
+    public function find_expense_page(WP_REST_Request $request)
+    {
+        global $wpdb;
+        $expense_id = absint($request->get_param('id'));
+        $per_page = isset($request['per_page']) ? intval($request['per_page']) : 10;
+        
+        if ($expense_id <= 0) {
+            return new WP_Error('invalid_expense_id', __('Invalid expense ID.', 'my-easy-compta'), array('status' => 400));
+        }
+
+        $expenses_table = ECWP_TABLE_EXPENSES;
+        
+        // Compter combien de dépenses ont un ID supérieur (triés par ID DESC)
+        $count = $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM {$expenses_table} WHERE id > %d",
+            $expense_id
+        ));
+        
+        // La page est calculée en fonction de la position dans la liste triée
+        $page = floor($count / $per_page) + 1;
+        
+        return rest_ensure_response(array(
+            'page' => $page,
+            'per_page' => $per_page
+        ));
+    }
+
     public function get_expenses_categories()
     {
         global $wpdb;
-        $results = $wpdb->get_results($wpdb->prepare("SELECT * FROM %i", ECWP_TABLE_EXPENSES_CATEGORIES), OBJECT);
+        $expenses_categories_table = ECWP_TABLE_EXPENSES_CATEGORIES;
+        $results = $wpdb->get_results("SELECT * FROM {$expenses_categories_table}", OBJECT);
 
         $categories = array();
         if ($results) {
@@ -183,7 +219,8 @@ class ECWP_Expenses
     public function get_expenses_clients()
     {
         global $wpdb;
-        $results = $wpdb->get_results($wpdb->prepare("SELECT id, company_name FROM %i ORDER BY company_name ASC", ECWP_TABLE_CLIENTS));
+        $clients_table = ECWP_TABLE_CLIENTS;
+        $results = $wpdb->get_results("SELECT id, company_name FROM {$clients_table} ORDER BY company_name ASC");
         return rest_ensure_response($results);
     }
 
@@ -316,8 +353,9 @@ class ECWP_Expenses
             return new WP_Error('invalid_expense_id', __('Invalid expense ID.', 'my-easy-compta'), array('status' => 400));
         }
 
+        $expenses_table = ECWP_TABLE_EXPENSES;
         $expense_details = $wpdb->get_row(
-            $wpdb->prepare("SELECT p.* FROM %i p WHERE p.id = %d", ECWP_TABLE_EXPENSES,
+            $wpdb->prepare("SELECT p.* FROM {$expenses_table} p WHERE p.id = %d",
                 $expense_id),
             ARRAY_A
         );
@@ -326,9 +364,11 @@ class ECWP_Expenses
             return new WP_Error('expense_not_found', __('Expense not found.', 'my-easy-compta'), array('status' => 404));
         }
 
-        $categories_expenses = $wpdb->get_results($wpdb->prepare("SELECT * FROM %i", ECWP_TABLE_EXPENSES_CATEGORIES), ARRAY_A);
+        $expenses_categories_table = ECWP_TABLE_EXPENSES_CATEGORIES;
+        $clients_table = ECWP_TABLE_CLIENTS;
+        $categories_expenses = $wpdb->get_results("SELECT * FROM {$expenses_categories_table}", ARRAY_A);
 
-        $list_clients = $wpdb->get_results($wpdb->prepare("SELECT id, company_name FROM %i", ECWP_TABLE_CLIENTS), ARRAY_A);
+        $list_clients = $wpdb->get_results("SELECT id, company_name FROM {$clients_table}", ARRAY_A);
 
         $expense_details['categories_expenses'] = $categories_expenses;
         $expense_details['list_clients'] = $list_clients;

@@ -26,6 +26,15 @@
       @confirm="this.removeItem(selectedItem, selectedInvoiceId)"
       @cancel="showRemoveModal = false"
     />
+
+    <article-modal
+      :show-modal="showArticlesModal"
+      modal-id="modal_articles"
+      :modal-title="translations.select"
+      @select-article="applySelectedArticle"
+      @close="showArticlesModal = false"
+    />
+
     <div
       v-if="loading"
       class="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-gray-900 bg-opacity-50 z-50"
@@ -192,7 +201,7 @@
           <tbody>
             <tr v-for="(item, index) in quoteItems" :key="item.id || index">
               <td class="draggable-item drag-handle px-2">
-                <i class="fas fa-bars"></i>
+                <i class="fas fa-sort"></i>
               </td>
               <td>{{ item.item_ref }}</td>
               <td>
@@ -275,7 +284,11 @@
               </td>
             </tr>
             <tr v-if="quote.status == 'draft' || quote.status == 'pending'">
-              <td class="px-2"></td>
+              <td class="align-top px-2">
+                <span class="cursor-pointer" @click.prevent="ShowModalArticles">
+                  <i class="fas fa-list-ul"></i>
+                </span>
+              </td>
               <td class="align-top px-2">
                 <div class="flex items-center border rounded-md relative">
                   <input
@@ -537,6 +550,7 @@ import Card from "@/components/Card.vue";
 import QuoteNavBar from "@/components/quotes/NavBar.vue";
 import EditItemModal from "@/components/quotes/Modal_Edit_Item.vue";
 import RemoveModal from "@/components/RemoveAlert.vue";
+import ArticleModal from "@/components/ArticlesModal.vue";
 import Sortable from "sortablejs";
 import { fetchSettings } from "@/api/api";
 import { parseDate } from "@/utils/helpers";
@@ -548,6 +562,7 @@ export default {
     QuoteNavBar,
     EditItemModal,
     RemoveModal,
+    ArticleModal,
   },
   data() {
     return {
@@ -587,6 +602,7 @@ export default {
         type: "alert-success",
         position: "toast-bottom toast-end",
       },
+      showArticlesModal: false,
       articles: [],
       categories: [],
       showDropdown: false,
@@ -1001,6 +1017,16 @@ export default {
           this.categories = data;
         })
         .catch((error) => console.error("Error fetching categories:", error));
+    },
+    ShowModalArticles() {
+      this.showArticlesModal = true;
+      modal_articles.showModal();
+    },
+    applySelectedArticle(article) {
+      this.newItem.item_ref = article.ref;
+      this.newItem.item_name = article.name;
+      this.newItem.item_description = article.description || "";
+      this.newItem.unit_price = article.unit_price || 0;
     },
     fetchArticles() {
       if (this.newItem.item_name.length < 1) {

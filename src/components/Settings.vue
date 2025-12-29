@@ -45,62 +45,66 @@
             :class="tabClass(2)"
             @click="selectTab(2)"
             class="justify-start w-full"
-            ><i class="fas fa-tools mr-2"></i>
-            {{ translations.system_settings }}</a
           >
+            <i class="fas fa-tools mr-2"></i>
+            {{ translations.system_settings }}
+          </a>
           <a
             :class="tabClass(3)"
             @click="selectTab(3)"
             class="justify-start w-full"
-            ><i class="fas fa-newspaper mr-2"></i>
-            {{ translations.articles_settings }}</a
           >
+            <i class="fas fa-newspaper mr-2"></i>
+            {{ translations.articles_settings }}
+          </a>
           <a
             :class="tabClass(4)"
             @click="selectTab(4)"
             class="justify-start w-full"
-            ><i class="fas fa-file-invoice-dollar mr-2"></i>
-            {{ translations.invoices_settings }}</a
           >
+            <i class="fas fa-file-invoice-dollar mr-2"></i>
+            {{ translations.invoices_settings }}
+          </a>
           <a
             :class="tabClass(5)"
             @click="selectTab(5)"
             class="justify-start w-full"
-            ><i class="fas fa-undo mr-2"></i>
-            {{ translations.credits_settings }}</a
           >
+            <i class="fas fa-undo mr-2"></i>
+            {{ translations.credits_settings }}
+          </a>
           <a
             :class="tabClass(6)"
             @click="selectTab(6)"
             class="justify-start w-full"
           >
             <i class="far fa-question-circle mr-2"></i>
-            {{ translations.quotes_settings }}</a
-          >
+            {{ translations.quotes_settings }}
+          </a>
           <a
             :class="tabClass(7)"
             @click="selectTab(7)"
             class="justify-start w-full"
           >
             <i class="fas fa-dollar-sign mr-2"></i>
-            {{ translations.currency_vat_settings }}</a
-          >
+            {{ translations.currency_vat_settings }}
+          </a>
           <a
             :class="tabClass(8)"
             @click="selectTab(8)"
             class="justify-start w-full"
           >
             <i class="fas fa-money-check-alt mr-2"></i>
-            {{ translations.payments_settings }}</a
-          >
+            {{ translations.payments_settings }}
+          </a>
           <a
             :class="tabClass(9)"
             @click="selectTab(9)"
             class="justify-start w-full"
           >
             <i class="fas fa-shopping-basket mr-2"></i>
-            {{ translations.expenses_settings }}</a
-          >
+            {{ translations.expenses_settings }}
+          </a>
           <a
             v-if="form.easy_compta_planning_addon_active == 1"
             :class="tabClass(10)"
@@ -108,8 +112,8 @@
             class="justify-start w-full"
           >
             <i class="fas fa-calendar-alt mr-2"></i>
-            {{ translations.planning_settings }}</a
-          >
+            {{ translations.planning_settings }}
+          </a>
           <a
             v-if="form.easy_compta_email_addon_active == 1"
             :class="tabClass(11)"
@@ -117,8 +121,8 @@
             class="justify-start w-full"
           >
             <i class="far fa-envelope mr-2"></i>
-            {{ translations.email_settings }}</a
-          >
+            {{ translations.email_settings }}
+          </a>
           <a
             v-if="form.easy_compta_user_addon_active == 1"
             :class="tabClass(12)"
@@ -126,8 +130,8 @@
             class="justify-start w-full"
           >
             <i class="fas fa-user mr-2"></i>
-            {{ translations.users_settings }}</a
-          >
+            {{ translations.users_settings }}
+          </a>
           <a
             v-if="form.easy_compta_payment_addon_active == 1"
             :class="tabClass(13)"
@@ -135,8 +139,8 @@
             class="justify-start w-full"
           >
             <i class="far fa-credit-card mr-2"></i>
-            {{ translations.stripe_settings }}</a
-          >
+            {{ translations.stripe_settings }}
+          </a>
           <a
             v-if="form.easy_compta_stats_addon_active == 1"
             :class="tabClass(14)"
@@ -144,8 +148,8 @@
             class="justify-start w-full"
           >
             <i class="far fa-chart-bar mr-2"></i>
-            {{ translations.stats_settings }}</a
-          >
+            {{ translations.stats_settings }}
+          </a>
           <a
             v-if="form.easy_compta_qrcode_addon_active == 1"
             :class="tabClass(15)"
@@ -153,16 +157,16 @@
             class="justify-start w-full"
           >
             <i class="fas fa-qrcode mr-2"></i>
-            {{ translations.qrcode_settings }}</a
-          >
+            {{ translations.qrcode_settings }}
+          </a>
           <a
             :class="tabClass(16)"
             @click="selectTab(16)"
             class="justify-start w-full"
           >
             <i class="far fa-id-badge mr-2"></i>
-            {{ translations.validation_license }}</a
-          >
+            {{ translations.validation_license }}
+          </a>
         </div>
 
         <div
@@ -381,10 +385,10 @@
                     class="ecwp-file-input file-input file-input-bordered file-input-info w-full max-w-xs"
                   />
                   <label for="file_logo">
-                    <span
-                      ><i class="fas fa-cloud-upload-alt mr-2"></i
-                      >{{ translations.select }}</span
-                    >
+                    <span>
+                      <i class="fas fa-cloud-upload-alt mr-2"></i>
+                      {{ translations.select }}
+                    </span>
                   </label>
                 </div>
                 <div v-if="logoPreviewUrl" class="max-w-md">
@@ -1973,160 +1977,492 @@
             <h2 class="text-xl font-semibold mb-4">
               {{ translations.validation_license }}
             </h2>
-            <div class="grid grid-cols-2 gap-4">
-              <div class="ecwp-group form-group relative join">
-                <label class="ecwp-label label" for="license-code">{{
-                  translations.license_key
-                }}</label>
-                <input
-                  type="text"
-                  id="license-code"
-                  v-model="license_key"
-                  class="ecwp-input input input-bordered w-full"
-                  :disabled="licenseData && licenseData.valid"
-                  required
-                />
-                <button
-                  @click="checkLicense"
-                  class="btn btn-primary join-item rounded-r-full mt-5 -me-1"
-                  :disabled="
-                    loadingLicense || (licenseData && licenseData.valid)
-                  "
-                >
-                  <span
-                    v-if="loadingLicense"
-                    class="loading loading-spinner loading-sm"
-                  ></span>
-                  <span v-else>
-                    {{ translations.validate }}
-                  </span>
-                </button>
+            
+            <!-- Formulaire de validation compact -->
+            <div v-if="!licenseData || !licenseData.valid" class="mb-4">
+              <div class="form-control">
+                <label class="label py-1">
+                  <span class="label-text text-sm font-medium">{{
+                    translations.license_key
+                  }}</span>
+                </label>
+                <div class="input-group">
+                  <input
+                    type="text"
+                    id="license-code"
+                    v-model="license_key"
+                    class="input input-bordered input-sm flex-1"
+                    :disabled="licenseData && licenseData.valid"
+                    :placeholder="translations.enter_license_key || 'XXXX-XXXX-XXXX-XXXX'"
+                    required
+                  />
+                  <button
+                    @click="checkLicense"
+                    class="btn btn-primary btn-sm"
+                    :disabled="loadingLicense || (licenseData && licenseData.valid)"
+                  >
+                    <span
+                      v-if="loadingLicense"
+                      class="loading loading-spinner loading-xs"
+                    ></span>
+                    <i v-else class="fas fa-check mr-1"></i>
+                    <span v-if="!loadingLicense">
+                      {{ translations.validate }}
+                    </span>
+                  </button>
+                </div>
               </div>
             </div>
-            <div class="grid grid-cols-1 gap-4">
-              <div v-if="errorMessage" class="error-message">
-                {{ errorMessage }}
-              </div>
-              <div v-if="licenseData" class="overflow-x-auto my-4">
-                <table class="table table-xs table-pin-rows table-pin-cols">
-                  <thead>
-                    <tr>
-                      <th>{{ translations.domain }}</th>
-                      <th>{{ translations.addon_name }}</th>
-                      <th>{{ translations.activation_date }}</th>
-                      <th>{{ translations.expiry_date }}</th>
-                      <th>{{ translations.status }}</th>
-                      <th>{{ translations.actions }}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>{{ licenseData.domain }}</td>
-                      <td>
-                        <div
-                          v-for="(version, pluginName) in licenseData.plugins"
-                          :key="pluginName"
-                        >
-                          {{ pluginName }}
+            
+            <div v-if="errorMessage" class="alert alert-error shadow-lg mb-4 py-3 animate-fade-in">
+              <i class="fas fa-exclamation-circle animate-pulse"></i>
+              <span class="text-sm font-medium">{{ errorMessage }}</span>
+            </div>
+              <div v-if="licenseData" class="my-4 animate-fade-in">
+                <div class="card bg-gradient-to-br from-base-200 to-base-300 shadow-xl border border-base-300 hover:shadow-2xl transition-all duration-300">
+                  <div class="card-body p-4">
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                      <div class="p-3 rounded-lg bg-base-100/50 hover:bg-base-100 transition-colors duration-200">
+                        <div class="text-xs text-base-content/60 mb-2 font-medium flex items-center gap-1">
+                          <i class="fas fa-globe text-primary text-xs"></i>
+                          {{ translations.domain || "Domaine" }}
                         </div>
-                      </td>
-                      <td>{{ licenseData.start_date }}</td>
-                      <td>{{ licenseData.end_date }}</td>
-                      <td>{{ licenseData.valid ? "Valid" : "Invalid" }}</td>
-                      <td>
-                        <button
-                          @click="refresh_licence()"
-                          class="btn btn-circle text-blue-500 hover:text-blue-700 mx-1"
-                        >
-                          <i class="fas fa-sync"></i>
-                        </button>
-                        <button
-                          @click="delete_item('licence', '')"
-                          class="btn btn-circle text-red-500 hover:text-red-700 mx-1"
-                        >
-                          <i class="far fa-trash-alt"></i>
-                        </button>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+                        <div class="font-bold text-base text-primary">{{ licenseData.domain || licenseData.current_domain }}</div>
+                      </div>
+                      <div class="p-3 rounded-lg bg-base-100/50 hover:bg-base-100 transition-colors duration-200">
+                        <div class="text-xs text-base-content/60 mb-2 font-medium flex items-center gap-1">
+                          <i class="fas fa-calendar-check text-info text-xs"></i>
+                          {{ translations.activation_date || "Date d'activation" }}
+                        </div>
+                        <div class="font-bold text-base text-info">{{ licenseData.start_date }}</div>
+                      </div>
+                      <div class="p-3 rounded-lg bg-base-100/50 hover:bg-base-100 transition-colors duration-200">
+                        <div class="text-xs text-base-content/60 mb-2 font-medium flex items-center gap-1">
+                          <i class="fas fa-calendar-times text-warning text-xs"></i>
+                          {{ translations.expiry_date || "Date d'expiration" }}
+                        </div>
+                        <div class="font-bold text-base text-warning">{{ licenseData.end_date }}</div>
+                      </div>
+                      <div class="p-3 rounded-lg bg-base-100/50 hover:bg-base-100 transition-colors duration-200">
+                        <div class="text-xs text-base-content/60 mb-2 font-medium flex items-center gap-1">
+                          <i class="fas fa-shield-alt text-success text-xs"></i>
+                          {{ translations.status || "Statut" }}
+                        </div>
+                        <div>
+                          <span class="badge badge-lg shadow-md animate-pulse" :class="licenseData.valid ? 'badge-success' : 'badge-error'">
+                            <i :class="licenseData.valid ? 'fas fa-check-circle' : 'fas fa-times-circle'"></i>
+                            {{ licenseData.valid ? (translations.valid || "Valide") : (translations.invalid || "Invalide") }}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="flex gap-3 mt-4 pt-4 border-t border-base-300">
+                      <button
+                        @click="refresh_licence()"
+                        class="btn btn-sm btn-primary shadow-md hover:shadow-lg hover:scale-105 transition-all duration-200"
+                      >
+                        <i class="fas fa-sync mr-2"></i>
+                        {{ translations.refresh || "Rafraîchir" }}
+                      </button>
+                      <button
+                        @click="delete_item('licence', '')"
+                        class="btn btn-sm btn-error btn-outline shadow-md hover:shadow-lg hover:scale-105 transition-all duration-200"
+                      >
+                        <i class="fas fa-trash mr-2"></i>
+                        {{ translations.delete || "Supprimer" }}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-                <table
-                  class="table table-xs table-pin-rows table-pin-cols mt-6"
-                >
-                  <thead>
-                    <tr>
-                      <th>{{ translations.addon_name }}</th>
-                      <th>{{ translations.slug }}</th>
-                      <th>{{ translations.installed }}</th>
-                      <th>{{ translations.version }}</th>
-                      <th>{{ translations.actions }}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="plugin in licenseData.plugins" :key="plugin">
-                      <td>{{ plugin.product_name }}</td>
-                      <td>{{ plugin.product_slug }}</td>
-                      <td>
-                        <template
-                          v-if="installed_versions[plugin.product_slug]"
-                          >{{ translations.installed }}</template
+              <!-- Section de gestion des domaines autorisés -->
+              <div v-if="licenseData" class="mt-6 animate-fade-in">
+                <div class="card bg-gradient-to-br from-base-100 via-base-100 to-base-200 shadow-2xl border-2 border-primary/20 hover:border-primary/40 transition-all duration-300">
+                  <div class="card-body px-0">
+                    <div class="flex items-center justify-between mb-6">
+                      <h3 class="text-2xl font-extrabold flex items-center gap-3 bg-gradient-to-r from-primary to-info bg-clip-text text-transparent">
+                        <div class="avatar placeholder">
+                          <div class="bg-gradient-to-br from-primary to-info text-primary-content rounded-full w-12 shadow-lg">
+                            <i class="fas fa-globe text-xl"></i>
+                          </div>
+                        </div>
+                        <span>{{ translations.authorized_domains || "Domaines autorisés" }}</span>
+                      </h3>
+                    </div>
+                  
+                  <!-- Statistiques compactes -->
+                  <div v-if="licenseData" class="mb-6">
+                    <div class="stats stats-vertical lg:stats-horizontal shadow-2xl w-full bg-gradient-to-br from-base-200 via-base-300 to-base-200 border-2 border-base-300">
+                      <div class="stat py-4 px-6 hover:bg-base-100/50 transition-all duration-300 rounded-lg group">
+                        <div class="stat-figure text-primary opacity-90 group-hover:opacity-100 group-hover:scale-110 transition-all duration-300">
+                          <div class="avatar placeholder">
+                            <div class="bg-gradient-to-br from-primary to-primary-focus text-primary-content rounded-full w-16 shadow-lg">
+                              <i class="fas fa-server text-2xl"></i>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="stat-title text-sm text-base-content/70 font-semibold mb-1">
+                          {{ translations.used_domains || "Utilisés" }}
+                        </div>
+                        <div class="stat-value text-primary text-4xl font-extrabold drop-shadow-sm">{{ usedDomainsCount }}</div>
+                        <div class="stat-desc text-xs text-base-content/60 mt-1">
+                          <i class="fas fa-circle text-xs mr-1"></i>
+                          {{ translations.currently_used || "Actuellement utilisés" }}
+                        </div>
+                      </div>
+                      <div class="stat py-4 px-6 hover:bg-base-100/50 transition-all duration-300 rounded-lg group">
+                        <div class="stat-figure text-info opacity-90 group-hover:opacity-100 group-hover:scale-110 transition-all duration-300">
+                          <div class="avatar placeholder">
+                            <div class="bg-gradient-to-br from-info to-info-focus text-info-content rounded-full w-16 shadow-lg">
+                              <i class="fas fa-chart-line text-2xl"></i>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="stat-title text-sm text-base-content/70 font-semibold mb-1">
+                          {{ translations.max_domains || "Maximum" }}
+                        </div>
+                        <div class="stat-value text-info text-4xl font-extrabold drop-shadow-sm">{{ maxDomainsText }}</div>
+                        <div class="stat-desc text-xs text-base-content/60 mt-1">
+                          <i class="fas fa-circle text-xs mr-1"></i>
+                          {{ translations.limit || "Limite de la licence" }}
+                        </div>
+                      </div>
+                      <div class="stat py-4 px-6 hover:bg-base-100/50 transition-all duration-300 rounded-lg group">
+                        <div class="stat-figure opacity-90 group-hover:opacity-100 group-hover:scale-110 transition-all duration-300" :class="remainingDomainsClass">
+                          <div class="avatar placeholder">
+                            <div class="rounded-full w-16 shadow-lg" :class="remainingDomainsClass === 'text-success' ? 'bg-gradient-to-br from-success to-success-focus text-success-content' : remainingDomainsClass === 'text-warning' ? 'bg-gradient-to-br from-warning to-warning-focus text-warning-content' : 'bg-gradient-to-br from-error to-error-focus text-error-content'">
+                              <i class="fas fa-check-circle text-2xl"></i>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="stat-title text-sm text-base-content/70 font-semibold mb-1">
+                          {{ translations.remaining_domains || "Restants" }}
+                        </div>
+                        <div class="stat-value text-4xl font-extrabold drop-shadow-sm" :class="remainingDomainsClass">{{ remainingDomainsText }}</div>
+                        <div class="stat-desc text-xs mt-1" :class="remainingDomainsClass">
+                          <i class="fas fa-circle text-xs mr-1"></i>
+                          {{ translations.available || "Disponibles" }}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <!-- Barre de progression compacte -->
+                    <div v-if="maxDomains !== null && maxDomains > 0" class="mt-6 card bg-gradient-to-r from-base-200 to-base-300 shadow-lg border border-base-300">
+                      <div class="card-body p-4">
+                        <div class="flex justify-between items-center mb-3">
+                          <span class="font-bold text-base flex items-center gap-2">
+                            <i class="fas fa-tachometer-alt text-primary"></i>
+                            {{ translations.usage || "Utilisation" }}
+                          </span>
+                          <span class="badge badge-lg shadow-md font-bold" :class="progressBarClass === 'progress-success' ? 'badge-success' : progressBarClass === 'progress-warning' ? 'badge-warning' : 'badge-error'">
+                            <i class="fas fa-percent mr-1"></i>
+                            {{ usagePercentage }}%
+                          </span>
+                        </div>
+                        <progress
+                          class="progress h-4 shadow-inner transition-all duration-1000 ease-out"
+                          :class="progressBarClass"
+                          :value="usedDomainsCount"
+                          :max="maxDomains"
+                        ></progress>
+                        <div class="flex justify-between text-sm font-semibold mt-3">
+                          <span class="badge badge-outline badge-md shadow-sm">
+                            <i class="fas fa-globe mr-1"></i>
+                            {{ usedDomainsCount }} / {{ maxDomains }}
+                          </span>
+                          <span class="badge badge-outline badge-md shadow-sm" :class="remainingDomainsClass === 'text-success' ? 'badge-success' : remainingDomainsClass === 'text-warning' ? 'badge-warning' : 'badge-error'">
+                            <i class="fas fa-hourglass-half mr-1"></i>
+                            {{ remainingDomainsText }} {{ translations.remaining || "restants" }}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <!-- Messages d'avertissement compacts -->
+                    <div
+                      v-if="remainingDomains === 0 && maxDomains !== null"
+                      class="alert alert-warning shadow-xl mt-4 py-4 border-2 border-warning/50 animate-pulse"
+                    >
+                      <i class="fas fa-exclamation-triangle text-2xl"></i>
+                      <span class="font-bold text-base">
+                        {{ translations.limit_reached || "Limite de domaines atteinte." }}
+                      </span>
+                    </div>
+                    <div
+                      v-if="remainingDomains > 0 && remainingDomains <= 2 && maxDomains !== null"
+                      class="alert alert-info shadow-xl mt-4 py-4 border-2 border-info/50"
+                    >
+                      <i class="fas fa-info-circle text-2xl"></i>
+                      <span class="font-semibold text-base">
+                        {{ translations.limit_warning || "Il ne reste que " + remainingDomains + " domaine(s)." }}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <!-- Formulaire compact -->
+                  <div v-if="licenseData" class="mb-6">
+                    <div class="form-control">
+                      <label class="label pb-2">
+                        <span class="label-text font-bold text-base flex items-center gap-2">
+                          <i class="fas fa-plus-circle text-primary"></i>
+                          {{ translations.add_domain || "Ajouter un domaine" }}
+                        </span>
+                      </label>
+                      <div class="input-group">
+                        <input
+                          type="text"
+                          v-model="newDomain"
+                          :placeholder="translations.enter_domain || 'exemple.com'"
+                          class="input input-bordered flex-1 focus:input-primary focus:ring-2 focus:ring-primary transition-all duration-200"
+                          :class="{
+                            'input-error focus:ring-error': domainErrorMessage,
+                            'input-disabled opacity-50': maxDomains !== null && maxDomains !== -1 && remainingDomains === 0
+                          }"
+                          @keyup.enter="addDomain"
+                          :disabled="maxDomains !== null && maxDomains !== -1 && remainingDomains === 0"
+                        />
+                        <button
+                          @click="addDomain"
+                          class="btn btn-primary shadow-md hover:shadow-xl hover:scale-105 transition-all duration-200"
+                          :disabled="loadingDomain || !newDomain || (maxDomains !== null && maxDomains !== -1 && remainingDomains === 0)"
                         >
-                        <template v-else>
-                          {{ translations.not_installed }}
-                        </template>
-                      </td>
-                      <td>{{ installed_versions[plugin.product_slug] }}</td>
-                      <td>
-                        <template v-if="installed_versions[plugin.product_slug]"
-                          ><button
-                            @click="
-                              checkUpdatePlugin(
-                                plugin.product_slug,
-                                installed_versions[plugin.product_slug]
-                              )
-                            "
-                            class="btn btn-sm text-red-500 hover:text-red-700 mx-1"
+                          <span v-if="loadingDomain" class="loading loading-spinner loading-sm"></span>
+                          <i v-else class="fas fa-plus text-lg"></i>
+                          <span v-if="!loadingDomain" class="font-semibold">{{ translations.add_domain || "Ajouter" }}</span>
+                        </button>
+                      </div>
+                      <label v-if="domainErrorMessage" class="label py-2 animate-fade-in">
+                        <span class="label-text-alt text-error text-sm font-semibold flex items-center gap-2">
+                          <i class="fas fa-exclamation-circle animate-pulse"></i>
+                          {{ domainErrorMessage }}
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+                  
+                  <!-- Liste des domaines compacte -->
+                  <div v-if="licenseData && licenseData.domains && licenseData.domains.length > 0" class="mt-6">
+                    <div class="overflow-x-auto shadow-xl rounded-lg border-2 border-base-300">
+                      <table class="table table-zebra">
+                        <thead class="bg-gradient-to-r from-base-200 to-base-300">
+                          <tr>
+                            <th class="text-sm font-bold">
+                              <i class="fas fa-globe mr-2 text-primary"></i>
+                              {{ translations.domain || "Domaine" }}
+                            </th>
+                            <th class="text-sm font-bold">
+                              <i class="fas fa-info-circle mr-2 text-info"></i>
+                              {{ translations.status || "Statut" }}
+                            </th>
+                            <th class="text-sm font-bold text-right">
+                              <i class="fas fa-cog mr-2 text-warning"></i>
+                              {{ translations.actions || "Actions" }}
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr
+                            v-for="(domain, index) in licenseData.domains"
+                            :key="index"
+                            class="hover:bg-base-200 transition-all duration-200"
+                            :class="{
+                              'bg-gradient-to-r from-success/20 to-success/10 border-l-4 border-success': domain === licenseData.current_domain,
+                            }"
                           >
-                            {{ translations.check_update }}
-                          </button>
-                          <button
-                            v-if="updatesAvailable[plugin.product_slug]"
-                            @click="
-                              installUpdatePlugin(
-                                plugin.product_slug,
-                                updatesAvailable[plugin.product_slug]
-                              )
-                            "
-                            class="btn btn-sm text-blue-500 hover:text-blue-700 mx-1"
-                          >
-                            {{ translations.download }}
-                          </button></template
-                        >
-                        <template v-else>
-                          <button
-                            @click="
-                              installUpdatePlugin(
-                                plugin.product_slug,
-                                updatesAvailable[plugin.product_slug]
-                              )
-                            "
-                            class="btn btn-sm text-green-500 hover:green-red-700 mx-1"
-                          >
-                            {{ translations.download }}
-                          </button>
-                        </template>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+                            <td>
+                              <div class="flex items-center gap-3">
+                                <div class="avatar placeholder">
+                                  <div class="bg-primary text-primary-content rounded-full w-8">
+                                    <i class="fas fa-server text-xs"></i>
+                                  </div>
+                                </div>
+                                <span class="font-mono text-base font-semibold">{{ domain }}</span>
+                                <span
+                                  v-if="domain === licenseData.current_domain"
+                                  class="badge badge-success badge-sm text-xs shadow-md font-medium animate-pulse"
+                                >
+                                  <i class="fas fa-check-circle mr-1 text-xs"></i>
+                                  {{ translations.current_domain || "Actuel" }}
+                                </span>
+                              </div>
+                            </td>
+                            <td>
+                              <span
+                                class="badge badge-sm text-xs shadow-sm font-medium"
+                                :class="
+                                  domain === licenseData.current_domain
+                                    ? 'badge-success'
+                                    : 'badge-info'
+                                "
+                              >
+                                <i :class="domain === licenseData.current_domain ? 'fas fa-check-circle mr-1 text-xs' : 'fas fa-circle mr-1 text-xs'"></i>
+                                {{
+                                  domain === licenseData.current_domain
+                                    ? translations.active || "Actif"
+                                    : translations.authorized || "Autorisé"
+                                }}
+                              </span>
+                            </td>
+                            <td class="text-right">
+                              <button
+                                v-if="domain !== licenseData.current_domain"
+                                @click="confirmRemoveDomain(domain)"
+                                class="btn btn-sm btn-error btn-outline shadow-md hover:shadow-xl hover:scale-110 transition-all duration-200"
+                                :disabled="loadingDomain"
+                              >
+                                <i class="fas fa-trash"></i>
+                              </button>
+                              <span v-else class="badge badge-ghost badge-sm shadow-sm">
+                                <i class="fas fa-lock"></i>
+                              </span>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  <div v-else-if="licenseData" class="alert shadow-xl mt-6 py-6 border-2 border-base-300">
+                    <i class="fas fa-inbox text-3xl text-base-content/40"></i>
+                    <span class="text-base font-semibold">{{ translations.no_domains || "Aucun domaine autorisé" }}</span>
+                  </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Liste des plugins avec collapse -->
+              <div v-if="licenseData && licenseData.plugins" class="mt-6 animate-fade-in">
+                <div class="card bg-gradient-to-br from-base-100 via-base-100 to-base-200 shadow-2xl border-2 border-primary/20 hover:border-primary/40 transition-all duration-300">
+                  <div class="card-body p-0">
+                    <!-- En-tête avec collapse -->
+                    <div class="collapse collapse-arrow bg-transparent" :class="{ 'collapse-open': pluginsListOpen }">
+                      <input type="checkbox" v-model="pluginsListOpen" class="hidden" />
+                      <div 
+                        class="collapse-title text-lg font-extrabold px-6 py-4 bg-gradient-to-r from-base-200 to-base-300 border-b-2 border-base-300 hover:bg-gradient-to-r hover:from-base-300 hover:to-base-200 transition-all duration-200 cursor-pointer"
+                        @click="pluginsListOpen = !pluginsListOpen"
+                      >
+                        <div class="flex items-center justify-between w-full">
+                          <div class="flex items-center gap-3">
+                            <div class="avatar placeholder">
+                              <div class="bg-gradient-to-br from-primary to-info text-primary-content rounded-full w-10 shadow-lg">
+                                <i class="fas fa-plug text-lg"></i>
+                              </div>
+                            </div>
+                            <span class="bg-gradient-to-r from-primary to-info bg-clip-text text-transparent">
+                              {{ translations.plugins_list || "Plugins de la licence" }}
+                            </span>
+                            <span class="badge badge-primary badge-sm text-xs shadow-md font-semibold">
+                              {{ Object.keys(licenseData.plugins).length }}
+                            </span>
+                          </div>
+                          
+                        </div>
+                      </div>
+                      <div class="collapse-content px-0 bg-transparent">
+                        <div class="p-6">
+                          <div class="overflow-x-auto shadow-xl rounded-lg border-2 border-base-300">
+                            <table class="table table-zebra">
+                              <thead class="bg-gradient-to-r from-base-200 to-base-300">
+                                <tr>
+                                  <th class="text-sm font-bold">
+                                    <i class="fas fa-cube mr-2 text-primary"></i>
+                                    {{ translations.addon_name || "Nom du module" }}
+                                  </th>
+                                  <th class="text-sm font-bold">
+                                    <i class="fas fa-check-circle mr-2 text-success"></i>
+                                    {{ translations.installed || "Installé" }}
+                                  </th>
+                                  <th class="text-sm font-bold">
+                                    <i class="fas fa-tag mr-2 text-info"></i>
+                                    {{ translations.version || "Version" }}
+                                  </th>
+                                  <th class="text-sm font-bold text-right">
+                                    <i class="fas fa-cog mr-2 text-warning"></i>
+                                    {{ translations.actions || "Actions" }}
+                                  </th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                <tr 
+                                  v-for="plugin in licenseData.plugins" 
+                                  :key="plugin.product_slug"
+                                  class="hover:bg-base-200 transition-all duration-200"
+                                  :class="{
+                                    'bg-success/5': installed_versions[plugin.product_slug]
+                                  }"
+                                >
+                                  <td>
+                                    <div class="flex items-center gap-3">
+                                      <div class="avatar placeholder">
+                                        <div class="bg-gradient-to-br from-primary to-info text-primary-content rounded-full w-10 shadow-md">
+                                          <i class="fas fa-puzzle-piece text-sm"></i>
+                                        </div>
+                                      </div>
+                                      <div>
+                                        <div class="font-bold text-base text-primary">{{ plugin.product_name }}</div>
+                                        <div class="text-xs text-base-content/60 font-mono mt-1">{{ plugin.product_slug }}</div>
+                                      </div>
+                                    </div>
+                                  </td>
+                                  <td>
+                                    <span 
+                                      class="badge badge-sm text-xs shadow-sm font-medium" 
+                                      :class="installed_versions[plugin.product_slug] ? 'badge-success' : 'badge-ghost'"
+                                    >
+                                      <i :class="installed_versions[plugin.product_slug] ? 'fas fa-check-circle mr-1 text-xs' : 'fas fa-times-circle mr-1 text-xs'"></i>
+                                      {{ installed_versions[plugin.product_slug] ? (translations.installed || "Installé") : (translations.not_installed || "Non installé") }}
+                                    </span>
+                                  </td>
+                                  <td>
+                                    <div class="flex items-center gap-2">
+                                      <span class="font-mono text-sm font-semibold" :class="installed_versions[plugin.product_slug] ? 'text-base-content' : 'text-base-content/40'">
+                                        {{ installed_versions[plugin.product_slug] || '-' }}
+                                      </span>
+                                      <span 
+                                        v-if="updatesAvailable[plugin.product_slug]" 
+                                        class="badge badge-warning badge-sm text-xs shadow-sm font-medium animate-pulse"
+                                      >
+                                        <i class="fas fa-exclamation-triangle mr-1 text-xs"></i>
+                                        Mise à jour
+                                      </span>
+                                    </div>
+                                  </td>
+                                  <td class="text-right">
+                                    <div class="flex justify-end gap-2">
+                                      <button
+                                        v-if="installed_versions[plugin.product_slug]"
+                                        @click="checkUpdatePlugin(plugin.product_slug, installed_versions[plugin.product_slug])"
+                                        class="btn btn-sm btn-info btn-outline shadow-md hover:shadow-xl hover:scale-110 transition-all duration-200"
+                                        :title="translations.check_update || 'Vérifier les mises à jour'"
+                                      >
+                                        <i class="fas fa-sync"></i>
+                                      </button>
+                                      <button
+                                        v-if="updatesAvailable[plugin.product_slug] || !installed_versions[plugin.product_slug]"
+                                        @click="installUpdatePlugin(plugin.product_slug, updatesAvailable[plugin.product_slug])"
+                                        class="btn btn-sm btn-primary shadow-md hover:shadow-xl hover:scale-110 transition-all duration-200"
+                                        :title="updatesAvailable[plugin.product_slug] ? (translations.update || 'Mettre à jour') : (translations.install || 'Installer')"
+                                      >
+                                        <i :class="updatesAvailable[plugin.product_slug] ? 'fas fa-arrow-up' : 'fas fa-download'"></i>
+                                        <span class="ml-1">{{ updatesAvailable[plugin.product_slug] ? (translations.update || "Mettre à jour") : (translations.install || "Installer") }}</span>
+                                      </button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
               </div>
             </div>
-          </div>
-        </div>
+            </div>
+        </Card>
       </div>
-    </Card>
-  </div>
 </template>
 
 <script>
@@ -2145,6 +2481,7 @@ export default {
     return {
       loading: false,
       selectedTab: 1,
+      pluginsListOpen: false,
       form: {
         company_name: "",
         company_address: "",
@@ -2264,6 +2601,10 @@ export default {
       installed_versions: {},
       updatesAvailable: {},
       errorMessage: "",
+      newDomain: "",
+      loadingDomain: false,
+      domainErrorMessage: "",
+      domainToRemove: null,
       toast: {
         visible: false,
         message: "",
@@ -3232,12 +3573,26 @@ export default {
 
         const data = await response.json();
         if (data.valid) {
-          location.reload();
+          // Mettre à jour les données de licence localement
+          this.licenseData = data.license_data;
+          if (!this.licenseData.domains) {
+            this.licenseData.domains = [];
+          }
+          if (!this.licenseData.current_domain && this.licenseData.domain) {
+            this.licenseData.current_domain = this.licenseData.domain;
+          }
+          this.showToast(
+            this.translations.license_refreshed || "Licence rafraîchie avec succès",
+            "alert-success"
+          );
+          this.loading = false;
         } else {
           this.errorMessage = data.message;
+          this.loading = false;
         }
       } catch (error) {
         this.errorMessage = "An error occurred while refreshing the license.";
+        this.loading = false;
       }
     },
     async storeLicense(data) {
@@ -3276,6 +3631,14 @@ export default {
           if (data.valid) {
             this.licenseData = data.license_data;
             this.installed_versions = data.installed_versions;
+            // S'assurer que licenseData.domains existe
+            if (!this.licenseData.domains) {
+              this.licenseData.domains = [];
+            }
+            // S'assurer que current_domain existe
+            if (!this.licenseData.current_domain && this.licenseData.domain) {
+              this.licenseData.current_domain = this.licenseData.domain;
+            }
             this.license_key =
               "****-****-****-****-****" +
               this.license_key.substr(this.license_key.length - 4);
@@ -3316,6 +3679,125 @@ export default {
         }
       } catch (error) {
         this.showToast(error.message, "alert-error");
+      }
+    },
+    async addDomain() {
+      if (!this.newDomain || !this.newDomain.trim()) {
+        this.domainErrorMessage = this.translations.domain_required || "Le domaine est requis";
+        return;
+      }
+
+      this.loadingDomain = true;
+      this.domainErrorMessage = "";
+
+      try {
+        const response = await fetch(
+          "/wp-json/my-easy-compta/v1/license/add-domain",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-WP-Nonce": myEasyComptaAdmin.nonce,
+            },
+            body: JSON.stringify({
+              domain: this.newDomain.trim(),
+            }),
+          }
+        );
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          this.showToast(
+            data.message || this.translations.domain_added || "Domaine ajouté avec succès",
+            "alert-success"
+          );
+          this.newDomain = "";
+          // Rafraîchir les données de licence
+          await this.loadLicenseDetails();
+        } else {
+          this.domainErrorMessage =
+            data.message || this.translations.domain_add_failed || "Échec de l'ajout du domaine";
+          this.showToast(
+            data.message || this.translations.domain_add_failed || "Échec de l'ajout du domaine",
+            "alert-error"
+          );
+        }
+      } catch (error) {
+        this.domainErrorMessage =
+          this.translations.error_occurred || "Une erreur s'est produite";
+        this.showToast(
+          this.translations.error_occurred || "Une erreur s'est produite",
+          "alert-error"
+        );
+      } finally {
+        this.loadingDomain = false;
+      }
+    },
+    confirmRemoveDomain(domain) {
+      this.domainToRemove = domain;
+      // Utiliser le modal de confirmation existant ou créer une confirmation simple
+      if (
+        confirm(
+          (this.translations.confirm_remove_domain || "Êtes-vous sûr de vouloir supprimer le domaine") +
+            " " +
+            domain +
+            "?"
+        )
+      ) {
+        this.removeDomain(domain);
+      }
+      this.domainToRemove = null;
+    },
+    async removeDomain(domain) {
+      if (!domain) {
+        return;
+      }
+
+      this.loadingDomain = true;
+      this.domainErrorMessage = "";
+
+      try {
+        const response = await fetch(
+          "/wp-json/my-easy-compta/v1/license/remove-domain",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-WP-Nonce": myEasyComptaAdmin.nonce,
+            },
+            body: JSON.stringify({
+              domain: domain,
+            }),
+          }
+        );
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          this.showToast(
+            data.message || this.translations.domain_removed || "Domaine supprimé avec succès",
+            "alert-success"
+          );
+          // Rafraîchir les données de licence
+          await this.loadLicenseDetails();
+        } else {
+          this.domainErrorMessage =
+            data.message || this.translations.domain_remove_failed || "Échec de la suppression du domaine";
+          this.showToast(
+            data.message || this.translations.domain_remove_failed || "Échec de la suppression du domaine",
+            "alert-error"
+          );
+        }
+      } catch (error) {
+        this.domainErrorMessage =
+          this.translations.error_occurred || "Une erreur s'est produite";
+        this.showToast(
+          this.translations.error_occurred || "Une erreur s'est produite",
+          "alert-error"
+        );
+      } finally {
+        this.loadingDomain = false;
       }
     },
 
@@ -3367,6 +3849,12 @@ export default {
     },
     async installUpdatePlugin(plugin_slug) {
       try {
+        // Afficher un message de chargement
+        this.showToast(
+          this.translations.installing || "Installation en cours...",
+          "alert-info"
+        );
+
         const response = await fetch(
           "/wp-json/my-easy-compta/v1/license/download-update",
           {
@@ -3384,19 +3872,29 @@ export default {
         const data = await response.json();
 
         if (data.success) {
-          this.showToast(this.translations.success, "alert-success");
-          const downloadLink = document.createElement("a");
-          downloadLink.href = data.download_url;
-          downloadLink.setAttribute("download", "");
-          document.body.appendChild(downloadLink);
-          downloadLink.click();
-          document.body.removeChild(downloadLink);
+          const actionMessage = data.action === 'installed' 
+            ? (this.translations.plugin_installed || "Plugin installé avec succès")
+            : (this.translations.plugin_updated || "Plugin mis à jour avec succès");
+          
+          this.showToast(actionMessage, "alert-success");
+          
+          // Rafraîchir la liste des plugins installés
+          await this.loadLicenseDetails();
+          
+          // Rafraîchir la page après un court délai pour voir le message
+          setTimeout(() => {
+            window.location.reload();
+          }, 1500);
         } else {
-          this.showToast(this.translations.error, "alert-error");
+          const errorMessage = data.message || data.code || this.translations.error || "Une erreur est survenue";
+          this.showToast(errorMessage, "alert-error");
         }
       } catch (error) {
-        console.error("Error checking for plugin update:", error);
-        this.showToast(this.translations.error, "alert-error");
+        console.error("Error installing plugin:", error);
+        this.showToast(
+          this.translations.error || "Erreur lors de l'installation",
+          "alert-error"
+        );
       }
     },
   },
@@ -3404,6 +3902,79 @@ export default {
   computed: {
     translations() {
       return window.myEasyComptaAdmin.easyComptaTranslations;
+    },
+    // Nombre de domaines utilisés
+    usedDomainsCount() {
+      if (!this.licenseData || !this.licenseData.domains) {
+        return 0;
+      }
+      return this.licenseData.domains.length;
+    },
+    // Nombre maximum de domaines autorisés
+    maxDomains() {
+      if (!this.licenseData) {
+        return null;
+      }
+      // L'API peut retourner max_domains, max_sites, ou domain_limit
+      return (
+        this.licenseData.max_domains ||
+        this.licenseData.max_sites ||
+        this.licenseData.domain_limit ||
+        null
+      );
+    },
+    // Texte pour afficher le maximum (illimité si null ou -1)
+    maxDomainsText() {
+      if (this.maxDomains === null || this.maxDomains === -1) {
+        return this.translations.unlimited || "Illimité";
+      }
+      return this.maxDomains.toString();
+    },
+    // Nombre de domaines restants
+    remainingDomains() {
+      if (this.maxDomains === null || this.maxDomains === -1) {
+        return -1; // -1 signifie illimité
+      }
+      const remaining = this.maxDomains - this.usedDomainsCount;
+      return Math.max(0, remaining);
+    },
+    // Texte pour afficher les domaines restants
+    remainingDomainsText() {
+      if (this.remainingDomains === -1) {
+        return this.translations.unlimited || "Illimité";
+      }
+      return this.remainingDomains.toString();
+    },
+    // Classe CSS pour le nombre de domaines restants
+    remainingDomainsClass() {
+      if (this.remainingDomains === -1) {
+        return "text-success";
+      }
+      if (this.remainingDomains === 0) {
+        return "text-error";
+      }
+      if (this.remainingDomains <= 2) {
+        return "text-warning";
+      }
+      return "text-success";
+    },
+    // Pourcentage d'utilisation
+    usagePercentage() {
+      if (this.maxDomains === null || this.maxDomains === -1 || this.maxDomains === 0) {
+        return 0;
+      }
+      return Math.round((this.usedDomainsCount / this.maxDomains) * 100);
+    },
+    // Classe CSS pour la barre de progression (DaisyUI)
+    progressBarClass() {
+      const percentage = this.usagePercentage;
+      if (percentage >= 100) {
+        return "progress-error";
+      }
+      if (percentage >= 80) {
+        return "progress-warning";
+      }
+      return "progress-success";
     },
   },
   beforeUnmount() {

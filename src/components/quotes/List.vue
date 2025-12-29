@@ -1,5 +1,6 @@
 <template>
   <div class="pt-2 pr-4">
+    <GlobalSearch />
     <div
       v-if="toast.visible"
       :class="['toast', toast.position]"
@@ -313,6 +314,7 @@ import Card from "@/components/Card.vue";
 import QuoteEditModal from "@/components/quotes/Edit.vue";
 import RemoveModal from "@/components/RemoveAlert.vue";
 import ConfirmModal from "@/components/ConfirmAlert.vue";
+import GlobalSearch from "@/components/GlobalSearch.vue";
 import { fetchSettings } from "@/api/api";
 import {
   calculateVAT,
@@ -329,6 +331,7 @@ export default {
     QuoteEditModal,
     ConfirmModal,
     RemoveModal,
+    GlobalSearch,
   },
   data() {
     return {

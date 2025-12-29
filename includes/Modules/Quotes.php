@@ -219,9 +219,10 @@ class ECWP_Quotes
         global $wpdb;
         $params = $request->get_params();
         $quote_id = $params['id'];
+        $quotes_table = ECWP_TABLE_QUOTES;
 
         $quote_details = $wpdb->get_row(
-            $wpdb->prepare("SELECT * FROM %i WHERE id = %d", ECWP_TABLE_QUOTES, $quote_id),
+            $wpdb->prepare("SELECT * FROM {$quotes_table} WHERE id = %d", $quote_id),
             ARRAY_A
         );
 
@@ -248,14 +249,16 @@ class ECWP_Quotes
             return new WP_Error('rest_forbidden', __('API access error', 'my-easy-compta'), array('status' => 403));
         }
         global $wpdb;
-        $last_quote_id = $wpdb->get_var($wpdb->prepare("SELECT MAX(number) AS last_id FROM %i", ECWP_TABLE_QUOTES));
+        $quotes_table = ECWP_TABLE_QUOTES;
+        $settings_table = ECWP_TABLE_SETTINGS;
+        $last_quote_id = $wpdb->get_var("SELECT MAX(number) AS last_id FROM {$quotes_table}");
         if (empty($last_quote_id)) {
-            $last_quote_id = $wpdb->get_var($wpdb->prepare("SELECT meta_value FROM %i WHERE meta_key = 'quote_first'", ECWP_TABLE_SETTINGS));
+            $last_quote_id = $wpdb->get_var($wpdb->prepare("SELECT meta_value FROM {$settings_table} WHERE meta_key = %s", 'quote_first'));
         } else {
             $last_quote_id = $last_quote_id + 1;
         }
 
-        $quote_prefix = $wpdb->get_var($wpdb->prepare("SELECT meta_value FROM %i WHERE meta_key = 'quote_prefix'", ECWP_TABLE_SETTINGS));
+        $quote_prefix = $wpdb->get_var($wpdb->prepare("SELECT meta_value FROM {$settings_table} WHERE meta_key = %s", 'quote_prefix'));
         $quote_prefix = $quote_prefix ? sanitize_text_field($quote_prefix) : 'INV';
         $quote_number = $quote_prefix . '_' . str_pad($last_quote_id, 4, '0', STR_PAD_LEFT);
 
@@ -323,6 +326,7 @@ class ECWP_Quotes
         }
 
         global $wpdb;
+        $quote_elements_table = ECWP_TABLE_QUOTE_ELEMENTS;
         $data = [
             'quote_id' => sanitize_text_field($params['quote_id']),
             'item_name' => sanitize_text_field($params['item_name']),
@@ -335,12 +339,13 @@ class ECWP_Quotes
             'discount' => intval($params['discount']),
             'total_price' => floatval($params['total_price']),
             'total_amount' => floatval($params['total_amount']),
-            'item_order' => (int) ($wpdb->get_var($wpdb->prepare("SELECT MAX(item_order) FROM %i WHERE quote_id = %d", ECWP_TABLE_QUOTE_ELEMENTS, intval($params['quote_id']))) + 1),
+            'item_order' => (int) ($wpdb->get_var($wpdb->prepare("SELECT MAX(item_order) FROM {$quote_elements_table} WHERE quote_id = %d", intval($params['quote_id']))) + 1),
         ];
 
         $result = $wpdb->insert(ECWP_TABLE_QUOTE_ELEMENTS, $data);
 
-        $existing_article = $wpdb->get_var($wpdb->prepare("SELECT id FROM %i WHERE name = %s", ECWP_TABLE_ARTICLES, $params['item_name']));
+        $articles_table = ECWP_TABLE_ARTICLES;
+        $existing_article = $wpdb->get_var($wpdb->prepare("SELECT id FROM {$articles_table} WHERE name = %s", $params['item_name']));
 
         if (!$existing_article) {
             $wpdb->insert(ECWP_TABLE_ARTICLES, array(
@@ -386,6 +391,8 @@ class ECWP_Quotes
 
         $params = $request->get_params();
         $quote_id = $params['id'];
+        $quote_elements_table = ECWP_TABLE_QUOTE_ELEMENTS;
+        $articles_categories_table = ECWP_TABLE_ARTICLES_CATEGORIES;
 
         $items = $wpdb->get_results(
             $wpdb->prepare("SELECT
@@ -403,16 +410,15 @@ class ECWP_Quotes
                 ie.total_amount,
                 ie.item_order
             FROM
-                %i ie
+                {$quote_elements_table} ie
             LEFT JOIN
-                %i ac
+                {$articles_categories_table} ac
             ON
                 ie.item_category = ac.id
             WHERE
                 ie.quote_id = %d
             ORDER BY
                 ie.item_order ASC",
-                ECWP_TABLE_QUOTE_ELEMENTS, ECWP_TABLE_ARTICLES_CATEGORIES,
                 $quote_id),
             ARRAY_A
         );
@@ -430,9 +436,9 @@ class ECWP_Quotes
         $params = $request->get_params();
         $item_id = $params['id'];
 
+        $quote_elements_table = ECWP_TABLE_QUOTE_ELEMENTS;
         $item_details = $wpdb->get_row(
-            $wpdb->prepare("SELECT id, item_name, item_ref, item_description, quantity, vat_rate, unit_price, discount, total_price, total_amount, item_order FROM %i WHERE id = %d ORDER BY item_order ASC",
-                ECWP_TABLE_QUOTE_ELEMENTS,
+            $wpdb->prepare("SELECT id, item_name, item_ref, item_description, quantity, vat_rate, unit_price, discount, total_price, total_amount, item_order FROM {$quote_elements_table} WHERE id = %d ORDER BY item_order ASC",
                 $item_id),
             ARRAY_A
         );
@@ -485,21 +491,24 @@ class ECWP_Quotes
 
         global $wpdb;
         $wpdb->query('START TRANSACTION');
-        $original_quote = $wpdb->get_row($wpdb->prepare("SELECT * FROM %i WHERE id = %d", ECWP_TABLE_QUOTES, $quote_id), ARRAY_A);
+        $quotes_table = ECWP_TABLE_QUOTES;
+        $original_quote = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$quotes_table} WHERE id = %d", $quote_id), ARRAY_A);
 
         if (!$original_quote) {
             return new WP_Error('quote_not_found', __('Quote not found.', 'easy-compta'), array('status' => 404));
         }
 
         unset($original_quote['id']);
-        $last_quote_id = $wpdb->get_var($wpdb->prepare("SELECT MAX(number) AS last_id FROM %i", ECWP_TABLE_QUOTES));
+        $quotes_table = ECWP_TABLE_QUOTES;
+        $settings_table = ECWP_TABLE_SETTINGS;
+        $last_quote_id = $wpdb->get_var("SELECT MAX(number) AS last_id FROM {$quotes_table}");
         if (empty($last_quote_id)) {
-            $last_quote_id = $wpdb->get_var($wpdb->prepare("SELECT meta_value FROM %i WHERE meta_key = 'quote_first'", ECWP_TABLE_SETTINGS));
+            $last_quote_id = $wpdb->get_var($wpdb->prepare("SELECT meta_value FROM {$settings_table} WHERE meta_key = %s", 'quote_first'));
         } else {
             $last_quote_id = $last_quote_id + 1;
         }
 
-        $quote_prefix = $wpdb->get_var($wpdb->prepare("SELECT meta_value FROM %i WHERE meta_key = 'quote_prefix'", ECWP_TABLE_SETTINGS));
+        $quote_prefix = $wpdb->get_var($wpdb->prepare("SELECT meta_value FROM {$settings_table} WHERE meta_key = %s", 'quote_prefix'));
         $quote_prefix = $quote_prefix ? sanitize_text_field($quote_prefix) : 'INV';
         $quote_number = $quote_prefix . '_' . str_pad($last_quote_id, 4, '0', STR_PAD_LEFT);
 
@@ -514,7 +523,8 @@ class ECWP_Quotes
 
         $new_quote_id = $wpdb->insert_id;
 
-        $original_items = $wpdb->get_results($wpdb->prepare("SELECT * FROM %i WHERE quote_id = %d", ECWP_TABLE_QUOTE_ELEMENTS, $quote_id), ARRAY_A);
+        $quote_elements_table = ECWP_TABLE_QUOTE_ELEMENTS;
+        $original_items = $wpdb->get_results($wpdb->prepare("SELECT * FROM {$quote_elements_table} WHERE quote_id = %d", $quote_id), ARRAY_A);
 
         foreach ($original_items as $item) {
             unset($item['id']);
@@ -631,7 +641,8 @@ class ECWP_Quotes
             return new WP_REST_Response(array('success' => false, 'message' => __('Failed to edit Item', 'my-easy-compta')), 500);
         }
 
-        $quote_id = $wpdb->get_var($wpdb->prepare("SELECT quote_id FROM %i WHERE id = %d", ECWP_TABLE_QUOTE_ELEMENTS, $item_id));
+        $quote_elements_table = ECWP_TABLE_QUOTE_ELEMENTS;
+        $quote_id = $wpdb->get_var($wpdb->prepare("SELECT quote_id FROM {$quote_elements_table} WHERE id = %d", $item_id));
         if (!$quote_id) {
             return new \WP_Error('no_quote_found', __('No quote found for the given item.', 'my-easy-compta'), array('status' => 404));
         }
@@ -669,7 +680,8 @@ class ECWP_Quotes
 
         $item_id = absint($request->get_param('id'));
 
-        $quote_id = $wpdb->get_var($wpdb->prepare("SELECT quote_id FROM %i WHERE id = %d", ECWP_TABLE_QUOTE_ELEMENTS, $item_id));
+        $quote_elements_table = ECWP_TABLE_QUOTE_ELEMENTS;
+        $quote_id = $wpdb->get_var($wpdb->prepare("SELECT quote_id FROM {$quote_elements_table} WHERE id = %d", $item_id));
         if (!$quote_id) {
             return new WP_Error('no_quote_found', __('No quote found for the given item.', 'my-easy-compta'), array('status' => 404));
         }
@@ -751,7 +763,7 @@ class ECWP_Quotes
         }
 
         $total_amount = $wpdb->get_var(
-            $wpdb->prepare("SELECT total_amount FROM %i WHERE id = %d", ECWP_TABLE_QUOTES, $id)
+            $wpdb->prepare("SELECT total_amount FROM {$quotes_table} WHERE id = %d", $id)
         );
 
         return rest_ensure_response(array(
@@ -770,14 +782,16 @@ class ECWP_Quotes
             return new WP_Error('rest_nonce_invalid', __('Invalid nonce', 'my-easy-compta'), array('status' => 403));
         }
 
+        $quotes_table = ECWP_TABLE_QUOTES;
         $quote = $wpdb->get_row(
-            $wpdb->prepare("SELECT * FROM %i WHERE id = %d", ECWP_TABLE_QUOTES, $quote_id), ARRAY_A);
+            $wpdb->prepare("SELECT * FROM {$quotes_table} WHERE id = %d", $quote_id), ARRAY_A);
 
         if (!$quote) {
             return new WP_Error('quote_not_found', __('Quote not found', 'my-easy-compta'), array('status' => 404));
         }
 
-        $last_invoice_id = $wpdb->get_var($wpdb->prepare("SELECT MAX(number) AS last_id FROM %i", ECWP_TABLE_INVOICES));
+        $invoices_table = ECWP_TABLE_INVOICES;
+        $last_invoice_id = $wpdb->get_var("SELECT MAX(number) AS last_id FROM {$invoices_table}");
         $padded_invoice_id = str_pad(intval($last_invoice_id + 1), 4, "0", STR_PAD_LEFT);
 
         $settings = new ECWP_Settings();
@@ -804,8 +818,9 @@ class ECWP_Quotes
             return new WP_Error('invoice_creation_failed', __('Failed to create invoice', 'my-easy-compta'), array('status' => 500));
         }
 
+        $quote_elements_table = ECWP_TABLE_QUOTE_ELEMENTS;
         $quote_items = $wpdb->get_results(
-            $wpdb->prepare("SELECT * FROM %i WHERE quote_id = %d", ECWP_TABLE_QUOTE_ELEMENTS, $quote_id), ARRAY_A);
+            $wpdb->prepare("SELECT * FROM {$quote_elements_table} WHERE quote_id = %d", $quote_id), ARRAY_A);
 
         foreach ($quote_items as $item) {
             $item_data = array(
@@ -845,8 +860,9 @@ class ECWP_Quotes
     public function calculate_total_amount($quote_id)
     {
         global $wpdb;
-        $amount = $wpdb->get_var($wpdb->prepare("SELECT SUM(total_price) FROM %i WHERE quote_id = %d", ECWP_TABLE_QUOTE_ELEMENTS, $quote_id));
-        $totalAmount = $wpdb->get_var($wpdb->prepare("SELECT SUM(total_amount) FROM %i WHERE quote_id = %d", ECWP_TABLE_QUOTE_ELEMENTS, $quote_id));
+        $quote_elements_table = ECWP_TABLE_QUOTE_ELEMENTS;
+        $amount = $wpdb->get_var($wpdb->prepare("SELECT SUM(total_price) FROM {$quote_elements_table} WHERE quote_id = %d", $quote_id));
+        $totalAmount = $wpdb->get_var($wpdb->prepare("SELECT SUM(total_amount) FROM {$quote_elements_table} WHERE quote_id = %d", $quote_id));
 
         $data = array(
             'amount' => $amount,

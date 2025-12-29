@@ -57,6 +57,10 @@ class ECWP_Credits
             return current_user_can('manage_options');
         });
 
+        $this->routes->add_route('/credits/find-page/(?P<id>\d+)', 'GET', $this, 'find_credit_page', function () {
+            return current_user_can('manage_options');
+        });
+
         $this->routes->register_routes();
     }
 
@@ -68,6 +72,10 @@ class ECWP_Credits
         $page = isset($request['page']) ? intval($request['page']) : 1;
         $offset = ($page - 1) * $per_page;
 
+        $invoices_table = ECWP_TABLE_INVOICES;
+        $credits_table = ECWP_TABLE_CREDITS;
+        $clients_table = ECWP_TABLE_CLIENTS;
+        $currencies_table = ECWP_TABLE_CURRENCY;
         $results = $wpdb->get_results(
             $wpdb->prepare("SELECT invoices.id,
                         clients.company_name,
@@ -78,14 +86,13 @@ class ECWP_Credits
                         credits.id AS credit_id,
                         credits.credit_number,
                         credits.created_at
-                FROM %i AS invoices
-                LEFT JOIN %i AS credits ON invoices.id = credits.invoice_id
-                LEFT JOIN %i AS clients ON invoices.client_id = clients.id
-                LEFT JOIN %i AS currencies ON clients.currency_id = currencies.id
+                FROM {$invoices_table} AS invoices
+                LEFT JOIN {$credits_table} AS credits ON invoices.id = credits.invoice_id
+                LEFT JOIN {$clients_table} AS clients ON invoices.client_id = clients.id
+                LEFT JOIN {$currencies_table} AS currencies ON clients.currency_id = currencies.id
                 WHERE invoices.credit = %d
                 ORDER BY invoices.id DESC
                 LIMIT %d, %d",
-                ECWP_TABLE_INVOICES, ECWP_TABLE_CREDITS, ECWP_TABLE_CLIENTS, ECWP_TABLE_CURRENCY,
                 1,
                 $offset, $per_page),
             OBJECT
@@ -109,7 +116,8 @@ class ECWP_Credits
                 'created_at' => date_i18n($format_date, strtotime($r->created_at)),
             );
         }
-        $total_count = $wpdb->get_var("SELECT COUNT(*) FROM %i WHERE credit = 1", ECWP_TABLE_INVOICES);
+        $invoices_table = ECWP_TABLE_INVOICES;
+        $total_count = $wpdb->get_var("SELECT COUNT(*) FROM {$invoices_table} WHERE credit = 1");
         $total_pages = ceil($total_count / $per_page);
 
         $response = array(
@@ -123,6 +131,37 @@ class ECWP_Credits
         return rest_ensure_response($response);
     }
 
+    /**
+     * Trouve la page où se trouve un avoir spécifique
+     * Note: Les avoirs utilisent invoices.id comme identifiant principal
+     */
+    public function find_credit_page(WP_REST_Request $request)
+    {
+        global $wpdb;
+        $credit_id = absint($request->get_param('id'));
+        $per_page = isset($request['per_page']) ? intval($request['per_page']) : 10;
+        
+        if ($credit_id <= 0) {
+            return new WP_Error('invalid_credit_id', __('Invalid credit ID.', 'my-easy-compta'), array('status' => 400));
+        }
+
+        $invoices_table = ECWP_TABLE_INVOICES;
+        
+        // Compter combien d'avoirs (invoices avec credit=1) ont un ID supérieur (triés par ID DESC)
+        $count = $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM {$invoices_table} WHERE credit = 1 AND id > %d",
+            $credit_id
+        ));
+        
+        // La page est calculée en fonction de la position dans la liste triée
+        $page = floor($count / $per_page) + 1;
+        
+        return rest_ensure_response(array(
+            'page' => $page,
+            'per_page' => $per_page
+        ));
+    }
+
     public function create_credit_invoice($request)
     {
         global $wpdb;
@@ -131,8 +170,9 @@ class ECWP_Credits
         if (!wp_verify_nonce($nonce, 'wp_rest')) {
             return new \WP_Error('rest_nonce_invalid', __('Invalid nonce', 'my-easy-compta'), array('status' => 403));
         }
+        $invoices_table = ECWP_TABLE_INVOICES;
         $invoice = $wpdb->get_row(
-            $wpdb->prepare("SELECT * FROM %i WHERE id = %d", ECWP_TABLE_INVOICES, $invoice_id), ARRAY_A);
+            $wpdb->prepare("SELECT * FROM {$invoices_table} WHERE id = %d", $invoice_id), ARRAY_A);
 
         if (!$invoice) {
             return new \WP_Error('invoice_not_found', __('Invoice not found', 'my-easy-compta'), array('status' => 404));
@@ -145,8 +185,10 @@ class ECWP_Credits
             array('%d'),
             array('%d')
         );
-        $last_credit_id = $wpdb->get_var($wpdb->prepare("SELECT MAX(id) FROM %i", ECWP_TABLE_CREDITS));
-        $credit_prefix = $wpdb->get_var($wpdb->prepare("SELECT meta_value FROM %i WHERE meta_key = 'credit_prefix'", ECWP_TABLE_SETTINGS));
+        $credits_table = ECWP_TABLE_CREDITS;
+        $settings_table = ECWP_TABLE_SETTINGS;
+        $last_credit_id = $wpdb->get_var("SELECT MAX(id) FROM {$credits_table}");
+        $credit_prefix = $wpdb->get_var($wpdb->prepare("SELECT meta_value FROM {$settings_table} WHERE meta_key = %s", 'credit_prefix'));
         $credit_prefix = $credit_prefix ? sanitize_text_field($credit_prefix) : 'AVR';
         $credit_number = $credit_prefix . '_' . str_pad($last_credit_id + 1, 4, '0', STR_PAD_LEFT);
         $wpdb->insert(
@@ -178,8 +220,9 @@ class ECWP_Credits
             return new \WP_Error('rest_nonce_invalid', __('Invalid nonce', 'my-easy-compta'), array('status' => 403));
         }
 
+        $invoices_table = ECWP_TABLE_INVOICES;
         $invoice = $wpdb->get_row(
-            $wpdb->prepare("SELECT * FROM %i WHERE id = %d", ECWP_TABLE_INVOICES, $invoice_id), ARRAY_A
+            $wpdb->prepare("SELECT * FROM {$invoices_table} WHERE id = %d", $invoice_id), ARRAY_A
         );
 
         if (!$invoice) {

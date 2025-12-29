@@ -130,12 +130,13 @@ class ECWP_Clients
             $where_sql = 'WHERE ' . implode(' AND ', $where_clauses);
         }
 
-        $total_count = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM %i $where_sql", ECWP_TABLE_CLIENTS, ...$query_params));
+        $clients_table = ECWP_TABLE_CLIENTS;
+        $total_count = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$clients_table} $where_sql", ...$query_params));
         $query_params[] = $per_page;
         $query_params[] = $offset;
 
         $results = $wpdb->get_results(
-            $wpdb->prepare("SELECT * FROM %i $where_sql ORDER BY company_name ASC LIMIT %d OFFSET %d", ECWP_TABLE_CLIENTS, ...$query_params),
+            $wpdb->prepare("SELECT * FROM {$clients_table} $where_sql ORDER BY company_name ASC LIMIT %d OFFSET %d", ...$query_params),
             OBJECT
         );
 
@@ -160,19 +161,20 @@ class ECWP_Clients
     public function get_list_clients($request)
     {
         global $wpdb;
-        $results = $wpdb->get_results($wpdb->prepare("SELECT
+        $clients_table = ECWP_TABLE_CLIENTS;
+        $currencies_table = ECWP_TABLE_CURRENCY;
+        $results = $wpdb->get_results("SELECT
         c.id,
         c.company_name,
         c.email,
         c.currency_id,
         cur.symbol as currency_symbol
     FROM
-    %i c
+    {$clients_table} c
     LEFT JOIN
-    %i cur ON c.currency_id = cur.id
+    {$currencies_table} cur ON c.currency_id = cur.id
     ORDER BY
         c.company_name ASC",
-            ECWP_TABLE_CLIENTS, ECWP_TABLE_CURRENCY),
             ARRAY_A);
 
         $response = array(
@@ -191,8 +193,9 @@ class ECWP_Clients
         global $wpdb;
         $params = $request->get_params();
         $client_id = absint($params['id']);
+        $clients_table = ECWP_TABLE_CLIENTS;
         $client_details = $wpdb->get_row(
-            $wpdb->prepare("SELECT * FROM %i WHERE id = %d", ECWP_TABLE_CLIENTS, $client_id),
+            $wpdb->prepare("SELECT * FROM {$clients_table} WHERE id = %d", $client_id),
             ARRAY_A
         );
         if (!$client_details) {
@@ -251,8 +254,9 @@ class ECWP_Clients
 
         // Check if client already exists
         global $wpdb;
+        $clients_table = ECWP_TABLE_CLIENTS;
         $existing_client = $wpdb->get_row(
-            $wpdb->prepare("SELECT id FROM %i WHERE company_name = %s AND email = %s", ECWP_TABLE_CLIENTS,
+            $wpdb->prepare("SELECT id FROM {$clients_table} WHERE company_name = %s AND email = %s",
                 $company_name, $email));
 
         if ($existing_client) {
@@ -261,7 +265,8 @@ class ECWP_Clients
 
         if (!empty($params['currency_id'])) {
             $currency_id = sanitize_text_field($params['currency_id']);
-            $currency_exists = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM %i WHERE id = %d", ECWP_TABLE_CURRENCY, $currency_id));
+            $currencies_table = ECWP_TABLE_CURRENCY;
+            $currency_exists = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$currencies_table} WHERE id = %d", $currency_id));
 
             if (!$currency_exists) {
                 return new WP_Error('rest_invalid_param', __('Currency ID is invalid', 'my-easy-compta'), array('status' => 422));
@@ -354,8 +359,9 @@ class ECWP_Clients
         $associated_data_exists = $this->check_associated_data($client_id);
         if ($associated_data_exists) {
 
+            $quotes_table = ECWP_TABLE_QUOTES;
             $quotes = $wpdb->get_results(
-                $wpdb->prepare("SELECT id FROM %i WHERE client_id = %d", ECWP_TABLE_QUOTES, $client_id),
+                $wpdb->prepare("SELECT id FROM {$quotes_table} WHERE client_id = %d", $client_id),
                 ARRAY_A
             );
             foreach ($quotes as $quote) {
@@ -363,8 +369,9 @@ class ECWP_Clients
                 $wpdb->delete(ECWP_TABLE_QUOTES, array('id' => $quote['id']));
             }
 
+            $invoices_table = ECWP_TABLE_INVOICES;
             $invoices = $wpdb->get_results(
-                $wpdb->prepare("SELECT id FROM %i WHERE client_id = %d", ECWP_TABLE_INVOICES, $client_id),
+                $wpdb->prepare("SELECT id FROM {$invoices_table} WHERE client_id = %d", $client_id),
                 ARRAY_A
             );
             foreach ($invoices as $invoice) {
@@ -372,8 +379,9 @@ class ECWP_Clients
                 $wpdb->delete(ECWP_TABLE_INVOICES, array('id' => $invoice['id']));
             }
 
+            $payments_table = ECWP_TABLE_PAYMENTS;
             $payments = $wpdb->get_results(
-                $wpdb->prepare("SELECT id FROM %i WHERE client_id = %d", ECWP_TABLE_PAYMENTS, $client_id),
+                $wpdb->prepare("SELECT id FROM {$payments_table} WHERE client_id = %d", $client_id),
                 ARRAY_A
             );
             foreach ($payments as $payment) {
@@ -398,9 +406,12 @@ class ECWP_Clients
     private function check_associated_data($client_id)
     {
         global $wpdb;
-        $quote_count = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM %i WHERE client_id = %d", ECWP_TABLE_QUOTES, $client_id));
-        $invoice_count = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM %i WHERE client_id = %d", ECWP_TABLE_INVOICES, $client_id));
-        $payment_count = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM %i WHERE client_id = %d", ECWP_TABLE_PAYMENTS, $client_id));
+        $quotes_table = ECWP_TABLE_QUOTES;
+        $invoices_table = ECWP_TABLE_INVOICES;
+        $payments_table = ECWP_TABLE_PAYMENTS;
+        $quote_count = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$quotes_table} WHERE client_id = %d", $client_id));
+        $invoice_count = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$invoices_table} WHERE client_id = %d", $client_id));
+        $payment_count = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$payments_table} WHERE client_id = %d", $client_id));
         return ($quote_count > 0 || $invoice_count > 0 || $payment_count > 0);
     }
 
@@ -416,7 +427,8 @@ class ECWP_Clients
     public function get_Easy_Compta_options()
     {
         global $wpdb;
-        $currency_options = $wpdb->get_results($wpdb->prepare("SELECT id, name, code, symbol FROM %i", ECWP_TABLE_CURRENCY));
+        $currencies_table = ECWP_TABLE_CURRENCY;
+        $currency_options = $wpdb->get_results("SELECT id, name, code, symbol FROM {$currencies_table}");
         $settings = new ECWP_Settings;
 
         $addon_user_active = 0;

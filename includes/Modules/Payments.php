@@ -47,6 +47,10 @@ class ECWP_Payments
         $this->routes->add_route('/payments', 'GET', $this, 'get_payments', function () {
             return current_user_can('manage_options');
         });
+        
+        $this->routes->add_route('/payments/find-page/(?P<id>\d+)', 'GET', $this, 'find_payment_page', function () {
+            return current_user_can('manage_options');
+        });
 
         $this->routes->add_route('/payments/methods', 'GET', $this, 'get_payment_methods', function () {
             return current_user_can('manage_options');
@@ -155,6 +159,36 @@ class ECWP_Payments
         return rest_ensure_response($response);
     }
 
+    /**
+     * Trouve la page où se trouve un paiement spécifique
+     */
+    public function find_payment_page(WP_REST_Request $request)
+    {
+        global $wpdb;
+        $payment_id = absint($request->get_param('id'));
+        $per_page = isset($request['per_page']) ? intval($request['per_page']) : 10;
+        
+        if ($payment_id <= 0) {
+            return new WP_Error('invalid_payment_id', __('Invalid payment ID.', 'my-easy-compta'), array('status' => 400));
+        }
+
+        $payments_table = ECWP_TABLE_PAYMENTS;
+        
+        // Compter combien de paiements ont un ID supérieur (triés par ID DESC)
+        $count = $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM {$payments_table} WHERE id > %d",
+            $payment_id
+        ));
+        
+        // La page est calculée en fonction de la position dans la liste triée
+        $page = floor($count / $per_page) + 1;
+        
+        return rest_ensure_response(array(
+            'page' => $page,
+            'per_page' => $per_page
+        ));
+    }
+
     public function get_payment_details(WP_REST_Request $request)
     {
         global $wpdb;
@@ -166,14 +200,18 @@ class ECWP_Payments
         }
 
         $encrypt = new \ECWP\Admin\Encrypt\ECWP_Encrypt();
+        
+        // Définir les noms de tables
+        $payments_table = ECWP_TABLE_PAYMENTS;
+        $invoices_table = ECWP_TABLE_INVOICES;
+        $clients_table = ECWP_TABLE_CLIENTS;
 
         $payment_details = $wpdb->get_row(
             $wpdb->prepare("SELECT p.*, i.invoice_number, c.company_name
-            FROM %i p
-            LEFT JOIN %i i ON p.invoice_id = i.id
-            LEFT JOIN %i c ON i.client_id = c.id
+            FROM {$payments_table} p
+            LEFT JOIN {$invoices_table} i ON p.invoice_id = i.id
+            LEFT JOIN {$clients_table} c ON i.client_id = c.id
             WHERE p.id = %d",
-                ECWP_TABLE_PAYMENTS, ECWP_TABLE_INVOICES, ECWP_TABLE_CLIENTS,
                 $payment_id),
             ARRAY_A
         );
@@ -186,7 +224,8 @@ class ECWP_Payments
             $payment_details['invoice_number'] = $encrypt->decrypt($payment_details['invoice_number']);
         }
 
-        $payment_methods = $wpdb->get_results($wpdb->prepare("SELECT * FROM %i", ECWP_TABLE_PAYMENTS_METHODS));
+        $payments_methods_table = ECWP_TABLE_PAYMENTS_METHODS;
+        $payment_methods = $wpdb->get_results("SELECT * FROM {$payments_methods_table}");
 
         $payment_details['payment_methods'] = $payment_methods;
 
@@ -268,7 +307,8 @@ class ECWP_Payments
             return new WP_Error('invalid_nonce', 'Nonce verification failed.', array('status' => 403));
         }
         global $wpdb;
-        $payment_methods = $wpdb->get_results($wpdb->prepare("SELECT * FROM %i", ECWP_TABLE_PAYMENTS_METHODS));
+        $payments_methods_table = ECWP_TABLE_PAYMENTS_METHODS;
+        $payment_methods = $wpdb->get_results("SELECT * FROM {$payments_methods_table}");
 
         return new WP_REST_Response($payment_methods, 200);
     }

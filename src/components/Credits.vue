@@ -1,5 +1,6 @@
 <template>
   <div class="pt-2 pr-4">
+    <GlobalSearch />
     <div
       v-if="toast.visible"
       :class="['toast', toast.position]"
@@ -55,7 +56,12 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="credit in credits" :key="credit.id">
+            <tr 
+              v-for="credit in credits" 
+              :key="credit.id"
+              :class="{ 'highlight-row': highlightId && credit.id == highlightId }"
+              :id="highlightId && credit.id == highlightId ? 'highlighted-row' : null"
+            >
               <td>{{ credit.credit_number }}</td>
               <td>{{ credit.invoice_number }}</td>
               <td>{{ credit.client_name }}</td>
@@ -141,6 +147,7 @@
 <script>
 import Card from "@/components/Card.vue";
 import RemoveModal from "@/components/RemoveAlert.vue";
+import GlobalSearch from "@/components/GlobalSearch.vue";
 import { fetchSettings } from "@/api/api";
 import {
   generatePaginationButtons,
@@ -153,6 +160,7 @@ export default {
   components: {
     Card,
     RemoveModal,
+    GlobalSearch,
   },
   data() {
     return {
@@ -180,10 +188,58 @@ export default {
     };
   },
   created() {
-    this.fetchCredits();
+    // Récupérer le paramètre highlight depuis l'URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const highlight = urlParams.get('highlight');
+    if (highlight) {
+      this.highlightId = parseInt(highlight);
+      // Trouver la page où se trouve cet avoir
+      this.findCreditPage(parseInt(highlight));
+    } else {
+      this.fetchCredits();
+    }
+    
     this.loadSettings();
   },
+  mounted() {
+    // Scroll vers la ligne mise en surbrillance après le chargement
+    if (this.highlightId) {
+      this.$nextTick(() => {
+        setTimeout(() => {
+          const highlightedRow = document.getElementById('highlighted-row');
+          if (highlightedRow) {
+            highlightedRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // Retirer la surbrillance après 3 secondes
+            setTimeout(() => {
+              this.highlightId = null;
+            }, 3000);
+          }
+        }, 500); // Attendre un peu que les données soient chargées
+      });
+    }
+  },
   methods: {
+    async findCreditPage(creditId) {
+      try {
+        const response = await fetch(
+          `/wp-json/my-easy-compta/v1/credits/find-page/${creditId}?per_page=${this.perPage}`,
+          {
+            headers: {
+              "X-WP-Nonce": myEasyComptaAdmin.nonce,
+            },
+          }
+        );
+        const data = await response.json();
+        if (data.page) {
+          this.fetchCredits(data.page);
+        } else {
+          this.fetchCredits();
+        }
+      } catch (error) {
+        console.error("Error finding credit page:", error);
+        this.fetchCredits();
+      }
+    },
     fetchCredits(page = 1) {
       this.loading = true;
       const { perPage } = this;

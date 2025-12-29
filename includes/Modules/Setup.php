@@ -357,7 +357,8 @@ class ECWP_Setup
     private function data_settings_exist()
     {
         global $wpdb;
-        $result = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) %i WHERE meta_key IS NOT NULL AND meta_value IS NOT NULL", ECWP_TABLE_SETTINGS));
+        $settings_table = ECWP_TABLE_SETTINGS;
+        $result = $wpdb->get_var("SELECT COUNT(*) FROM {$settings_table} WHERE meta_key IS NOT NULL AND meta_value IS NOT NULL");
 
         return $result > 0;
     }

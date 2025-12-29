@@ -2,7 +2,7 @@
 /**
  * Plugin Name: myEasyCompta
  * Description: Streamline your financial management with myEasyCompta, an all-in-one accounting plugin. Effortlessly handle quotes, invoices, expenses, and more, all within a sleek, user-friendly interface. Perfect for freelancers and small businesses looking to simplify their accounting processes.
- * Version: 1.4.2
+ * Version: 1.4.6
  * Author: MELIOZ.dev
  * Author URI: https://myeasycompta.com
  * Text Domain: my-easy-compta
@@ -21,7 +21,7 @@
  * A comprehensive accounting plugin using Vue.js and TailwindCSS. Manage your quotes, invoices, expenses, and more with ease.
  *
  * @package myEasyCompta
- * @since 1.4.2
+ * @since 1.4.6
  */
 
 if (!defined('ABSPATH')) {
@@ -36,8 +36,8 @@ final class ECWP_Easy_Compta
      *
      * @var string
      */
-    public $version = '1.4.2';
-    private $version_migration_db = true;
+    public $version = '1.4.6';
+    private $version_migration_db = false;
 
     /**
      * Minimum PHP version required
@@ -127,7 +127,20 @@ final class ECWP_Easy_Compta
         define('ECWP_UPLOADS', plugin_dir_path(__FILE__) . 'uploads');
         define('ECWP_UPLOADS_URL', ECWP_URL . '/uploads');
         define('ECWP_SECRET_KEY', 'c9a8b2d6eef97d2a98170fbc99b5218e');
-        define('ECWP_URL_LICENSE', 'https://myeasycompta.com');
+        
+        // Détection automatique de l'environnement local pour l'URL de licence
+        $current_domain = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : (isset($_SERVER['SERVER_NAME']) ? $_SERVER['SERVER_NAME'] : '');
+        $is_local = (
+            strpos($current_domain, '.local') !== false ||
+            strpos($current_domain, 'localhost') !== false ||
+            strpos($current_domain, '127.0.0.1') !== false
+        );
+        
+        if ($is_local) {
+            define('ECWP_URL_LICENSE', 'https://myeasycompta-site.local');
+        } else {
+            define('ECWP_URL_LICENSE', 'https://myeasycompta.com');
+        }
 
         define('ECWP_TABLE_SETTINGS', ECWP_PREFIX . 'ecwp_settings');
         define('ECWP_TABLE_ARTICLES', ECWP_PREFIX . 'ecwp_articles');

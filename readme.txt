@@ -1,9 +1,9 @@
 === myEasyCompta ===
 Tags: accounting, quotes, invoices, expenses, freelancers
 Requires at least: 6.2
-Tested up to: 6.6.1
+Tested up to: 6.7.1
 Requires PHP: 8.0
-Stable tag: 1.4.2
+Stable tag: 1.4.6
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -78,6 +78,22 @@ We welcome contributions from the community! You can contribute by submitting a 
 6. **Addons** - Addons page.
 
 == Changelog ==
+
+= 1.4.6 =
+* Fix: disable invoice status change in invoice modification mode.
+
+= 1.4.5 =
+* Fix: problem modifying and deleting disbursements for validated invoices.
+
+= 1.4.4 =
+* Enhance: Added a modal to easily select and apply articles for new items.
+* Enhance: Improved the user interface for the item addition process.
+
+= 1.4.3 =
+* Enhance: Updated the design of error notifications with a modern, responsive look.
+* Enhance: Improved success notification styling after database migration for better user engagement.
+* Enhance: Redesigned the permalink structure warning notification for clarity and visual appeal.
+* Enhance: Added a background blur effect to highlight notifications and enhance focus.
 
 = 1.4.2 =
 * Fix: Resolved issues with item field editing.

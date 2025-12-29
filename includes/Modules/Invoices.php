@@ -97,6 +97,15 @@ class ECWP_Invoices
         $this->routes->add_route('/invoices/pdf/(?P<id>\d+)', 'GET', $this, 'generate_invoice_pdf', function () {
             return current_user_can('manage_options');
         });
+        
+        $this->routes->add_route('/invoices/pdf-facturx/(?P<id>\d+)', 'GET', $this, 'generate_invoice_pdf_facturx', function () {
+            return current_user_can('manage_options');
+        });
+
+        // Routes pour formats électroniques
+        $this->routes->add_route('/invoices/electronic/(?P<id>\d+)/(?P<format>[a-z-]+)', 'GET', $this, 'generate_electronic_invoice', function () {
+            return current_user_can('manage_options');
+        });
 
         $this->routes->add_route('/invoices/disbursements/(?P<id>\d+)', 'GET', $this, 'get_disbursements_invoice', function () {
             return current_user_can('manage_options');
@@ -209,11 +218,12 @@ class ECWP_Invoices
     public function get_invoice_details($request)
     {
         global $wpdb;
+        $invoices_table = ECWP_TABLE_INVOICES;
         $params = $request->get_params();
         $invoice_id = $params['id'];
 
         $invoice_details = $wpdb->get_row(
-            $wpdb->prepare("SELECT * FROM %i WHERE id = %d", ECWP_TABLE_INVOICES, $invoice_id),
+            $wpdb->prepare("SELECT * FROM {$invoices_table} WHERE id = %d", $invoice_id),
             ARRAY_A
         );
 
@@ -225,7 +235,8 @@ class ECWP_Invoices
 
         $invoice_details['invoice_number'] = $encrypt->decrypt($invoice_details['invoice_number']);
         $invoice_details['client_id'] = $invoice_details['client_id'];
-        $invoice_details['exchange_rate'] = number_format($encrypt->decrypt($invoice_details['exchange_rate']), 2, '.', ' ');
+        $exchange_rate = $encrypt->decrypt($invoice_details['exchange_rate']);
+        $invoice_details['exchange_rate'] = !empty($exchange_rate) && is_numeric($exchange_rate) ? number_format((float)$exchange_rate, 2, '.', ' ') : '0.00';
         $invoice_details['total_amount'] = $encrypt->decrypt($invoice_details['total_amount']);
         $invoice_details['status'] = $encrypt->decrypt($invoice_details['status']);
         if (isset($invoice_details['advance_amount'])) {
@@ -261,14 +272,16 @@ class ECWP_Invoices
         global $wpdb;
         $encrypt = new \ECWP\Admin\Encrypt\ECWP_Encrypt;
 
-        $last_invoice_id = $wpdb->get_var($wpdb->prepare("SELECT MAX(number) AS last_id FROM %i", ECWP_TABLE_INVOICES));
+        $invoices_table = ECWP_TABLE_INVOICES;
+        $settings_table = ECWP_TABLE_SETTINGS;
+        $last_invoice_id = $wpdb->get_var("SELECT MAX(number) AS last_id FROM {$invoices_table}");
         if (empty($last_invoice_id)) {
-            $last_invoice_id = $wpdb->get_var($wpdb->prepare("SELECT meta_value FROM %i WHERE meta_key = 'invoice_first'", ECWP_TABLE_SETTINGS));
+            $last_invoice_id = $wpdb->get_var($wpdb->prepare("SELECT meta_value FROM {$settings_table} WHERE meta_key = %s", 'invoice_first'));
         } else {
             $last_invoice_id = $last_invoice_id + 1;
         }
 
-        $invoice_prefix = $wpdb->get_var($wpdb->prepare("SELECT meta_value FROM %i WHERE meta_key = 'invoice_prefix'", ECWP_TABLE_SETTINGS));
+        $invoice_prefix = $wpdb->get_var($wpdb->prepare("SELECT meta_value FROM {$settings_table} WHERE meta_key = %s", 'invoice_prefix'));
         $invoice_prefix = $invoice_prefix ? sanitize_text_field($invoice_prefix) : 'INV';
         $invoice_number = $invoice_prefix . '_' . str_pad($last_invoice_id, 4, '0', STR_PAD_LEFT);
 
@@ -350,21 +363,34 @@ class ECWP_Invoices
         }
 
         global $wpdb;
+        $invoice_elements_table = ECWP_TABLE_INVOICE_ELEMENTS;
         $encrypt = new \ECWP\Admin\Encrypt\ECWP_Encrypt();
+
+        // Vérifier que les champs optionnels ne sont pas vides avant de les crypter
+        $item_ref = !empty($params['item_ref']) ? sanitize_text_field($params['item_ref']) : '';
+        $item_description = !empty($params['item_description']) ? wp_kses_post($params['item_description']) : '';
+        $vat_rate = !empty($params['vat_rate']) ? sanitize_text_field($params['vat_rate']) : '0';
+        $discount = !empty($params['discount']) ? sanitize_text_field($params['discount']) : '0';
+        $total_price = !empty($params['total_price']) ? sanitize_text_field($params['total_price']) : '0';
+        $total_amount = !empty($params['total_amount']) ? sanitize_text_field($params['total_amount']) : '0';
+
+        // Calculer item_order
+        $max_order = $wpdb->get_var($wpdb->prepare("SELECT MAX(item_order) FROM {$invoice_elements_table} WHERE invoice_id = %d", intval($params['invoice_id'])));
+        $item_order = $max_order ? (int)$max_order + 1 : 1;
 
         $data = [
             'invoice_id' => intval($params['invoice_id']),
             'item_name' => $encrypt->encrypt(sanitize_text_field($params['item_name'])),
-            'item_ref' => $encrypt->encrypt(sanitize_text_field($params['item_ref'])),
-            'item_category' => sanitize_text_field($params['item_category']),
-            'item_description' => $encrypt->encrypt(wp_kses_post($params['item_description'])),
+            'item_ref' => $encrypt->encrypt($item_ref),
+            'item_category' => !empty($params['item_category']) ? sanitize_text_field($params['item_category']) : 0,
+            'item_description' => $encrypt->encrypt($item_description),
             'quantity' => $encrypt->encrypt(sanitize_text_field($params['quantity'])),
-            'vat_rate' => $encrypt->encrypt(sanitize_text_field($params['vat_rate'])),
+            'vat_rate' => $encrypt->encrypt($vat_rate),
             'unit_price' => $encrypt->encrypt(sanitize_text_field($params['unit_price'])),
-            'discount' => $encrypt->encrypt(sanitize_text_field($params['discount'])),
-            'total_price' => $encrypt->encrypt(sanitize_text_field($params['total_price'])),
-            'total_amount' => $encrypt->encrypt(sanitize_text_field($params['total_amount'])),
-            'item_order' => (int) ($wpdb->get_var($wpdb->prepare("SELECT MAX(item_order) FROM %i WHERE invoice_id = %d", ECWP_TABLE_INVOICE_ELEMENTS, intval($params['invoice_id']))) + 1),
+            'discount' => $encrypt->encrypt($discount),
+            'total_price' => $encrypt->encrypt($total_price),
+            'total_amount' => $encrypt->encrypt($total_amount),
+            'item_order' => $item_order,
         ];
 
         $format = [
@@ -384,13 +410,14 @@ class ECWP_Invoices
 
         $result = $wpdb->insert(ECWP_TABLE_INVOICE_ELEMENTS, $data, $format);
 
-        $existing_article = $wpdb->get_var($wpdb->prepare("SELECT id FROM %i WHERE name = %s", ECWP_TABLE_ARTICLES, $params['item_name']));
+        $articles_table = ECWP_TABLE_ARTICLES;
+        $existing_article = $wpdb->get_var($wpdb->prepare("SELECT id FROM {$articles_table} WHERE name = %s", $params['item_name']));
 
         if (!$existing_article) {
             $wpdb->insert(ECWP_TABLE_ARTICLES, array(
                 'name' => sanitize_text_field($params['item_name']),
-                'ref' => sanitize_text_field($params['item_ref']),
-                'description' => wp_kses_post($params['item_description']),
+                'ref' => !empty($params['item_ref']) ? sanitize_text_field($params['item_ref']) : '',
+                'description' => !empty($params['item_description']) ? wp_kses_post($params['item_description']) : '',
                 'unit_price' => floatval($params['unit_price']),
             ));
         }
@@ -408,11 +435,19 @@ class ECWP_Invoices
             array('%d')
         );
 
-        if ($result && $result_invoice) {
-            return new \WP_REST_Response(array('success' => true, 'message' => __('Invoice item successfully added', 'my-easy-compta')), 200);
-        } else {
-            return new \WP_REST_Response(array('success' => false, 'message' => __('Failed to add invoice item', 'my-easy-compta'), '$result' => $result, '$result_invoice' => $result_invoice), 500);
+        if ($result === false) {
+            return new \WP_Error('insert_failed', __('Failed to insert invoice item into database', 'my-easy-compta') . ': ' . $wpdb->last_error, array('status' => 500));
         }
+
+        // Mettre à jour le total de la facture (peut échouer silencieusement si les montants sont déjà à jour)
+        if ($result_invoice === false) {
+            // Log l'erreur mais ne bloque pas si l'insertion a réussi
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('Failed to update invoice total: ' . $wpdb->last_error);
+            }
+        }
+
+        return new \WP_REST_Response(array('success' => true, 'message' => __('Invoice item successfully added', 'my-easy-compta'), 'item_id' => $wpdb->insert_id), 200);
     }
 
     public function edit_invoice(\WP_REST_Request $request)
@@ -476,21 +511,29 @@ class ECWP_Invoices
         }
 
         global $wpdb;
-        $wpdb->query('START TRANSACTION');
-        $delete_items = $wpdb->delete(ECWP_TABLE_INVOICE_ELEMENTS, array('invoice_id' => $invoice_id));
-        $delete_invoice = $wpdb->delete(ECWP_TABLE_INVOICES, array('id' => $invoice_id));
+        
+        try {
+            $wpdb->query('START TRANSACTION');
+            
+            $delete_items = $wpdb->delete(ECWP_TABLE_INVOICE_ELEMENTS, array('invoice_id' => $invoice_id));
+            $delete_invoice = $wpdb->delete(ECWP_TABLE_INVOICES, array('id' => $invoice_id));
 
-        if ($delete_invoice !== false && $delete_items !== false) {
+            if ($delete_invoice === false || $delete_items === false) {
+                throw new \Exception('Delete operation failed: ' . $wpdb->last_error);
+            }
+            
             $wpdb->query('COMMIT');
             return new \WP_REST_Response(array('success' => true, 'message' => __('Invoice and related items successfully deleted', 'my-easy-compta')), 200);
-        } else {
+        } catch (\Exception $e) {
             $wpdb->query('ROLLBACK');
-            return new \WP_Error('delete_failed', __('Failure to delete invoice and/or associated items', 'my-easy-compta'), array('status' => 500));
+            return new \WP_Error('delete_failed', __('Failure to delete invoice and/or associated items', 'my-easy-compta') . ': ' . $e->getMessage(), array('status' => 500));
         }
     }
     public function get_invoice_items(\WP_REST_Request $request)
     {
         global $wpdb;
+        $invoice_elements_table = ECWP_TABLE_INVOICE_ELEMENTS;
+        $articles_categories_table = ECWP_TABLE_ARTICLES_CATEGORIES;
         $params = $request->get_params();
         $invoice_id = $params['id'];
 
@@ -513,16 +556,15 @@ class ECWP_Invoices
             ie.total_amount,
             ie.item_order
         FROM
-        %i ie
+        {$invoice_elements_table} ie
         LEFT JOIN
-        %i ac
+        {$articles_categories_table} ac
         ON
             ie.item_category = ac.id
         WHERE
             ie.invoice_id = %d
         ORDER BY
             ie.item_order ASC",
-                ECWP_TABLE_INVOICE_ELEMENTS, ECWP_TABLE_ARTICLES_CATEGORIES,
                 $invoice_id),
             ARRAY_A
         );
@@ -549,13 +591,14 @@ class ECWP_Invoices
     public function get_item_details_for_edit(\WP_REST_Request $request)
     {
         global $wpdb;
+        $invoice_elements_table = ECWP_TABLE_INVOICE_ELEMENTS;
         $params = $request->get_params();
         $item_id = $params['id'];
 
         $encrypt = new \ECWP\Admin\Encrypt\ECWP_Encrypt();
 
         $item_details = $wpdb->get_row(
-            $wpdb->prepare("SELECT id, item_name, item_ref, item_description, quantity, vat_rate, unit_price, discount, total_price, total_amount, item_order FROM %i WHERE id = %d ORDER BY item_order ASC", ECWP_TABLE_INVOICE_ELEMENTS,
+            $wpdb->prepare("SELECT id, item_name, item_ref, item_description, quantity, vat_rate, unit_price, discount, total_price, total_amount, item_order FROM {$invoice_elements_table} WHERE id = %d ORDER BY item_order ASC",
                 $item_id),
             ARRAY_A
         );
@@ -638,7 +681,8 @@ class ECWP_Invoices
             return new \WP_REST_Response(array('success' => false, 'message' => __('Failed to edit item', 'my-easy-compta')), 500);
         }
 
-        $invoice_id = $wpdb->get_var($wpdb->prepare("SELECT invoice_id FROM %i WHERE id = %d", ECWP_TABLE_INVOICE_ELEMENTS, $item_id));
+        $invoice_elements_table = ECWP_TABLE_INVOICE_ELEMENTS;
+        $invoice_id = $wpdb->get_var($wpdb->prepare("SELECT invoice_id FROM {$invoice_elements_table} WHERE id = %d", $item_id));
         if (!$invoice_id) {
             return new \WP_Error('no_invoice_found', __('No invoice found for the given item.', 'my-easy-compta'), array('status' => 404));
         }
@@ -678,7 +722,8 @@ class ECWP_Invoices
         global $wpdb;
         $item_id = absint($request->get_param('id'));
 
-        $invoice_id = $wpdb->get_var($wpdb->prepare("SELECT invoice_id FROM %i WHERE id = %d", ECWP_TABLE_INVOICE_ELEMENTS, $item_id));
+        $invoice_elements_table = ECWP_TABLE_INVOICE_ELEMENTS;
+        $invoice_id = $wpdb->get_var($wpdb->prepare("SELECT invoice_id FROM {$invoice_elements_table} WHERE id = %d", $item_id));
         if (!$invoice_id) {
             return new \WP_Error('no_invoice_found', __('No invoice found for the given item.', 'my-easy-compta'), array('status' => 404));
         }
@@ -752,8 +797,9 @@ class ECWP_Invoices
         if (!is_numeric($id)) {
             return new \WP_Error('invalid_id', __('Invalid ID provided', 'my-easy-compta'), array('status' => 400));
         }
+        $invoices_table = ECWP_TABLE_INVOICES;
         $invoice = $wpdb->get_row(
-            $wpdb->prepare("SELECT * FROM %i WHERE id = %d", ECWP_TABLE_INVOICES, $id));
+            $wpdb->prepare("SELECT * FROM {$invoices_table} WHERE id = %d", $id));
         if (null === $invoice) {
             return new \WP_Error('invalid_id', __('Invoice not found', 'my-easy-compta'), array('status' => 404));
         }
@@ -779,10 +825,12 @@ class ECWP_Invoices
         if ($status === 'paid') {
             $encrypt = new \ECWP\Admin\Encrypt\ECWP_Encrypt;
 
-            $invoice = $wpdb->get_row($wpdb->prepare("SELECT * FROM %i WHERE id = %d", ECWP_TABLE_INVOICES, $id));
+            $invoices_table = ECWP_TABLE_INVOICES;
+            $clients_table = ECWP_TABLE_CLIENTS;
+            $invoice = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$invoices_table} WHERE id = %d", $id));
 
             $amount_invoice = $encrypt->decrypt($invoice->total_amount);
-            $client_currency = $wpdb->get_var($wpdb->prepare("SELECT currency_id FROM %i WHERE id = %d", ECWP_TABLE_CLIENTS, $invoice->client_id));
+            $client_currency = $wpdb->get_var($wpdb->prepare("SELECT currency_id FROM {$clients_table} WHERE id = %d", $invoice->client_id));
 
             $settings = new ECWP_Settings();
             $default_currency_id = $settings->get_setting('default_currency');
@@ -829,10 +877,12 @@ class ECWP_Invoices
         global $wpdb;
         $encrypt = new \ECWP\Admin\Encrypt\ECWP_Encrypt();
 
-        $encrypted_prices = $wpdb->get_col($wpdb->prepare("SELECT total_price FROM %i WHERE invoice_id = %d", ECWP_TABLE_INVOICE_ELEMENTS, $invoice_id));
-        $encrypted_amounts = $wpdb->get_col($wpdb->prepare("SELECT total_amount FROM %i WHERE invoice_id = %d", ECWP_TABLE_INVOICE_ELEMENTS, $invoice_id));
+        $invoice_elements_table = ECWP_TABLE_INVOICE_ELEMENTS;
+        $disbursements_table = ECWP_TABLE_DISBURSEMENTS;
+        $encrypted_prices = $wpdb->get_col($wpdb->prepare("SELECT total_price FROM {$invoice_elements_table} WHERE invoice_id = %d", $invoice_id));
+        $encrypted_amounts = $wpdb->get_col($wpdb->prepare("SELECT total_amount FROM {$invoice_elements_table} WHERE invoice_id = %d", $invoice_id));
 
-        $disbursements_prices = $wpdb->get_col($wpdb->prepare("SELECT unit_price FROM %i WHERE invoice_id = %d", ECWP_TABLE_DISBURSEMENTS, $invoice_id));
+        $disbursements_prices = $wpdb->get_col($wpdb->prepare("SELECT unit_price FROM {$disbursements_table} WHERE invoice_id = %d", $invoice_id));
 
         $amount = 0;
         $totalAmount = 0;
@@ -861,11 +911,84 @@ class ECWP_Invoices
     public function generate_invoice_pdf(\WP_REST_Request $request)
     {
         global $wpdb;
-        $invoice_id = sanitize_text_field($request->get_param('id'));
-        $currency_id = sanitize_text_field($request->get_param('currency_id'));
-
+        $params = $request->get_params();
+        $invoice_id = $params['id'];
+        $currency_id = isset($params['currency_id']) ? $params['currency_id'] : null;
         $pdfGenerator = new PDFGenerator($wpdb);
         $pdfGenerator->generateInvoicePDF($invoice_id, $currency_id, "");
+    }
+    
+    public function generate_invoice_pdf_facturx(\WP_REST_Request $request)
+    {
+        global $wpdb;
+        $params = $request->get_params();
+        $invoice_id = $params['id'];
+        $currency_id = isset($params['currency_id']) ? $params['currency_id'] : null;
+        $pdfGenerator = new PDFGenerator($wpdb);
+        $pdfGenerator->generateInvoicePDF($invoice_id, $currency_id, "", true);
+    }
+
+    /**
+     * Génère une facture électronique dans le format demandé (UBL, CII, Chorus Pro)
+     * 
+     * @param \WP_REST_Request $request
+     * @return void
+     */
+    public function generate_electronic_invoice(\WP_REST_Request $request)
+    {
+        $params = $request->get_params();
+        $invoice_id = absint($params['id']);
+        $format = sanitize_text_field($params['format'] ?? 'ubl');
+        
+        global $wpdb;
+        $encrypt = new \ECWP\Admin\Encrypt\ECWP_Encrypt();
+        
+        // Récupérer la facture
+        $invoice = $wpdb->get_row($wpdb->prepare("SELECT * FROM " . ECWP_TABLE_INVOICES . " WHERE id = %d", $invoice_id), OBJECT);
+        if (!$invoice) {
+            wp_send_json_error(['message' => __('Facture introuvable', 'my-easy-compta')], 404);
+            return;
+        }
+        
+        // Récupérer les articles
+        $items = $wpdb->get_results($wpdb->prepare(
+            "SELECT * FROM " . ECWP_TABLE_INVOICE_ELEMENTS . " WHERE invoice_id = %d ORDER BY item_order ASC",
+            $invoice_id
+        ), OBJECT);
+        
+        // Récupérer le client
+        $client = $wpdb->get_row($wpdb->prepare("SELECT * FROM " . ECWP_TABLE_CLIENTS . " WHERE id = %d", $invoice->client_id), OBJECT);
+        if (!$client) {
+            wp_send_json_error(['message' => __('Client introuvable', 'my-easy-compta')], 404);
+            return;
+        }
+        
+        // Récupérer la devise
+        $currency_id = $client->currency_id;
+        $currency = $wpdb->get_row($wpdb->prepare("SELECT * FROM " . ECWP_TABLE_CURRENCY . " WHERE id = %d", $currency_id), OBJECT);
+        
+        // Récupérer les settings (vendeur)
+        $settings_table = ECWP_TABLE_SETTINGS;
+        $settings = $wpdb->get_results("SELECT * FROM {$settings_table}", OBJECT);
+        $seller = new \stdClass();
+        foreach ($settings as $setting) {
+            $seller->{$setting->meta_key} = $setting->meta_value;
+        }
+        
+        // Générer le format électronique
+        $generator = new \ECWP\Admin\ElectronicInvoice\ElectronicInvoiceGenerator();
+        
+        try {
+            $xml = $generator->generate($invoice, $items, $client, $seller, $currency, $format);
+            
+            // Envoyer le XML en téléchargement
+            header('Content-Type: application/xml; charset=UTF-8');
+            header('Content-Disposition: attachment; filename="facture_' . $invoice_id . '_' . $format . '.xml"');
+            echo $xml;
+            exit;
+        } catch (\Exception $e) {
+            wp_send_json_error(['message' => $e->getMessage()], 500);
+        }
     }
 
     public function get_disbursements_invoice(\WP_REST_Request $request)
@@ -874,8 +997,9 @@ class ECWP_Invoices
         $params = $request->get_params();
         $invoice_id = $params['id'];
 
+        $disbursements_table = ECWP_TABLE_DISBURSEMENTS;
         $disbursements = $wpdb->get_results(
-            $wpdb->prepare("SELECT * FROM %i WHERE invoice_id = %d", ECWP_TABLE_DISBURSEMENTS, $invoice_id)
+            $wpdb->prepare("SELECT * FROM {$disbursements_table} WHERE invoice_id = %d", $invoice_id)
         );
 
         if (!$disbursements) {
@@ -944,8 +1068,9 @@ class ECWP_Invoices
         $params = $request->get_params();
         $item_id = $params['id'];
 
+        $disbursements_table = ECWP_TABLE_DISBURSEMENTS;
         $item_details = $wpdb->get_row(
-            $wpdb->prepare("SELECT id, title, description, unit_price FROM %i WHERE id = %d", ECWP_TABLE_DISBURSEMENTS,
+            $wpdb->prepare("SELECT id, title, description, unit_price FROM {$disbursements_table} WHERE id = %d",
                 $item_id),
             ARRAY_A
         );
@@ -997,7 +1122,8 @@ class ECWP_Invoices
             return new \WP_REST_Response(array('success' => false, 'message' => __('Failed to edit item', 'my-easy-compta')), 500);
         }
 
-        $invoice_id = $wpdb->get_var($wpdb->prepare("SELECT invoice_id FROM %i WHERE id = %d", ECWP_TABLE_DISBURSEMENTS, $disb_id));
+        $disbursements_table = ECWP_TABLE_DISBURSEMENTS;
+        $invoice_id = $wpdb->get_var($wpdb->prepare("SELECT invoice_id FROM {$disbursements_table} WHERE id = %d", $disb_id));
         if (!$invoice_id) {
             return new \WP_Error('no_invoice_found', __('No invoice found for the given item.', 'my-easy-compta'), array('status' => 404));
         }
@@ -1037,7 +1163,8 @@ class ECWP_Invoices
         global $wpdb;
         $disb_id = absint($request->get_param('id'));
 
-        $invoice_id = $wpdb->get_var($wpdb->prepare("SELECT invoice_id FROM %i WHERE id = %d", ECWP_TABLE_DISBURSEMENTS, $disb_id));
+        $disbursements_table = ECWP_TABLE_DISBURSEMENTS;
+        $invoice_id = $wpdb->get_var($wpdb->prepare("SELECT invoice_id FROM {$disbursements_table} WHERE id = %d", $disb_id));
         if (!$invoice_id) {
             return new \WP_Error('no_invoice_found', __('No invoice found for the given item.', 'my-easy-compta'), array('status' => 404));
         }

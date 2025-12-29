@@ -14,26 +14,6 @@
         </div>
         <h2 class="text-lg font-semibold text-center">{{ title }}</h2>
         <p class="my-4 text-center text-xl">{{ message }}</p>
-        <!-- <div v-if="status === 'paid'" class="mt-4">
-          <label
-            for="payment-method"
-            class="block text-sm font-medium text-gray-700"
-            >{{ translations.select_payment_method }}</label
-          >
-          <select
-            id="payment-method"
-            v-model="selectedPaymentMethod"
-            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-          >
-            <option value="">{{ translations.select }}</option>
-            <option value="1">{{ translations.credit_card }}</option>
-            <option value="2">{{ translations.paypal }}</option>
-            <option value="3">
-              {{ translations.bank_transfer }}
-            </option>
-            <option value="4">{{ translations.cash }}</option>
-          </select> 
-        </div>-->
         <div class="flex justify-between space-x-4">
           <button @click="onCancel" class="btn btn-secondary rounded-full">
             {{ cancelText }}

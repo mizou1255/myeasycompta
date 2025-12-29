@@ -178,21 +178,36 @@
               </button>
             </div>
           </template>
+
+          <!-- Bouton pour créer une facture récurrente -->
+          <div
+            v-if="recurringActive == 1"
+            class="tooltip tooltip-bottom"
+            :data-tip="translations.create_recurring_invoice || 'Créer une facture récurrente'"
+          >
+            <button
+              @click="createRecurringInvoice"
+              class="btn btn-outline btn-info btn-sm hover:text-white"
+            >
+              <i class="fas fa-redo"></i>
+              {{ translations.create_recurring_invoice || 'Facture récurrente' }}
+            </button>
+          </div>
+          <div
+            v-else
+            class="tooltip tooltip-bottom tooltip-warning"
+            :data-tip="translations.active_recurring_addon || 'Achetez l\'addon Factures Récurrentes pour automatiser vos factures récurrentes'"
+          >
+            <button
+              class="btn btn-outline btn-info btn-sm"
+              disabled
+            >
+              <i class="fas fa-redo"></i>
+              {{ translations.create_recurring_invoice || 'Facture récurrente' }}
+            </button>
+          </div>
         </div>
       </div>
-      <button
-        v-if="invoiceInfo.status == 'draft'"
-        @click="exportToPDF(currencyDefault.currency_id)"
-        class="btn btn-outline btn-secondary btn-sm"
-        :disabled="loadingPdf"
-      >
-        <i class="far fa-file-pdf"></i>
-        <span>{{ translations.previewPDF }}</span>
-        <span
-          v-if="loadingPdf"
-          class="loading loading-spinner loading-sm"
-        ></span>
-      </button>
       <div class="flex gap-2">
         <button
           @click.prevent="sendInvoice(invoiceInfo.client_id)"
@@ -271,64 +286,83 @@
           </button>
         </div>
 
-        <div v-if="currencyDefault.currency_id !== currencyClient.currency_id">
+        <!-- Dropdown unifié pour PDF et Factur-X -->
+        <div
+          v-if="invoiceInfo.status != 'draft'"
+          class="dropdown dropdown-end"
+        >
           <div
-            class="dropdown dropdown-end"
-            v-if="invoiceInfo.status != 'draft'"
-          >
-            <div
-              tabindex="0"
-              role="button"
-              class="btn btn-outline btn-success btn-sm"
-            >
-              <i class="far fa-file-pdf"></i>
-              {{ translations.exportToPDF }}
-              <span
-                v-if="loadingPdf"
-                class="loading loading-spinner loading-sm"
-              ></span>
-            </div>
-            <ul
-              tabindex="0"
-              class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow"
-            >
-              <li>
-                <a
-                  @click="exportToPDF(currencyDefault.currency_id)"
-                  :disabled="loadingPdf"
-                  >{{ translations.invoice_in }}
-                  {{ currencyDefault.currency_symbol }}</a
-                >
-              </li>
-              <li>
-                <a
-                  @click="exportToPDF(currencyClient.currency_id)"
-                  :disabled="loadingPdf"
-                  >{{ translations.invoice_in }}
-                  {{ currencyClient.currency_symbol }}</a
-                >
-              </li>
-            </ul>
-          </div>
-        </div>
-        <div v-else>
-          <button
-            v-if="invoiceInfo.status != 'draft'"
-            @click="exportToPDF(currencyDefault.currency_id)"
+            tabindex="0"
+            role="button"
             class="btn btn-outline btn-success btn-sm"
-            :disabled="loadingPdf"
           >
             <i class="far fa-file-pdf"></i>
-            <span v-if="invoiceInfo.status != 'draft'">{{
-              translations.exportToPDF
-            }}</span>
-            <span v-else>{{ translations.previewPDF }}</span>
+            {{ translations.exportToPDF }}
+            <i class="fas fa-chevron-down ml-1"></i>
             <span
-              v-if="loadingPdf"
-              class="loading loading-spinner loading-sm"
+              v-if="loadingPdf || loadingPdfFacturX"
+              class="loading loading-spinner loading-sm ml-1"
             ></span>
-          </button>
+          </div>
+          <ul
+            tabindex="0"
+            class="dropdown-content menu bg-base-100 rounded-box z-[1] w-56 p-2 shadow"
+          >
+            <li>
+              <a
+                @click="exportToPDF(currencyDefault.currency_id)"
+                :disabled="loadingPdf"
+              >
+                <i class="far fa-file-pdf"></i>
+                PDF {{ translations.invoice_in }}
+                {{ currencyDefault.currency_symbol }}
+              </a>
+            </li>
+            <li v-if="currencyDefault.currency_id !== currencyClient.currency_id">
+              <a
+                @click="exportToPDF(currencyClient.currency_id)"
+                :disabled="loadingPdf"
+              >
+                <i class="far fa-file-pdf"></i>
+                PDF {{ translations.invoice_in }}
+                {{ currencyClient.currency_symbol }}
+              </a>
+            </li>
+            <li>
+              <a
+                @click="exportToPDFFacturX(currencyDefault.currency_id)"
+                :disabled="loadingPdfFacturX"
+              >
+                <i class="fas fa-file-invoice"></i>
+                Factur-X {{ translations.invoice_in }}
+                {{ currencyDefault.currency_symbol }}
+              </a>
+            </li>
+            <li v-if="currencyDefault.currency_id !== currencyClient.currency_id">
+              <a
+                @click="exportToPDFFacturX(currencyClient.currency_id)"
+                :disabled="loadingPdfFacturX"
+              >
+                <i class="fas fa-file-invoice"></i>
+                Factur-X {{ translations.invoice_in }}
+                {{ currencyClient.currency_symbol }}
+              </a>
+            </li>
+          </ul>
         </div>
+        <button
+          v-else
+          @click="exportToPDF(currencyDefault.currency_id)"
+          class="btn btn-outline btn-secondary btn-sm"
+          :disabled="loadingPdf"
+        >
+          <i class="far fa-file-pdf"></i>
+          {{ translations.previewPDF }}
+          <span
+            v-if="loadingPdf"
+            class="loading loading-spinner loading-sm"
+          ></span>
+        </button>
 
         <button
           v-if="invoiceInfo.status == 'draft' && !noItems"
@@ -353,6 +387,7 @@
             {{ translations.validateInvoice }}
           </button>
         </div>
+
       </div>
     </div>
   </div>
@@ -379,6 +414,7 @@ export default {
     currencyClient: Object,
     emailActive: String,
     qrCodeActive: String,
+    recurringActive: String,
     totalAmount: String,
     noItems: Boolean,
   },
@@ -390,6 +426,7 @@ export default {
       sendInvoiceModal: false,
       loadingModal: false,
       loadingPdf: false,
+      loadingPdfFacturX: false,
       client_detail: null,
       selectedStatus: null,
       subject: "",
@@ -502,6 +539,41 @@ export default {
         .catch((error) => {
           console.error("There was a problem with the fetch operation:", error);
           this.loadingPdf = false;
+        });
+    },
+    exportToPDFFacturX(currency) {
+      this.loadingPdfFacturX = true;
+      const invoiceId = this.invoiceInfo.id;
+      let url = `/wp-json/my-easy-compta/v1/invoices/pdf-facturx/${invoiceId}?currency_id=${currency}`;
+
+      fetch(url, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "X-WP-Nonce": myEasyComptaAdmin.nonce,
+        },
+      })
+        .then((response) => {
+          if (!response.ok) {
+            this.loadingPdfFacturX = false;
+            throw new Error("Network response was not ok");
+          }
+          return response.blob();
+        })
+        .then((blob) => {
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = `facture_${this.invoiceInfo.invoice_number || this.invoiceInfo.id}_facturx.pdf`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+          this.loadingPdfFacturX = false;
+        })
+        .catch((error) => {
+          console.error("There was a problem with the fetch operation:", error);
+          this.loadingPdfFacturX = false;
         });
     },
     sendInvoice(clientId) {
@@ -628,6 +700,16 @@ export default {
         this.invoiceInfo.invoice_number || this.invoiceInfo.number
       }.png`;
       link.click();
+    },
+    createRecurringInvoice() {
+      // Rediriger vers la page des factures récurrentes avec les paramètres pré-remplis
+      const params = new URLSearchParams({
+        from_invoice: this.invoiceInfo.id,
+        client_id: this.invoiceInfo.client_id,
+        template_invoice_id: this.invoiceInfo.id,
+        invoice_number: this.invoiceInfo.invoice_number || `#${this.invoiceInfo.number}`,
+      });
+      window.location.href = `/wp-admin/admin.php?page=my-easy-compta-recurring-invoices&${params.toString()}`;
     },
   },
 };

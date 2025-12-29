@@ -1,5 +1,6 @@
 <template>
   <div class="pt-2 pr-4">
+    <GlobalSearch />
     <div
       v-if="toast.visible"
       :class="['toast', toast.position]"
@@ -139,7 +140,12 @@
             </tr>
           </thead>
           <tbody v-if="!loading">
-            <tr v-for="payment in payments" :key="payment.id">
+            <tr 
+              v-for="payment in payments" 
+              :key="payment.id"
+              :class="{ 'highlight-row': highlightId && payment.id == highlightId }"
+              :id="highlightId && payment.id == highlightId ? 'highlighted-row' : null"
+            >
               <td>{{ payment.invoice_number }}</td>
               <td>{{ payment.company_name }}</td>
               <td>{{ payment.payment_date }}</td>
@@ -218,6 +224,7 @@
 import Card from "@/components/Card.vue";
 import PaymentEditModal from "@/components/payments/Edit.vue";
 import RemoveModal from "@/components/RemoveAlert.vue";
+import GlobalSearch from "@/components/GlobalSearch.vue";
 import { fetchSettings } from "@/api/api";
 import {
   generatePaginationButtons,
@@ -231,6 +238,7 @@ export default {
     Card,
     PaymentEditModal,
     RemoveModal,
+    GlobalSearch,
   },
   data() {
     return {
@@ -273,15 +281,62 @@ export default {
         type: "alert-success",
         position: "toast-bottom toast-end",
       },
+      highlightId: null,
     };
   },
   created() {
-    this.fetchPaymentsWithFilters();
+    // Récupérer le paramètre highlight depuis l'URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const highlight = urlParams.get('highlight');
+    if (highlight) {
+      this.highlightId = parseInt(highlight);
+      // Trouver la page où se trouve ce paiement
+      this.findPaymentPage(parseInt(highlight));
+    } else {
+      this.fetchPaymentsWithFilters();
+    }
+    
     this.fetchClients();
     this.fetchPaymentMethods();
     this.loadSettings();
   },
+  mounted() {
+    // Scroll vers la ligne mise en surbrillance après le chargement
+    if (this.highlightId) {
+      this.$nextTick(() => {
+        const highlightedRow = document.getElementById('highlighted-row');
+        if (highlightedRow) {
+          highlightedRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          // Retirer la surbrillance après 3 secondes
+          setTimeout(() => {
+            this.highlightId = null;
+          }, 3000);
+        }
+      });
+    }
+  },
   methods: {
+    async findPaymentPage(paymentId) {
+      try {
+        const response = await fetch(
+          `/wp-json/my-easy-compta/v1/payments/find-page/${paymentId}?per_page=${this.perPage}`,
+          {
+            headers: {
+              "X-WP-Nonce": myEasyComptaAdmin.nonce,
+            },
+          }
+        );
+        const data = await response.json();
+        if (data.page) {
+          this.fetchPaymentsWithFilters(data.page);
+        } else {
+          this.fetchPaymentsWithFilters();
+        }
+      } catch (error) {
+        console.error("Error finding payment page:", error);
+        this.fetchPaymentsWithFilters();
+      }
+    },
     fetchPayments(page = 1) {
       this.loading = true;
       const { perPage } = this;

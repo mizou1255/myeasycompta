@@ -1,5 +1,6 @@
 <template>
   <div class="pt-2 pr-4">
+    <GlobalSearch />
     <div
       v-if="toast.visible"
       :class="['toast', toast.position]"
@@ -244,6 +245,7 @@ import AddClientModal from "@/components/clients/Add.vue";
 import ClientDetailsModal from "@/components/clients/View.vue";
 import ClientEditModal from "@/components/clients/Edit.vue";
 import RemoveModal from "@/components/RemoveAlert.vue";
+import GlobalSearch from "@/components/GlobalSearch.vue";
 import { generatePaginationButtons, showToast } from "@/utils/helpers";
 import { fetchSettings } from "@/api/api";
 
@@ -255,6 +257,7 @@ export default {
     ClientDetailsModal,
     ClientEditModal,
     RemoveModal,
+    GlobalSearch,
   },
   data() {
     return {
@@ -288,12 +291,29 @@ export default {
     };
   },
   created() {
+    // Vérifier si on doit ouvrir un client depuis l'URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const openClientId = urlParams.get('openClient');
+    if (openClientId) {
+      this.showClientDetails({ id: parseInt(openClientId) });
+    }
+    
     this.fetchClients();
     this.loadSettings();
   },
+  mounted() {
+    // Écouter l'événement pour ouvrir le modal depuis la recherche globale
+    window.addEventListener('ecwp:open-client-modal', this.handleOpenClientModal);
+  },
+  beforeUnmount() {
+    window.removeEventListener('ecwp:open-client-modal', this.handleOpenClientModal);
+  },
   methods: {
     AddNew() {
-      modal_clients.showModal();
+      const modal = document.getElementById('modal_clients');
+      if (modal) {
+        modal.showModal();
+      }
     },
     fetchClients(page = 1) {
       this.loading = true;
@@ -376,14 +396,18 @@ export default {
     showClientDetails(client) {
       this.loadingModal = true;
       this.showClientDetailsModal = true;
-      modal_client_details.showModal();
       this.fetchClientDetails(client.id);
+    },
+    handleOpenClientModal(event) {
+      const clientId = event.detail?.clientId;
+      if (clientId) {
+        this.showClientDetails({ id: clientId });
+      }
     },
 
     editClient(client) {
       this.loadingModal = true;
       this.editClientModal = true;
-      modal_client_edit.showModal();
       this.fetchClientDetails(client.id);
     },
     generatePaginationButtons() {
@@ -403,7 +427,6 @@ export default {
     },
     confirmDeleteClient(client) {
       this.selectedClient = client;
-      modal_client_remove.showModal();
       this.showRemoveModal = true;
     },
 

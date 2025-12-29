@@ -169,6 +169,12 @@ class ECWP_Settings
         $this->routes->add_route('/license/download-update', 'POST', $this, 'download_update_plugin', function () {
             return current_user_can('manage_options');
         });
+        $this->routes->add_route('/license/add-domain', 'POST', $this, 'add_domain', function () {
+            return current_user_can('manage_options');
+        });
+        $this->routes->add_route('/license/remove-domain', 'POST', $this, 'remove_domain', function () {
+            return current_user_can('manage_options');
+        });
 
         $this->routes->register_routes();
     }
@@ -179,19 +185,24 @@ class ECWP_Settings
     public function get_settings()
     {
         global $wpdb;
-        $results = $wpdb->get_results($wpdb->prepare("SELECT meta_key, meta_value FROM %i", ECWP_TABLE_SETTINGS), OBJECT_K);
+        $settings_table = ECWP_TABLE_SETTINGS;
+        $results = $wpdb->get_results("SELECT meta_key, meta_value FROM {$settings_table}", OBJECT_K);
 
-        $last_invoice_id = $wpdb->get_var($wpdb->prepare("SELECT MAX(number) AS last_id FROM %i", ECWP_TABLE_INVOICES));
-        $last_quote_id = $wpdb->get_var($wpdb->prepare("SELECT MAX(number) AS last_id FROM %i", ECWP_TABLE_QUOTES));
+        $invoices_table = ECWP_TABLE_INVOICES;
+        $quotes_table = ECWP_TABLE_QUOTES;
+        $last_invoice_id = $wpdb->get_var("SELECT MAX(number) AS last_id FROM {$invoices_table}");
+        $last_quote_id = $wpdb->get_var("SELECT MAX(number) AS last_id FROM {$quotes_table}");
 
         if (empty($last_invoice_id)) {
-            $last_invoice_id = $wpdb->get_var($wpdb->prepare("SELECT meta_value FROM %i WHERE meta_key = 'invoice_first'", ECWP_TABLE_SETTINGS));
+            $settings_table = ECWP_TABLE_SETTINGS;
+            $last_invoice_id = $wpdb->get_var($wpdb->prepare("SELECT meta_value FROM {$settings_table} WHERE meta_key = %s", 'invoice_first'));
         } else {
             $last_invoice_id += 1;
         }
 
         if (empty($last_quote_id)) {
-            $last_quote_id = $wpdb->get_var($wpdb->prepare("SELECT meta_value FROM %i WHERE meta_key = 'quote_first'", ECWP_TABLE_SETTINGS));
+            $settings_table = ECWP_TABLE_SETTINGS;
+            $last_quote_id = $wpdb->get_var($wpdb->prepare("SELECT meta_value FROM {$settings_table} WHERE meta_key = %s", 'quote_first'));
         } else {
             $last_quote_id += 1;
         }
@@ -214,7 +225,8 @@ class ECWP_Settings
     public function get_format_date()
     {
         global $wpdb;
-        $results = $wpdb->get_var($wpdb->prepare("SELECT meta_value FROM %i WHERE meta_key = 'date_format'", ECWP_TABLE_SETTINGS));
+        $settings_table = ECWP_TABLE_SETTINGS;
+        $results = $wpdb->get_var($wpdb->prepare("SELECT meta_value FROM {$settings_table} WHERE meta_key = %s", 'date_format'));
 
         return rest_ensure_response($this->convert_date_format($results));
     }
@@ -242,6 +254,7 @@ class ECWP_Settings
     public function save_settings(\WP_REST_Request $request)
     {
         global $wpdb;
+        $settings_table = ECWP_TABLE_SETTINGS;
         $settings = $request->get_params();
 
         foreach ($settings as $meta_key => $meta_value) {
@@ -252,13 +265,13 @@ class ECWP_Settings
             }
             $meta_key_sanitized = sanitize_key($meta_key);
             $existing_setting = $wpdb->get_var($wpdb->prepare(
-                "SELECT COUNT(*) FROM %i WHERE meta_key = %s", ECWP_TABLE_SETTINGS,
+                "SELECT COUNT(*) FROM {$settings_table} WHERE meta_key = %s",
                 $meta_key_sanitized)
             );
 
             if ($existing_setting > 0) {
                 $wpdb->update(
-                    ECWP_TABLE_SETTINGS,
+                    $settings_table,
                     array('meta_value' => $meta_value),
                     array('meta_key' => $meta_key_sanitized),
                     array('%s'),
@@ -266,7 +279,7 @@ class ECWP_Settings
                 );
             } else {
                 $wpdb->insert(
-                    ECWP_TABLE_SETTINGS,
+                    $settings_table,
                     array(
                         'meta_key' => $meta_key_sanitized,
                         'meta_value' => $meta_value,
@@ -277,7 +290,13 @@ class ECWP_Settings
                     )
                 );
             }
+            
+            // Invalider le cache pour ce paramètre
+            wp_cache_delete('ecwp_setting_' . $meta_key_sanitized, 'ecwp_settings');
         }
+        
+        // Invalider le cache global des paramètres
+        wp_cache_delete('ecwp_settings', 'ecwp_settings');
 
         return rest_ensure_response(__('Settings saved successfully', 'my-easy-compta'));
     }
@@ -288,8 +307,10 @@ class ECWP_Settings
     public function get_articles()
     {
         global $wpdb;
-        $articles = $wpdb->get_results($wpdb->prepare("SELECT * FROM %i", ECWP_TABLE_ARTICLES), ARRAY_A);
-        $categories = $wpdb->get_results($wpdb->prepare("SELECT * FROM %i", ECWP_TABLE_ARTICLES_CATEGORIES), ARRAY_A);
+        $articles_table = ECWP_TABLE_ARTICLES;
+        $articles_categories_table = ECWP_TABLE_ARTICLES_CATEGORIES;
+        $articles = $wpdb->get_results("SELECT * FROM {$articles_table}", ARRAY_A);
+        $categories = $wpdb->get_results("SELECT * FROM {$articles_categories_table}", ARRAY_A);
         $response_data = [
             'articles' => $articles,
             'categories' => $categories,
@@ -302,7 +323,8 @@ class ECWP_Settings
     public function get_categories()
     {
         global $wpdb;
-        $categories = $wpdb->get_results($wpdb->prepare("SELECT * FROM %i", ECWP_TABLE_ARTICLES_CATEGORIES), ARRAY_A);
+        $articles_categories_table = ECWP_TABLE_ARTICLES_CATEGORIES;
+        $categories = $wpdb->get_results("SELECT * FROM {$articles_categories_table}", ARRAY_A);
         return rest_ensure_response($categories);
     }
 
@@ -311,8 +333,21 @@ class ECWP_Settings
      */
     public function get_currencies()
     {
+        // Utiliser le cache pour améliorer les performances
+        $cache_key = 'ecwp_currencies';
+        $cached = wp_cache_get($cache_key, 'ecwp_data');
+        
+        if (false !== $cached) {
+            return rest_ensure_response($cached);
+        }
+        
         global $wpdb;
-        $currencies = $wpdb->get_results($wpdb->prepare("SELECT * FROM %i", ECWP_TABLE_CURRENCY), ARRAY_A);
+        $currencies_table = ECWP_TABLE_CURRENCY;
+        $currencies = $wpdb->get_results("SELECT * FROM {$currencies_table}", ARRAY_A);
+        
+        // Mettre en cache pendant 1 heure
+        wp_cache_set($cache_key, $currencies, 'ecwp_data', 3600);
+        
         return rest_ensure_response($currencies);
     }
 
@@ -321,8 +356,21 @@ class ECWP_Settings
      */
     public function get_vats()
     {
+        // Utiliser le cache pour améliorer les performances
+        $cache_key = 'ecwp_vats';
+        $cached = wp_cache_get($cache_key, 'ecwp_data');
+        
+        if (false !== $cached) {
+            return rest_ensure_response($cached);
+        }
+        
         global $wpdb;
-        $vats = $wpdb->get_results($wpdb->prepare("SELECT * FROM %i", ECWP_TABLE_VATS), ARRAY_A);
+        $vats_table = ECWP_TABLE_VATS;
+        $vats = $wpdb->get_results("SELECT * FROM {$vats_table}", ARRAY_A);
+        
+        // Mettre en cache pendant 1 heure
+        wp_cache_set($cache_key, $vats, 'ecwp_data', 3600);
+        
         return rest_ensure_response($vats);
     }
 
@@ -331,8 +379,21 @@ class ECWP_Settings
      */
     public function get_payments_methods()
     {
+        // Utiliser le cache pour améliorer les performances
+        $cache_key = 'ecwp_payments_methods';
+        $cached = wp_cache_get($cache_key, 'ecwp_data');
+        
+        if (false !== $cached) {
+            return rest_ensure_response($cached);
+        }
+        
         global $wpdb;
-        $payments = $wpdb->get_results($wpdb->prepare("SELECT * FROM %i", ECWP_TABLE_PAYMENTS_METHODS), ARRAY_A);
+        $payments_table = ECWP_TABLE_PAYMENTS_METHODS;
+        $payments = $wpdb->get_results("SELECT * FROM {$payments_table}", ARRAY_A);
+        
+        // Mettre en cache pendant 1 heure
+        wp_cache_set($cache_key, $payments, 'ecwp_data', 3600);
+        
         return rest_ensure_response($payments);
     }
     /**
@@ -340,8 +401,21 @@ class ECWP_Settings
      */
     public function get_expenses_categories()
     {
+        // Utiliser le cache pour améliorer les performances
+        $cache_key = 'ecwp_expenses_categories';
+        $cached = wp_cache_get($cache_key, 'ecwp_data');
+        
+        if (false !== $cached) {
+            return rest_ensure_response($cached);
+        }
+        
         global $wpdb;
-        $exps = $wpdb->get_results($wpdb->prepare("SELECT * FROM %i", ECWP_TABLE_EXPENSES_CATEGORIES), ARRAY_A);
+        $exps_table = ECWP_TABLE_EXPENSES_CATEGORIES;
+        $exps = $wpdb->get_results("SELECT * FROM {$exps_table}", ARRAY_A);
+        
+        // Mettre en cache pendant 1 heure
+        wp_cache_set($cache_key, $exps, 'ecwp_data', 3600);
+        
         return rest_ensure_response($exps);
     }
 
@@ -354,8 +428,9 @@ class ECWP_Settings
     {
         global $wpdb;
         $currency_id = $request->get_param('id');
+        $currencies_table = ECWP_TABLE_CURRENCY;
         $currency_data = $wpdb->get_row(
-            $wpdb->prepare("SELECT * FROM %i WHERE id = %d", ECWP_TABLE_CURRENCY, $currency_id)
+            $wpdb->prepare("SELECT * FROM {$currencies_table} WHERE id = %d", $currency_id)
         );
 
         if (!$currency_data) {
@@ -374,8 +449,9 @@ class ECWP_Settings
     {
         global $wpdb;
         $vat_id = $request->get_param('id');
+        $vats_table = ECWP_TABLE_VATS;
         $vat_data = $wpdb->get_row(
-            $wpdb->prepare("SELECT * FROM %i WHERE id = %d", ECWP_TABLE_VATS, $vat_id));
+            $wpdb->prepare("SELECT * FROM {$vats_table} WHERE id = %d", $vat_id));
 
         if (!$vat_data) {
             return new \WP_Error('vat_not_found', 'VAT not found', array('status' => 404));
@@ -932,12 +1008,68 @@ class ECWP_Settings
         return new \WP_REST_Response(['id' => $id], 200);
     }
 
+    /**
+     * Déchiffre une clé de licence avec support de migration depuis l'ancien système
+     * 
+     * @param string $encrypted_license_key La clé chiffrée
+     * @return string|false La clé déchiffrée ou false en cas d'échec
+     */
+    private function decrypt_license_key($encrypted_license_key)
+    {
+        if (empty($encrypted_license_key)) {
+            return false;
+        }
+        
+        try {
+            // Essayer d'abord avec le nouveau système (AES-256-CBC)
+            $encrypt = new \ECWP\Admin\Encrypt\ECWP_Encrypt();
+            $decrypted = $encrypt->decrypt($encrypted_license_key);
+            
+            // Si succès, retourner la clé déchiffrée
+            if ($decrypted !== false && !empty($decrypted)) {
+                return $decrypted;
+            }
+        } catch (\Exception $e) {
+            // Si échec, essayer avec l'ancien système (AES-128-ECB) pour migration
+            if (defined('ECWP_SECRET_KEY')) {
+                $decrypted = $this->decrypt_license_key($encrypted_license_key);
+                
+                // Si l'ancien système fonctionne, rechiffrer avec le nouveau et sauvegarder
+                if ($decrypted !== false && !empty($decrypted)) {
+                    try {
+                        $encrypt = new \ECWP\Admin\Encrypt\ECWP_Encrypt();
+                        $new_encrypted = $encrypt->encrypt($decrypted);
+                        update_option('ecwp_client_license_key', $new_encrypted);
+                    } catch (\Exception $e) {
+                        // Si le rechiffrement échoue, continuer avec l'ancien système
+                    }
+                    return $decrypted;
+                }
+            }
+        }
+        
+        return false;
+    }
+
     public function get_setting($meta_key)
     {
+        // Utiliser le cache pour améliorer les performances
+        $cache_key = 'ecwp_setting_' . $meta_key;
+        $cached = wp_cache_get($cache_key, 'ecwp_settings');
+        
+        if (false !== $cached) {
+            return $cached;
+        }
+        
         global $wpdb;
+        $settings_table = ECWP_TABLE_SETTINGS;
         $meta_value = $wpdb->get_var(
-            $wpdb->prepare("SELECT meta_value FROM %i WHERE meta_key = %s", ECWP_TABLE_SETTINGS, $meta_key)
+            $wpdb->prepare("SELECT meta_value FROM {$settings_table} WHERE meta_key = %s", $meta_key)
         );
+        
+        // Mettre en cache pendant 1 heure
+        wp_cache_set($cache_key, $meta_value, 'ecwp_settings', 3600);
+        
         return $meta_value;
     }
 
@@ -948,17 +1080,50 @@ class ECWP_Settings
             return new \WP_Error('invalid_nonce', 'Nonce verification failed.', array('status' => 403));
         }
         $license_key = sanitize_text_field($request->get_param('license_key'));
-        $response = wp_remote_post(ECWP_URL_LICENSE . '/wp-json/mlz-license/v1/check', [
-            'body' => wp_json_encode(['license_key' => $license_key, 'domain' => sanitize_text_field($_SERVER['SERVER_NAME'])]),
+        
+        if (empty($license_key)) {
+            return new \WP_REST_Response(['valid' => false, 'message' => 'License key is required.'], 400);
+        }
+        
+        $current_domain = $this->get_current_domain();
+        $api_url = ECWP_URL_LICENSE . '/wp-json/mlz-license/v1/check';
+        
+        // Détecter si l'URL de licence est locale (pour désactiver SSL)
+        $is_license_local = $this->is_license_url_local();
+        
+        
+        $response = wp_remote_post($api_url, [
+            'body' => wp_json_encode([
+                'license_key' => $license_key,
+                'domain' => $current_domain
+            ]),
             'headers' => ['Content-Type' => 'application/json'],
+            'timeout' => 15,
+            'sslverify' => !$is_license_local, // Désactiver la vérification SSL si l'URL de licence est locale
         ]);
 
         if (is_wp_error($response)) {
-            return new \WP_REST_Response(['valid' => false, 'message' => 'Failed to validate license'], 500);
+            $error_message = $response->get_error_message();
+            $error_code = $response->get_error_code();
+            
+            return new \WP_REST_Response([
+                'valid' => false,
+                'message' => 'Failed to validate license: ' . $error_message . ' (Code: ' . $error_code . ')'
+            ], 500);
         }
 
+        $response_code = wp_remote_retrieve_response_code($response);
         $body = json_decode(wp_remote_retrieve_body($response), true);
-        return new \WP_REST_Response($body, $response['response']['code']);
+        
+        // Si la réponse n'est pas valide JSON ou est vide
+        if (json_last_error() !== JSON_ERROR_NONE || empty($body)) {
+            return new \WP_REST_Response([
+                'valid' => false,
+                'message' => 'Invalid response from license server. Response code: ' . $response_code
+            ], 500);
+        }
+        
+        return new \WP_REST_Response($body, $response_code);
     }
 
     public function store_license(\WP_REST_Request $request)
@@ -970,7 +1135,9 @@ class ECWP_Settings
         $license_key = sanitize_text_field($request->get_param('license_key'));
         $license_data = $request->get_param('license_data');
 
-        $encrypted_license_key = openssl_encrypt($license_key, 'AES-128-ECB', ECWP_SECRET_KEY);
+        // Utiliser la classe de chiffrement sécurisée
+        $encrypt = new \ECWP\Admin\Encrypt\ECWP_Encrypt();
+        $encrypted_license_key = $encrypt->encrypt($license_key);
         update_option('ecwp_client_license_key', $encrypted_license_key);
         update_option('ecwp_client_license_data', $license_data);
 
@@ -992,7 +1159,11 @@ class ECWP_Settings
             return new \WP_REST_Response(['success' => false, 'message' => 'License not found.'], 404);
         }
 
-        $license_key = openssl_decrypt($encrypted_license_key, 'AES-128-ECB', ECWP_SECRET_KEY);
+        $license_key = $this->decrypt_license_key($encrypted_license_key);
+        
+        if ($license_key === false) {
+            return new \WP_REST_Response(['success' => false, 'message' => 'Failed to decrypt license key.'], 500);
+        }
 
         $license_data = $this->get_validate_license($license_key);
 
@@ -1008,7 +1179,7 @@ class ECWP_Settings
             $installed_versions[$plugin_slug] = $plugin_data['Version'];
         }
 
-        $license_plugins = $license_data['plugins'];
+        $license_plugins = isset($license_data['plugins']) && is_array($license_data['plugins']) ? $license_data['plugins'] : array();
         $comparison_result = array();
 
         foreach ($license_plugins as $plugin_slug => $plugin_info) {
@@ -1038,13 +1209,18 @@ class ECWP_Settings
         }
 
         $encrypted_license_key = get_option('ecwp_client_license_key');
+
+        $license_key = $this->decrypt_license_key($encrypted_license_key);
+        
+        if ($license_key === false) {
+            return new \WP_REST_Response(['success' => false, 'message' => 'Failed to decrypt license key.'], 500);
+        }
+
+        $license_data = $this->get_validate_license($license_key);
+
         if (empty($encrypted_license_key)) {
             return new \WP_REST_Response(['success' => false, 'message' => 'License key not found.'], 404);
         }
-
-        $license_key = openssl_decrypt($encrypted_license_key, 'AES-128-ECB', ECWP_SECRET_KEY);
-
-        $license_data = $this->get_validate_license($license_key);
 
         if (!$license_data || !$license_data['valid']) {
             return new \WP_REST_Response(['success' => false, 'message' => 'License validation failed.'], 500);
@@ -1075,18 +1251,106 @@ class ECWP_Settings
         return new \WP_REST_Response($response_data, 200);
     }
 
+    /**
+     * Normalise un domaine (enlève http/https, www, trailing slash)
+     *
+     * @param string $domain Le domaine à normaliser
+     * @return string Le domaine normalisé
+     */
+    private function normalize_domain($domain)
+    {
+        // Enlever http:// ou https://
+        $domain = preg_replace('#^https?://#', '', $domain);
+        // Enlever www.
+        $domain = preg_replace('#^www\.#', '', $domain);
+        // Enlever le trailing slash
+        $domain = rtrim($domain, '/');
+        // Enlever les espaces et convertir en minuscules
+        $domain = strtolower(trim($domain));
+        return $domain;
+    }
+
+    /**
+     * Récupère le domaine actuel du site normalisé
+     *
+     * @return string Le domaine actuel normalisé
+     */
+    private function get_current_domain()
+    {
+        $site_url = site_url();
+        $domain = $this->normalize_domain($site_url);
+        
+        return $domain;
+    }
+
+    /**
+     * Vérifie si l'URL de licence est en environnement local
+     *
+     * @return bool True si l'URL de licence est locale
+     */
+    private function is_license_url_local()
+    {
+        $license_url = ECWP_URL_LICENSE;
+        $license_domain = $this->normalize_domain($license_url);
+        
+        return (
+            strpos($license_domain, '.local') !== false ||
+            strpos($license_domain, 'localhost') !== false ||
+            strpos($license_domain, '127.0.0.1') !== false ||
+            strpos($license_url, '.local') !== false ||
+            strpos($license_url, 'localhost') !== false ||
+            strpos($license_url, '127.0.0.1') !== false
+        );
+    }
+
     public function get_validate_license($license_key)
     {
-        $response = wp_remote_post(ECWP_URL_LICENSE . '/wp-json/mlz-license/v1/check', [
-            'body' => wp_json_encode(['license_key' => sanitize_text_field($license_key), 'domain' => sanitize_text_field($_SERVER['SERVER_NAME'])]),
+        if (empty($license_key)) {
+            return ['valid' => false, 'message' => 'License key is required.'];
+        }
+        
+        $current_domain = $this->get_current_domain();
+        $api_url = ECWP_URL_LICENSE . '/wp-json/mlz-license/v1/check';
+        
+        // Détecter si l'URL de licence est locale (pour désactiver SSL)
+        $is_license_local = $this->is_license_url_local();
+        
+        
+        $response = wp_remote_post($api_url, [
+            'body' => wp_json_encode([
+                'license_key' => sanitize_text_field($license_key),
+                'domain' => $current_domain
+            ]),
             'headers' => ['Content-Type' => 'application/json'],
+            'timeout' => 15,
+            'sslverify' => !$is_license_local, // Désactiver la vérification SSL si l'URL de licence est locale
         ]);
 
         if (is_wp_error($response)) {
-            return ['valid' => false, 'message' => 'Failed to validate license'];
+            $error_message = $response->get_error_message();
+            $error_code = $response->get_error_code();
+            
+            return [
+                'valid' => false,
+                'message' => 'Failed to validate license: ' . $error_message . ' (Code: ' . $error_code . ')'
+            ];
         }
 
-        return json_decode(wp_remote_retrieve_body($response), true);
+        $response_code = wp_remote_retrieve_response_code($response);
+        $body = json_decode(wp_remote_retrieve_body($response), true);
+        
+        // Si la réponse n'est pas valide JSON ou est vide
+        if (json_last_error() !== JSON_ERROR_NONE || empty($body)) {
+            $raw_body = wp_remote_retrieve_body($response);
+            
+            
+            return [
+                'valid' => false,
+                'message' => 'Invalid response from license server. Response code: ' . $response_code
+            ];
+        }
+
+        return $body;
     }
 
     public function delete_license($request)
@@ -1110,7 +1374,18 @@ class ECWP_Settings
         $plugin_slug = $request->get_param('plugin_slug');
         $current_version = $request->get_param('current_version');
 
+        if (empty($plugin_slug)) {
+            return new \WP_REST_Response([
+                'success' => false,
+                'message' => 'Plugin slug is required.',
+            ], 400);
+        }
+
         $api_url = ECWP_URL_LICENSE . '/wp-json/mlz-license/v1/check-update';
+        
+        // Détecter si l'URL de licence est locale (pour désactiver SSL)
+        $is_license_local = $this->is_license_url_local();
+        
 
         $response = wp_remote_post($api_url, array(
             'body' => wp_json_encode(array(
@@ -1120,23 +1395,39 @@ class ECWP_Settings
             'headers' => array(
                 'Content-Type' => 'application/json',
             ),
+            'timeout' => 15,
+            'sslverify' => !$is_license_local, // Désactiver la vérification SSL si l'URL de licence est locale
         ));
 
         if (is_wp_error($response)) {
+            $error_message = $response->get_error_message();
+            $error_code = $response->get_error_code();
+            
+            
             return new \WP_REST_Response([
                 'success' => false,
-                'message' => 'Failed to check for updates.',
+                'message' => 'Failed to check for updates: ' . $error_message . ' (Code: ' . $error_code . ')',
             ], 500);
         }
 
+        $response_code = wp_remote_retrieve_response_code($response);
         $body = wp_remote_retrieve_body($response);
         $data = json_decode($body, true);
+        
+        // Si la réponse n'est pas valide JSON ou est vide
+        if (json_last_error() !== JSON_ERROR_NONE || empty($data)) {
+            
+            return new \WP_REST_Response([
+                'success' => false,
+                'message' => 'Invalid response from update server. Response code: ' . $response_code,
+            ], 500);
+        }
 
         return new \WP_REST_Response([
             'success' => true,
-            'update_available' => $data['update_available'],
-            'new_version' => $data['new_version'],
-        ], 200);
+            'update_available' => isset($data['update_available']) ? $data['update_available'] : false,
+            'new_version' => isset($data['new_version']) ? $data['new_version'] : null,
+        ], $response_code);
     }
 
     public function download_update_plugin(\WP_REST_Request $request)
@@ -1147,42 +1438,572 @@ class ECWP_Settings
         }
 
         $plugin_slug = sanitize_text_field($request->get_param('plugin_slug'));
-        $site_url = site_url();
-        $domain = trim(str_replace(array('http://', 'https://'), '', $site_url));
+        $current_domain = $this->get_current_domain();
 
         $encrypted_license_key = get_option('ecwp_client_license_key');
-        $license_key = openssl_decrypt($encrypted_license_key, 'AES-128-ECB', ECWP_SECRET_KEY);
+        if (empty($encrypted_license_key)) {
+            return new \WP_Error('license_not_found', 'License key not found.', array('status' => 404));
+        }
+        
+        $license_key = $this->decrypt_license_key($encrypted_license_key);
+        
+        if ($license_key === false) {
+            return new \WP_REST_Response(['success' => false, 'message' => 'Failed to decrypt license key.'], 500);
+        }
 
         if (empty($plugin_slug)) {
-            return new \WP_Error('invalid_parameters', 'Plugin slug or new version missing.', array('status' => 400));
+            return new \WP_Error('invalid_parameters', 'Plugin slug is required.', array('status' => 400));
+        }
+
+        // Vérifier si le plugin est déjà installé
+        $installed_plugins = get_plugins();
+        $plugin_installed = false;
+        $plugin_path = null;
+        
+        foreach ($installed_plugins as $path => $plugin_data) {
+            if (strpos($path, $plugin_slug . '/') === 0) {
+                $plugin_installed = true;
+                $plugin_path = $path;
+                break;
+            }
         }
 
         $api_url = ECWP_URL_LICENSE . '/wp-json/mlz-license/v1/download-update';
+        
+        // Détecter si l'URL de licence est locale (pour désactiver SSL)
+        $is_license_local = $this->is_license_url_local();
+        
 
         $response = wp_remote_post($api_url, array(
-            'body' => array(
-                'domain' => $domain,
+            'body' => wp_json_encode(array(
+                'domain' => $current_domain,
                 'plugin_slug' => $plugin_slug,
                 'license_key' => $license_key,
+            )),
+            'headers' => array(
+                'Content-Type' => 'application/json',
             ),
+            'timeout' => 60, // Timeout plus long pour les téléchargements et installations
+            'sslverify' => !$is_license_local, // Désactiver la vérification SSL si l'URL de licence est locale
         ));
 
         if (is_wp_error($response)) {
-            return new \WP_Error('api_error', 'Failed to connect to update API.', array('status' => 500));
+            $error_message = $response->get_error_message();
+            $error_code = $response->get_error_code();
+            
+            
+            return new \WP_Error('api_error', 'Failed to connect to update API: ' . $error_message . ' (Code: ' . $error_code . ')', array('status' => 500));
+        }
+
+        $response_code = wp_remote_retrieve_response_code($response);
+        $body = wp_remote_retrieve_body($response);
+        $content_type = wp_remote_retrieve_header($response, 'content-type');
+        
+        
+        // Vérifier si la réponse est un fichier ZIP (binaire) ou du JSON
+        $is_zip = false;
+        if ($content_type && (
+            stripos($content_type, 'application/zip') !== false || 
+            stripos($content_type, 'application/octet-stream') !== false ||
+            stripos($content_type, 'binary') !== false ||
+            stripos($content_type, 'zip') !== false
+        )) {
+            $is_zip = true;
+        }
+        
+        // Vérifier aussi par la signature du fichier ZIP (PK = 50 4B = 0x504B)
+        if (!$is_zip && strlen($body) > 2) {
+            $zip_signature = substr($body, 0, 2);
+            if ($zip_signature === 'PK') {
+                $is_zip = true;
+            }
+        }
+        
+        // Si c'est un fichier ZIP, le traiter directement
+        if ($is_zip && !empty($body)) {
+            
+            // Créer un fichier temporaire
+            $temp_file = wp_tempnam($plugin_slug . '.zip');
+            
+            if (!$temp_file) {
+                return new \WP_Error('temp_file_failed', 'Failed to create temporary file.', array('status' => 500));
+            }
+            
+            // Écrire le contenu dans le fichier temporaire
+            $written = file_put_contents($temp_file, $body);
+            
+            if ($written === false || $written !== strlen($body)) {
+                @unlink($temp_file);
+                return new \WP_Error('write_failed', 'Failed to write downloaded file.', array('status' => 500));
+            }
+            
+            
+            // Utiliser directement le fichier téléchargé
+            $data = array(
+                'success' => true,
+                'download_file' => $temp_file, // Fichier local au lieu d'URL
+                'is_direct_file' => true
+            );
+        } else {
+            // Sinon, essayer de parser comme JSON
+            $data = json_decode($body, true);
+            
+            // Si la réponse n'est pas valide JSON ou est vide
+            if (json_last_error() !== JSON_ERROR_NONE || empty($data)) {
+                
+                return new \WP_Error('invalid_response', 'Invalid API response. Expected JSON or ZIP file. Response code: ' . $response_code . ', Content-Type: ' . $content_type, array('status' => 500));
+            }
+            
+            if (!isset($data['success']) || !$data['success']) {
+                $error_message = isset($data['message']) ? $data['message'] : 'Failed to download update.';
+                return new \WP_Error('download_failed', $error_message, array('status' => $response_code));
+            }
+            
+            // Si pas de download_url, retourner une erreur
+            if (empty($data['download_url'])) {
+                return new \WP_Error('no_download_url', 'Download URL not provided by API.', array('status' => 500));
+            }
+        }
+
+        // Inclure les fichiers nécessaires pour l'installation
+        require_once ABSPATH . 'wp-admin/includes/file.php';
+        require_once ABSPATH . 'wp-admin/includes/plugin.php';
+        require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
+        require_once ABSPATH . 'wp-admin/includes/plugin-install.php';
+
+        // Créer un upgrader silencieux
+        $upgrader = new \Plugin_Upgrader(new \WP_Ajax_Upgrader_Skin());
+
+        // Si le plugin était déjà installé, on fait une mise à jour
+        if ($plugin_installed && $plugin_path) {
+            
+            // Vérifier si on a déjà un fichier téléchargé directement
+            if (isset($data['is_direct_file']) && $data['is_direct_file'] && isset($data['download_file'])) {
+                $temp_file = $data['download_file'];
+            } else {
+                // Télécharger depuis l'URL
+                
+                $is_license_local = $this->is_license_url_local();
+                
+                $download_response = wp_remote_get($data['download_url'], array(
+                    'timeout' => 300, // 5 minutes
+                    'sslverify' => !$is_license_local,
+                    'stream' => false,
+                    'redirection' => 5,
+                ));
+                
+                if (is_wp_error($download_response)) {
+                    return new \WP_Error('download_failed', 'Failed to download plugin update: ' . $download_response->get_error_message(), array('status' => 500));
+                }
+                
+                $response_code = wp_remote_retrieve_response_code($download_response);
+                if ($response_code !== 200) {
+                    return new \WP_Error('download_failed', 'Failed to download plugin update: HTTP ' . $response_code, array('status' => 500));
+                }
+                
+                $file_content = wp_remote_retrieve_body($download_response);
+                
+                if (empty($file_content)) {
+                    return new \WP_Error('download_failed', 'Downloaded file is empty.', array('status' => 500));
+                }
+                
+                
+                // Créer un fichier temporaire
+                $temp_file = wp_tempnam($plugin_slug . '-update.zip');
+                
+                if (!$temp_file) {
+                    return new \WP_Error('temp_file_failed', 'Failed to create temporary file.', array('status' => 500));
+                }
+                
+                // Écrire le contenu dans le fichier temporaire
+                $written = file_put_contents($temp_file, $file_content);
+                
+                if ($written === false || $written !== strlen($file_content)) {
+                    @unlink($temp_file);
+                    return new \WP_Error('write_failed', 'Failed to write downloaded file.', array('status' => 500));
+                }
+                
+            }
+            
+            // Faire la mise à jour depuis le fichier local
+            $upgrade_result = $upgrader->upgrade($temp_file);
+            
+            // Nettoyer le fichier temporaire
+            @unlink($temp_file);
+            
+            if (is_wp_error($upgrade_result)) {
+                return new \WP_Error('update_failed', 'Plugin update failed: ' . $upgrade_result->get_error_message(), array('status' => 500));
+            }
+            
+            // Activer le plugin s'il n'est pas déjà activé (après la mise à jour)
+            if (!is_plugin_active($plugin_path)) {
+                $activate_result = activate_plugin($plugin_path);
+                if (is_wp_error($activate_result)) {
+                    if (defined('WP_DEBUG') && WP_DEBUG) {
+                    }
+                }
+            }
+            
+            return new \WP_REST_Response(array(
+                'success' => true,
+                'message' => 'Plugin updated successfully.',
+                'action' => 'updated'
+            ), 200);
+        } else {
+            // Nouvelle installation - télécharger et installer le plugin
+            // Log de l'URL de téléchargement (toujours loguer pour débogage)
+            // Nouvelle installation
+            
+            // Télécharger le fichier manuellement car download_url() ne gère pas les URLs avec tokens
+            $is_license_local = $this->is_license_url_local();
+            
+            $download_response = wp_remote_get($data['download_url'], array(
+                'timeout' => 300, // 5 minutes
+                'sslverify' => !$is_license_local,
+                'stream' => false, // Télécharger en mémoire d'abord
+                'redirection' => 5,
+            ));
+            
+            if (is_wp_error($download_response)) {
+                return new \WP_Error('download_failed', 'Failed to download plugin: ' . $download_response->get_error_message(), array('status' => 500));
+            }
+            
+            $response_code = wp_remote_retrieve_response_code($download_response);
+            if ($response_code !== 200) {
+                return new \WP_Error('download_failed', 'Failed to download plugin: HTTP ' . $response_code, array('status' => 500));
+            }
+            
+            $file_content = wp_remote_retrieve_body($download_response);
+            
+            if (empty($file_content)) {
+                return new \WP_Error('download_failed', 'Downloaded file is empty.', array('status' => 500));
+            }
+            
+            
+            // Créer un fichier temporaire
+            $temp_file = wp_tempnam($plugin_slug . '.zip');
+            
+            if (!$temp_file) {
+                return new \WP_Error('temp_file_failed', 'Failed to create temporary file.', array('status' => 500));
+            }
+            
+            // Écrire le contenu dans le fichier temporaire
+            $written = file_put_contents($temp_file, $file_content);
+            
+            if ($written === false || $written !== strlen($file_content)) {
+                @unlink($temp_file);
+                return new \WP_Error('write_failed', 'Failed to write downloaded file.', array('status' => 500));
+            }
+            
+            
+            // Installer depuis le fichier local
+            $install_result = $upgrader->install($temp_file);
+            
+            // Nettoyer le fichier temporaire
+            @unlink($temp_file);
+
+            if (is_wp_error($install_result)) {
+                return new \WP_Error('install_failed', 'Plugin installation failed: ' . $install_result->get_error_message(), array('status' => 500));
+            }
+            
+            // $install_result peut être true, un array avec des infos, ou false
+            // Examiner le résultat en détail
+            $install_success = false;
+            
+            if ($install_result === true) {
+                $install_success = true;
+            } elseif (is_array($install_result)) {
+                // Le Plugin_Upgrader peut retourner un array avec des informations
+                // Vérifier si l'installation a réussi en regardant les clés du résultat
+                if (isset($install_result['destination_name']) || isset($install_result['destination'])) {
+                    $install_success = true;
+                } else {
+                    // Vérifier s'il y a des messages d'erreur dans le résultat
+                    if (isset($install_result['errors']) && !empty($install_result['errors'])) {
+                        return new \WP_Error('install_failed', 'Plugin installation failed: ' . print_r($install_result['errors'], true), array('status' => 500));
+                    }
+                    // Si pas d'erreurs explicites, considérer comme succès
+                    $install_success = true;
+                }
+            } else {
+                // Si ce n'est ni true ni un array, c'est probablement un échec
+                return new \WP_Error('install_failed', 'Plugin installation failed: Unexpected result type.', array('status' => 500));
+            }
+            
+            // Vérifier que l'installation a vraiment réussi en vérifiant le système de fichiers
+            $plugins_dir = WP_PLUGIN_DIR;
+            $plugin_dir_path = $plugins_dir . '/' . $plugin_slug;
+            
+            
+            // Si le dossier n'existe pas, l'installation a probablement échoué
+            if (!is_dir($plugin_dir_path)) {
+                // Essayer de trouver le plugin avec un nom légèrement différent
+                $all_plugin_dirs = glob($plugins_dir . '/*', GLOB_ONLYDIR);
+                $found_dir = null;
+                
+                foreach ($all_plugin_dirs as $dir) {
+                    $dir_name = basename($dir);
+                    // Chercher des variations du slug
+                    if (stripos($dir_name, $plugin_slug) !== false || stripos($plugin_slug, $dir_name) !== false) {
+                        $found_dir = $dir;
+                        break;
+                    }
+                }
+                
+                if (!$found_dir) {
+                    if (defined('WP_DEBUG') && WP_DEBUG) {
+                    }
+                    return new \WP_Error('install_failed', 'Plugin installation failed: Plugin directory not found after installation. Please check file permissions and try again.', array('status' => 500));
+                }
+                
+                $plugin_dir_path = $found_dir;
+                $plugin_slug = basename($found_dir);
+                
+                if (defined('WP_DEBUG') && WP_DEBUG) {
+                }
+            }
+            
+            // Vérifier qu'il y a au moins un fichier PHP dans le dossier
+            $plugin_files = glob($plugin_dir_path . '/*.php');
+            if (empty($plugin_files)) {
+                if (defined('WP_DEBUG') && WP_DEBUG) {
+                }
+                return new \WP_Error('install_failed', 'Plugin installation failed: No plugin files found in directory.', array('status' => 500));
+            }
+            
+            // Forcer le rafraîchissement du cache des plugins
+            wp_cache_delete('plugins', 'plugins');
+            if (function_exists('delete_plugins_cache')) {
+                delete_plugins_cache();
+            }
+            // Nettoyer le cache de transients WordPress
+            wp_cache_flush();
+            
+            // Nouvelle installation - trouver le chemin du plugin installé
+            // Attendre un peu pour que WordPress mette à jour sa liste
+            sleep(1);
+            
+            $installed_plugins_after = get_plugins();
+            $new_plugin_path = null;
+            
+            // Méthode 1: Chercher par slug exact dans le chemin
+            foreach ($installed_plugins_after as $path => $plugin_data) {
+                if (strpos($path, $plugin_slug . '/') === 0) {
+                    $new_plugin_path = $path;
+                    break;
+                }
+            }
+            
+            // Méthode 2: Si pas trouvé, chercher par nom de dossier (comme dans le reste du code)
+            if (!$new_plugin_path) {
+                foreach ($installed_plugins_after as $path => $plugin_data) {
+                    $dir_slug = dirname(plugin_basename($path));
+                    if ($dir_slug === $plugin_slug) {
+                        $new_plugin_path = $path;
+                        break;
+                    }
+                }
+            }
+            
+            // Méthode 3: Chercher par nom du plugin (plus flexible)
+            if (!$new_plugin_path && isset($data['plugin_name'])) {
+                foreach ($installed_plugins_after as $path => $plugin_data) {
+                    if (isset($plugin_data['Name']) && stripos($plugin_data['Name'], $data['plugin_name']) !== false) {
+                        $new_plugin_path = $path;
+                        break;
+                    }
+                }
+            }
+            
+            // Méthode 4: Construire le chemin directement depuis le système de fichiers
+            if (!$new_plugin_path) {
+                $main_plugin_file = $plugin_dir_path . '/' . $plugin_slug . '.php';
+                if (!file_exists($main_plugin_file)) {
+                    // Chercher le premier fichier PHP dans le dossier
+                    $main_plugin_file = $plugin_files[0];
+                }
+                
+                if (file_exists($main_plugin_file)) {
+                    $relative_path = str_replace($plugins_dir . '/', '', $main_plugin_file);
+                    if (isset($installed_plugins_after[$relative_path])) {
+                        $new_plugin_path = $relative_path;
+                    }
+                }
+            }
+            
+            
+            if ($new_plugin_path) {
+                // Activer le plugin
+                $activate_result = activate_plugin($new_plugin_path);
+                
+                if (is_wp_error($activate_result)) {
+                    if (defined('WP_DEBUG') && WP_DEBUG) {
+                    }
+                    // L'installation a réussi mais l'activation a échoué
+                    return new \WP_REST_Response(array(
+                        'success' => true,
+                        'message' => 'Plugin installed successfully but activation failed. Please activate manually.',
+                        'action' => 'installed',
+                        'activation_failed' => true,
+                        'plugin_path' => $new_plugin_path
+                    ), 200);
+                }
+                
+                return new \WP_REST_Response(array(
+                    'success' => true,
+                    'message' => 'Plugin installed and activated successfully.',
+                    'action' => 'installed',
+                    'plugin_path' => $new_plugin_path
+                ), 200);
+            } else {
+                
+                return new \WP_Error('plugin_not_detected', 'Plugin files were installed but WordPress could not detect them. Please check the plugin directory structure and refresh the plugins page manually.', array(
+                    'status' => 500,
+                    'plugin_directory' => $plugin_dir_path,
+                    'plugin_slug' => $plugin_slug
+                ));
+            }
+        }
+    }
+
+    /**
+     * Ajoute un domaine autorisé à la licence
+     *
+     * @param \WP_REST_Request $request
+     * @return \WP_REST_Response|\WP_Error
+     */
+    public function add_domain(\WP_REST_Request $request)
+    {
+        $nonce = sanitize_text_field(wp_unslash($request->get_header('X-WP-Nonce')));
+        if (!wp_verify_nonce($nonce, 'wp_rest')) {
+            return new \WP_Error('invalid_nonce', 'Nonce verification failed.', array('status' => 403));
+        }
+
+        $encrypted_license_key = get_option('ecwp_client_license_key');
+        if (empty($encrypted_license_key)) {
+            return new \WP_REST_Response(['success' => false, 'message' => 'License key not found.'], 404);
+        }
+
+        $license_key = $this->decrypt_license_key($encrypted_license_key);
+        
+        if ($license_key === false) {
+            return new \WP_REST_Response(['success' => false, 'message' => 'Failed to decrypt license key.'], 500);
+        }
+        
+        $domain = sanitize_text_field($request->get_param('domain'));
+
+        if (empty($domain)) {
+            return new \WP_REST_Response(['success' => false, 'message' => 'Domain is required.'], 400);
+        }
+
+        // Normaliser le domaine
+        $domain = $this->normalize_domain($domain);
+
+        // Appel à l'API pour ajouter le domaine
+        $api_url = ECWP_URL_LICENSE . '/wp-json/mlz-license/v1/add-domain';
+        $is_license_local = $this->is_license_url_local();
+        
+        $response = wp_remote_post($api_url, [
+            'body' => wp_json_encode([
+                'license_key' => $license_key,
+                'domain' => $domain,
+            ]),
+            'headers' => ['Content-Type' => 'application/json'],
+            'timeout' => 15,
+            'sslverify' => !$is_license_local, // Désactiver la vérification SSL si l'URL de licence est locale
+        ]);
+
+        if (is_wp_error($response)) {
+            return new \WP_REST_Response([
+                'success' => false,
+                'message' => 'Failed to connect to license server: ' . $response->get_error_message(),
+            ], 500);
         }
 
         $body = wp_remote_retrieve_body($response);
         $data = json_decode($body, true);
+        $response_code = wp_remote_retrieve_response_code($response);
 
-        if (!$data || !isset($data['success'])) {
-            return new \WP_Error('invalid_response', 'Invalid API response.', array('status' => 500));
+        // Si le domaine a été ajouté avec succès, mettre à jour les données de licence locales
+        if ($response_code === 200 && isset($data['success']) && $data['success']) {
+            // Rafraîchir les données de licence
+            $license_data = $this->get_validate_license($license_key);
+            if ($license_data && isset($license_data['valid']) && $license_data['valid']) {
+                update_option('ecwp_client_license_data', $license_data);
+            }
         }
 
-        if ($data['success']) {
-            return new \WP_REST_Response($data, 200);
-        } else {
-            return new \WP_Error('download_failed', 'Failed to download update.', array('status' => 500));
+        return new \WP_REST_Response($data, $response_code);
+    }
+
+    /**
+     * Supprime un domaine autorisé de la licence
+     *
+     * @param \WP_REST_Request $request
+     * @return \WP_REST_Response|\WP_Error
+     */
+    public function remove_domain(\WP_REST_Request $request)
+    {
+        $nonce = sanitize_text_field(wp_unslash($request->get_header('X-WP-Nonce')));
+        if (!wp_verify_nonce($nonce, 'wp_rest')) {
+            return new \WP_Error('invalid_nonce', 'Nonce verification failed.', array('status' => 403));
         }
+
+        $encrypted_license_key = get_option('ecwp_client_license_key');
+        if (empty($encrypted_license_key)) {
+            return new \WP_REST_Response(['success' => false, 'message' => 'License key not found.'], 404);
+        }
+
+        $license_key = $this->decrypt_license_key($encrypted_license_key);
+        
+        if ($license_key === false) {
+            return new \WP_REST_Response(['success' => false, 'message' => 'Failed to decrypt license key.'], 500);
+        }
+        
+        $domain = sanitize_text_field($request->get_param('domain'));
+
+        if (empty($domain)) {
+            return new \WP_REST_Response(['success' => false, 'message' => 'Domain is required.'], 400);
+        }
+
+        // Normaliser le domaine
+        $domain = $this->normalize_domain($domain);
+
+        // Appel à l'API pour supprimer le domaine
+        $api_url = ECWP_URL_LICENSE . '/wp-json/mlz-license/v1/remove-domain';
+        $is_license_local = $this->is_license_url_local();
+        
+        $response = wp_remote_post($api_url, [
+            'body' => wp_json_encode([
+                'license_key' => $license_key,
+                'domain' => $domain,
+            ]),
+            'headers' => ['Content-Type' => 'application/json'],
+            'timeout' => 15,
+            'sslverify' => !$is_license_local, // Désactiver la vérification SSL si l'URL de licence est locale
+        ]);
+
+        if (is_wp_error($response)) {
+            return new \WP_REST_Response([
+                'success' => false,
+                'message' => 'Failed to connect to license server: ' . $response->get_error_message(),
+            ], 500);
+        }
+
+        $body = wp_remote_retrieve_body($response);
+        $data = json_decode($body, true);
+        $response_code = wp_remote_retrieve_response_code($response);
+
+        // Si le domaine a été supprimé avec succès, mettre à jour les données de licence locales
+        if ($response_code === 200 && isset($data['success']) && $data['success']) {
+            // Rafraîchir les données de licence
+            $license_data = $this->get_validate_license($license_key);
+            if ($license_data && isset($license_data['valid']) && $license_data['valid']) {
+                update_option('ecwp_client_license_data', $license_data);
+            }
+        }
+
+        return new \WP_REST_Response($data, $response_code);
     }
 
 }

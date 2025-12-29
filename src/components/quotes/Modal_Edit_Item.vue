@@ -108,7 +108,7 @@ export default {
         item_name: { label: translations.item_name },
         item_description: { label: translations.description, type: "textarea" },
         quantity: { label: translations.quantity, type: "number" },
-        vat_rate: { label: "Taux de TVA", type: "number" },
+        vat_rate: { label: translations.vat, type: "number" },
         unit_price: { label: translations.unit_price, type: "number" },
         discount: { label: translations.discount, type: "number" },
       },

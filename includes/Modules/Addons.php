@@ -221,6 +221,40 @@ class ECWP_Addons
                 </div>
             </div>
         </div>
+        <div class="card p-6 bg-base-100 shadow-xl flex flex-col border-2 border-primary">
+            <div class="card-body flex flex-col flex-grow">
+                <div class="flex items-center gap-2 mb-2">
+                    <h2 class="card-title mb-0"><?php esc_html_e('myEasyCompta Recurring Invoices', 'my-easy-compta');?></h2>
+                    <span class="badge badge-primary badge-sm"><?php esc_html_e('New', 'my-easy-compta');?></span>
+                </div>
+                <p class="mb-2 flex-grow">
+                    <?php esc_html_e('Automate your recurring billing with myEasyCompta Recurring Invoices. Create invoice templates with customizable frequencies (monthly, quarterly, semi-annual, annual, or custom). Automatically generate invoices according to your schedule, manage start/end dates, pause or resume recurrences, and track the history of generated invoices. Perfect for subscriptions and recurring services.', 'my-easy-compta');?>
+                </p>
+                <div class="flex flex-col gap-2 mb-3">
+                    <div class="flex items-center gap-2 text-sm">
+                        <i class="fas fa-check-circle text-success"></i>
+                        <span><?php esc_html_e('Multiple frequency options', 'my-easy-compta');?></span>
+                    </div>
+                    <div class="flex items-center gap-2 text-sm">
+                        <i class="fas fa-check-circle text-success"></i>
+                        <span><?php esc_html_e('Automatic invoice generation', 'my-easy-compta');?></span>
+                    </div>
+                    <div class="flex items-center gap-2 text-sm">
+                        <i class="fas fa-check-circle text-success"></i>
+                        <span><?php esc_html_e('Pause/Resume functionality', 'my-easy-compta');?></span>
+                    </div>
+                    <div class="flex items-center gap-2 text-sm">
+                        <i class="fas fa-check-circle text-success"></i>
+                        <span><?php esc_html_e('Generation history tracking', 'my-easy-compta');?></span>
+                    </div>
+                </div>
+                <div class="flex card-actions justify-end mt-auto btn-rounded">
+                    <a class="btn btn-primary hover:text-white rounded-full"
+                        href="https://myeasycompta.com/addons-all/myeasycompta-recurring-invoices/"
+                        target="_blank"><?php esc_html_e('Read more', 'my-easy-compta');?></a>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 <?php

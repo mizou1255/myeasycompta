@@ -68,7 +68,31 @@ class PDFGenerator
         foreach ($settings as $setting) {
             $this->settings_array[$setting->meta_key] = $setting->meta_value;
         }
-        $this->logo_path = $this->settings_array['logo_path'] ?? '';
+        // Gérer logo_url et logo_path (priorité à logo_url)
+        $logo_url = $this->settings_array['logo_url'] ?? '';
+        $logo_path = $this->settings_array['logo_path'] ?? '';
+        
+        // Si logo_url est défini, l'utiliser et convertir en chemin absolu si c'est une URL locale
+        if (!empty($logo_url)) {
+            $upload_dir = wp_upload_dir();
+            // Si c'est une URL WordPress locale, convertir en chemin absolu
+            if (strpos($logo_url, $upload_dir['baseurl']) === 0) {
+                // C'est une URL locale WordPress, convertir en chemin absolu
+                $this->logo_path = str_replace($upload_dir['baseurl'], $upload_dir['basedir'], $logo_url);
+            } elseif (filter_var($logo_url, FILTER_VALIDATE_URL)) {
+                // C'est une URL externe, garder l'URL pour mPDF
+                $this->logo_path = $logo_url;
+            } else {
+                // C'est déjà un chemin, utiliser tel quel
+                $this->logo_path = $logo_url;
+            }
+        } elseif (!empty($logo_path)) {
+            // Utiliser logo_path si logo_url n'est pas défini
+            $this->logo_path = $logo_path;
+        } else {
+            $this->logo_path = '';
+        }
+        
         $this->logo_width = $this->settings_array['logo_width'] ?? '';
         $this->logo_mentions = $this->settings_array['logo_mentions'] ?? '';
         $this->invoice_color = $this->settings_array['invoice_color'] ?? '#ff6a00';
@@ -500,9 +524,29 @@ ie.item_order ASC",
     <div>
         <table width="100%" style="font-family: dejavusanscondensed;font-size: 10pt;line-height: 13pt;color: #777777;">
             <tr>
-                <td width="60%" height="100">
-                    <img style="width: ' . $this->logo_width . 'px;" src="' . $this->logo_path . '" /><br /><br />';
-
+                <td width="60%" height="100">';
+        
+        // Gérer l'affichage du logo
+        if (!empty($this->logo_path)) {
+            // Vérifier si c'est une URL ou un chemin local
+            $logo_src = $this->logo_path;
+            if (!filter_var($this->logo_path, FILTER_VALIDATE_URL)) {
+                // C'est un chemin local, vérifier qu'il existe
+                if (file_exists($this->logo_path)) {
+                    // mPDF peut utiliser les chemins absolus directement
+                    $logo_src = $this->logo_path;
+                } else {
+                    // Le fichier n'existe pas, ne pas afficher le logo
+                    $logo_src = '';
+                }
+            }
+            
+            if (!empty($logo_src)) {
+                $logo_width_style = !empty($this->logo_width) ? 'width: ' . intval($this->logo_width) . 'px;' : '';
+                $html .= '<img style="' . $logo_width_style . '" src="' . htmlspecialchars($logo_src) . '" /><br /><br />';
+            }
+        }
+        
         if ($this->logo_mentions_active == 1) {
             $html .= '<p style="margin: 4pt 0 0 0;">' . $this->logo_mentions . '</p>';
         }
