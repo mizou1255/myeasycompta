@@ -1,112 +1,132 @@
 <template>
-  <div>
+  <div class="p-4 max-w-4xl mx-auto">
+    <!-- Toast Notification -->
     <div
       v-if="toast.visible"
-      :class="['toast', toast.position]"
-      :style="{ zIndex: 9999 }"
+      class="ecwp-toast"
     >
-      <div :class="['alert', toast.type, 'text-white']">
+      <div :class="['ecwp-toast-content', toast.type === 'error' ? 'ecwp-toast-error' : 'ecwp-toast-success']">
+        <i :class="getToastIcon()"></i>
         <span>{{ toast.message }}</span>
       </div>
     </div>
-    <dialog :id="modalId" class="modal" :open="showModal">
-      <div class="modal-box">
-        <h3 class="font-bold text-lg">{{ translations.send_quote }}</h3>
-        <button
-          class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-          @click="closeModal()"
-        >
-          ✕
+
+    <!-- Page Header -->
+    <header class="ecwp-header mb-8">
+      <div>
+        <h1 class="ecwp-header-title">{{ translations.send_quote }}</h1>
+        <p class="ecwp-header-subtitle">Envoyer le devis par email</p>
+      </div>
+      <div class="header-actions">
+        <button class="ecwp-btn ecwp-btn-ghost" @click="goBack">
+          <i class="fas fa-arrow-left mr-2"></i>
+          {{ translations.back || 'Retour' }}
         </button>
-        <div v-if="loading">
-          <!-- Skeleton -->
-          <div class="grid grid-cols-1 gap-4">
-            <div v-for="n in skeletonItems" :key="n" class="py-2">
-              <div class="skeleton h-4 w-full mb-2"></div>
-              <div class="skeleton h-4 w-full"></div>
-            </div>
+      </div>
+    </header>
+
+    <!-- Loading Skeleton -->
+    <div v-if="loading" class="ecwp-card mt-8">
+      <div class="ecwp-card-body">
+        <div class="grid grid-cols-1 gap-4">
+          <div v-for="n in 3" :key="n" class="py-2">
+            <div class="skeleton h-4 w-32 mb-2"></div>
+            <div class="skeleton h-12 w-full"></div>
           </div>
         </div>
-        <form v-else @submit.prevent="submitForm" class="form">
-          <div class="grid grid-cols-1 gap-4">
-            <div
-              v-for="(field, key) in fields"
-              :key="key"
-              class="ecwp-group form-group"
-            >
-              <div
-                v-if="field.type !== 'textarea'"
-                :type="field.type || 'text'"
-              >
-                <label :for="key" class="ecwp-label form-label">{{
-                  field.label
-                }}</label>
-                <input
-                  :id="key"
-                  :class="[
-                    'ecwp-input input input-bordered',
-                    field.class || 'w-full',
-                  ]"
-                  :value="field.value"
-                  :disabled="field.disabled"
-                  @input="updateFieldValue(key, $event.target.value)"
-                />
-              </div>
-              <div v-else>
-                <label :for="key" class="form-label">{{ field.label }}</label>
+      </div>
+    </div>
+
+    <!-- Form -->
+    <div v-else class="ecwp-card mt-8">
+      <div class="ecwp-card-body">
+        <form @submit.prevent="submitForm" class="form">
+          <div class="grid grid-cols-1 gap-6">
+            <!-- Client Email -->
+            <div class="mb-4">
+              <label class="ecwp-label">
+                <span class="ecwp-label-text">{{ translations.client }}</span>
+              </label>
+              <input
+                v-model="fields.client_email.value"
+                type="email"
+                class="ecwp-input w-full"
+                disabled
+              />
+            </div>
+
+            <!-- Subject -->
+            <div class="mb-4">
+              <label class="ecwp-label">
+                <span class="ecwp-label-text">{{ translations.email_subject }}</span>
+              </label>
+              <input
+                v-model="fields.email_subject.value"
+                type="text"
+                class="ecwp-input w-full"
+                required
+              />
+            </div>
+
+            <!-- Message -->
+            <div class="mb-4">
+              <label class="ecwp-label">
+                <span class="ecwp-label-text">{{ translations.email_content }}</span>
+              </label>
+              <div class="ecwp-editor-container">
                 <vue-editor
-                  v-model="field.value"
+                  v-model="fields.email_message.value"
                   :editorToolbar="toolbarOptions"
                 ></vue-editor>
               </div>
             </div>
           </div>
-          <div class="form-group mt-4 flex justify-end">
+
+          <!-- Actions -->
+          <div class="flex justify-end gap-2 mt-8">
             <button
-              type="submit"
-              class="btn btn-primary rounded-full"
+              type="button"
+              class="ecwp-btn ecwp-btn-ghost"
+              @click="goBack"
               :disabled="loadingBtn"
             >
+              <i class="fas fa-times mr-2"></i>
+              {{ translations.cancel }}
+            </button>
+            <button
+              type="submit"
+              class="ecwp-btn ecwp-btn-primary"
+              :disabled="loadingBtn"
+            >
+              <i v-if="!loadingBtn" class="fas fa-paper-plane mr-2"></i>
+              <span v-else class="animate-spin mr-2"><i class="fas fa-spinner"></i></span>
               {{ translations.send }}
-              <span
-                v-if="loadingBtn"
-                class="loading loading-spinner loading-sm"
-              ></span>
             </button>
           </div>
         </form>
       </div>
-    </dialog>
+    </div>
   </div>
 </template>
   
-  <script>
+<script>
 import { VueEditor } from "vue3-editor";
+
 export default {
-  name: "sendQuote",
+  name: "QuoteSend",
   components: {
     VueEditor,
   },
-  props: {
-    showModal: Boolean,
-    modalId: String,
-    client: Object,
-    quoteId: Number,
-    loading: Boolean,
-    subject: String,
-    content: String,
-  },
   data() {
-    const translations = window.myEasyComptaAdmin.easyComptaTranslations;
     return {
-      loading: false,
+      loading: true,
       loadingBtn: false,
-
+      quoteId: null,
+      client: null,
       toast: {
         visible: false,
         message: "",
-        type: "alert-success",
-        position: "toast-bottom toast-end",
+        type: "success",
       },
       toolbarOptions: [
         ["bold", "italic", "underline", "strike"],
@@ -115,56 +135,72 @@ export default {
         [{ header: [1, 2, 3, 4, 5, 6, false] }],
         [{ color: [] }, { background: [] }],
         [{ align: [] }],
-        [{ align: "right" }, { align: "center" }, { align: "justify" }],
         ["clean"],
       ],
       fields: {
         client_email: {
-          label: translations.client,
+          label: "",
           value: "",
           disabled: true,
         },
-        email_subject: { label: translations.email_subject, value: "" },
+        email_subject: { 
+          label: "", 
+          value: "" 
+        },
         email_message: {
-          label: translations.email_content,
+          label: "",
           value: "",
           type: "textarea",
         },
       },
     };
   },
-  watch: {
-    client: {
-      immediate: true,
-      handler(newClient) {
-        this.fields.client_email.value = newClient?.email || "";
-      },
-    },
-    subject: {
-      immediate: true,
-      handler(newSubject) {
-        this.fields.email_subject.value = newSubject || "";
-      },
-    },
-    content: {
-      immediate: true,
-      handler(newContent) {
-        this.fields.email_message.value = newContent || "";
-      },
-    },
-  },
   computed: {
-    skeletonItems() {
-      return Array.from({ length: 10 }, (_, index) => index);
-    },
     translations() {
       return window.myEasyComptaAdmin.easyComptaTranslations;
     },
   },
+  mounted() {
+    this.quoteId = this.$route.params.id;
+    this.fetchQuoteDetails();
+  },
   methods: {
-    closeModal() {
-      const modal = document.getElementById(this.modalId);
-      modal.close();
+    async fetchQuoteDetails() {
+      this.loading = true;
+      try {
+        const response = await fetch(
+          `/wp-json/my-easy-compta/v1/quotes/${this.quoteId}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              "X-WP-Nonce": myEasyComptaAdmin.nonce,
+            },
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          this.client = data.client;
+          this.fields.client_email.value = data.client.email || "";
+          
+          // Définir un sujet par défaut
+          this.fields.email_subject.value = `Devis ${data.quote.quote_number}`;
+          
+          // Définir un message par défaut
+          this.fields.email_message.value = `
+            <p>Bonjour ${data.client.company_name},</p>
+            <p>Veuillez trouver ci-joint le devis n° ${data.quote.quote_number}.</p>
+            <p>Cordialement,</p>
+          `;
+        } else {
+          this.showToast("Erreur lors du chargement du devis", "error");
+        }
+      } catch (error) {
+        this.showToast("Erreur lors du chargement du devis", "error");
+      } finally {
+        this.loading = false;
+      }
     },
     async submitForm() {
       this.loadingBtn = true;
@@ -180,7 +216,7 @@ export default {
             body: JSON.stringify({
               type: "quote",
               id: this.quoteId,
-              client_email: this.client.email,
+              client_email: this.fields.client_email.value,
               email_subject: this.fields.email_subject.value,
               email_message: this.fields.email_message.value,
             }),
@@ -189,27 +225,23 @@ export default {
 
         if (response.ok) {
           const data = await response.json();
-          this.loadingBtn = false;
-          this.closeModal();
-          this.showToast(data.message, "alert-success");
+          this.showToast(data.message, "success");
+          setTimeout(() => {
+            this.goBack();
+          }, 2000);
         } else {
-          const errorMessage = `Error sending email: ${response.statusText}`;
-          this.showToast(errorMessage, "alert-error");
-          console.error(errorMessage);
-          this.loadingBtn = false;
+          const errorMessage = `Erreur lors de l'envoi : ${response.statusText}`;
+          this.showToast(errorMessage, "error");
         }
       } catch (error) {
-        const errorMessage =
-          error.response && error.response.data && error.response.data.message
-            ? error.response.data.message
-            : "Error sending email";
-        this.showToast(errorMessage, "alert-error");
-        console.error("Error sending email:", error);
+        const errorMessage = "Erreur lors de l'envoi de l'email";
+        this.showToast(errorMessage, "error");
+      } finally {
         this.loadingBtn = false;
       }
     },
-    updateFieldValue(key, value) {
-      this.fields[key].value = value;
+    goBack() {
+      this.$router.push({ name: "Quotes" });
     },
     showToast(message, type) {
       this.toast.message = message;
@@ -219,7 +251,15 @@ export default {
         this.toast.visible = false;
       }, 3000);
     },
+    getToastIcon() {
+      const icons = {
+        success: "fas fa-check-circle",
+        error: "fas fa-exclamation-circle",
+        warning: "fas fa-exclamation-triangle",
+        info: "fas fa-info-circle",
+      };
+      return icons[this.toast.type] || icons.info;
+    },
   },
 };
 </script>
-  

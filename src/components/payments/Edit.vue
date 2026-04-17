@@ -1,63 +1,64 @@
 <template>
   <div>
+    <!-- Toast Notification -->
     <div
       v-if="toast.visible"
-      :class="['toast', toast.position]"
-      :style="{ zIndex: 9999 }"
+      :class="['ecwp-toast', toast.type === 'alert-error' ? 'ecwp-toast-error' : 'ecwp-toast-success']"
     >
-      <div :class="['alert', toast.type, 'text-white']">
-        <span>{{ toast.message }}</span>
+      <div class="ecwp-toast-icon">
+        <i :class="toast.type === 'alert-error' ? 'fas fa-exclamation-circle' : 'fas fa-check-circle'"></i>
       </div>
+      <div class="ecwp-toast-content">{{ toast.message }}</div>
     </div>
-    <dialog :id="modalId" class="modal" :open="showModal">
-      <div class="modal-box">
-        <h3 class="font-bold text-lg">{{ modalTitle }}</h3>
-        <button
-          class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-          @click="closeModal"
-        >
-          ✕
-        </button>
-        <div v-if="loading">
+
+    <dialog :id="modalId" class="ecwp-modal-overlay" :open="showModal">
+      <div class="ecwp-modal-box max-w-2xl">
+        <div class="ecwp-modal-header">
+          <h3 class="ecwp-modal-title">{{ modalTitle }}</h3>
+          <button
+            class="ecwp-modal-close"
+            @click="closeModal"
+          >
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+
+        <div v-if="loading" class="p-6">
           <!-- Skeleton -->
-          <div class="grid grid-cols-2 gap-4">
-            <div v-for="n in skeletonItems" :key="n" class="py-2">
-              <div class="skeleton h-4 w-full mb-2"></div>
-              <div class="skeleton h-4 w-full"></div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div v-for="n in 4" :key="n" class="space-y-2">
+              <div class="ecwp-skeleton h-4 w-24"></div>
+              <div class="ecwp-skeleton h-10 w-full"></div>
             </div>
           </div>
         </div>
-        <form v-else @submit.prevent="submitForm" class="form">
-          <div class="grid grid-cols-2 gap-4">
+
+        <form v-else @submit.prevent="submitForm" class="p-6 space-y-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div
               v-for="(field, key) in fields"
               :key="key"
-              class="ecwp-group form-group"
             >
-              <label :for="key" class="ecwp-label form-label">{{
-                field.label
-              }}</label>
+              <label :for="key" class="ecwp-label">
+                {{ field.label }}
+                <span v-if="!field.disabled && key !== 'note'" class="text-red-500">*</span>
+              </label>
+              
               <input
                 v-if="key !== 'payment_method' && key !== 'payment_date'"
                 :type="field.type || 'text'"
                 :id="key"
                 v-model="editedPayment[key]"
-                :class="[
-                  'ecwp-input input',
-                  'input-bordered',
-                  field.class || 'w-full',
-                ]"
+                class="ecwp-input"
+                :class="{'opacity-60 cursor-not-allowed': field.disabled}"
                 :disabled="field.disabled"
               />
+              
               <select
                 v-else-if="key == 'payment_method'"
                 :id="key"
                 v-model="editedPayment.payment_method_id"
-                :class="[
-                  'ecwp-input input',
-                  'input-bordered',
-                  field.class || 'w-full',
-                ]"
+                class="ecwp-select"
               >
                 <option
                   v-for="method in paymentMethods"
@@ -67,9 +68,11 @@
                   {{ method.method_name }}
                 </option>
               </select>
+              
               <VueDatePicker
                 v-else-if="key == 'payment_date'"
-                class="ecwp-input ecwp-date input input-bordered w-full"
+                class="w-full"
+                input-class-name="ecwp-input"
                 id="invoiceDate"
                 v-model="editedPayment.payment_date"
                 :enable-time-picker="false"
@@ -81,28 +84,32 @@
               />
             </div>
           </div>
-          <div class="ecwp-group form-group mt-4">
-            <label for="note" class="ecwp-label form-label">{{
-              translations.note
-            }}</label>
+
+          <div>
+            <label for="note" class="ecwp-label">{{ translations.note }}</label>
             <textarea
               id="note"
               v-model="editedPayment.notes"
-              class="ecwp-input textarea textarea-bordered w-full"
-              rows="4"
+              class="ecwp-input h-24 w-full"
+              :placeholder="translations.add_note_placeholder || 'Ajouter une note...'"
             ></textarea>
           </div>
-          <div class="form-group mt-4 flex justify-end">
+
+          <div class="ecwp-modal-footer">
+            <button
+              type="button"
+              class="ecwp-btn ecwp-btn-secondary"
+              @click="closeModal"
+            >
+              {{ translations.cancel }}
+            </button>
             <button
               type="submit"
-              class="btn btn-primary rounded-full"
+              class="ecwp-btn ecwp-btn-primary"
               :disabled="loadingBtn"
             >
+              <span v-if="loadingBtn" class="animate-spin mr-2">...</span>
               {{ translations.save }}
-              <span
-                v-if="loadingBtn"
-                class="loading loading-spinner loading-sm"
-              ></span>
             </button>
           </div>
         </form>
@@ -113,6 +120,8 @@
   
   <script>
 import VueDatePicker from "@vuepic/vue-datepicker";
+import '@vuepic/vue-datepicker/dist/main.css';
+
 export default {
   components: {
     VueDatePicker,
@@ -226,7 +235,6 @@ export default {
           this.loadingBtn = false;
           const errorMessage = `Error editing payment: ${response.statusText}`;
           this.showToast(errorMessage, "alert-error");
-          console.error(errorMessage);
         }
       } catch (error) {
         const errorMessage =
@@ -234,7 +242,6 @@ export default {
             ? error.response.data.message
             : "Error editing payment";
         this.showToast(errorMessage, "alert-error");
-        console.error("Error editing payment:", error);
         this.loadingBtn = false;
       }
     },
@@ -257,4 +264,3 @@ export default {
   },
 };
 </script>
-  

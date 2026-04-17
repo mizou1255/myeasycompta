@@ -1,374 +1,164 @@
 <template>
   <div>
-    <div
-      v-if="toast.visible"
-      :class="['toast', toast.position]"
-      :style="{ zIndex: 9999 }"
-    >
-      <div :class="['alert', toast.type, 'text-white']">
-        <span>{{ toast.message }}</span>
+    <!-- Toast Notification -->
+    <div v-if="toast.visible" class="fixed bottom-8 right-8 z-[9999] animate-in fade-in slide-in-from-bottom-8 duration-300">
+      <div :class="['flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl border backdrop-blur-md', toast.type === 'alert-success' ? 'bg-emerald-500/90 text-white border-emerald-400/50' : 'bg-rose-500/90 text-white border-rose-400/50']">
+        <component :is="toast.type === 'alert-success' ? 'CheckCircle2' : 'AlertCircle'" class="w-6 h-6" />
+        <span class="font-bold text-sm">{{ toast.message }}</span>
+        <button @click="toast.visible = false" class="ml-2 hover:bg-white/20 p-1 rounded-full transition-colors"><X class="w-4 h-4" /></button>
       </div>
     </div>
-    <dialog id="modal_clients" class="modal">
-      <div class="modal-box">
-        <h3 class="font-bold text-lg">{{ translations.new_client }}</h3>
-        <form @submit.prevent="submitForm">
-          <button
-            class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-            @click="closeModal()"
-          >
-            ✕
-          </button>
-          <div v-if="options.addon_siret_active" class="grid grid-cols-1 gap-4">
-            <div class="ecwp-group form-group relative join">
-              <label for="siret" class="ecwp-label form-label">{{
-                translations.siret
-              }}</label>
-              <input
-                type="number"
-                id="siret"
-                v-model="formData.siret"
-                class="ecwp-input input input-bordered w-full"
-              />
-              <button
-                @click="fetchCompanyInfo"
-                class="btn join-item rounded-r-full mt-5"
-                :disabled="loadingSiret"
-              >
-                <span
-                  v-if="loadingSiret"
-                  class="loading loading-spinner loading-sm"
-                ></span>
-                <span v-else>
-                  {{ translations.search }}
-                </span>
-              </button>
-            </div>
-          </div>
-          <div class="grid grid-cols-1 gap-4">
-            <div class="ecwp-group form-group relative">
-              <label for="siren" class="ecwp-label form-label">{{
-                translations.siren
-              }}</label>
-              <input
-                type="number"
-                id="siren"
-                v-model="formData.siren_number"
-                class="ecwp-input input input-bordered w-full"
-              />
-            </div>
-          </div>
-          <div class="grid grid-cols-1 gap-4">
-            <div class="ecwp-group form-group relative">
-              <label for="tax_number" class="ecwp-label form-label">{{
-                translations.tax_number
-              }}</label>
-              <input
-                type="text"
-                id="tax_number"
-                v-model="formData.tax_number"
-                class="ecwp-input input input-bordered w-full"
-              />
-            </div>
-          </div>
-          <div class="grid grid-cols-2 gap-4">
-            <div
-              v-for="(field, key) in fields"
-              :key="key"
-              class="ecwp-group form-group relative"
-            >
-              <label :for="key" class="ecwp-label form-label">{{
-                field.label
-              }}</label>
-              <template v-if="key === 'currency_id'">
-                <select
-                  :id="key"
-                  v-model="formData[key]"
-                  class="ecwp-input input input-bordered w-full peer"
-                  :required="field.required"
-                >
-                  <option :value="options.default_currency">
-                    {{ translations.default_currency }}
-                  </option>
-                  <option
-                    v-for="option in getOptions(key)"
-                    :key="option.id"
-                    :value="option.id"
-                  >
-                    {{ option.name }} - {{ option.code }} ({{ option.symbol }})
-                  </option>
-                </select>
-              </template>
-              <template v-else>
-                <input
-                  :type="field.type"
-                  :id="key"
-                  v-model="formData[key]"
-                  class="ecwp-input input input-bordered w-full peer"
-                  placeholder=" "
-                  :required="field.required"
-                />
-              </template>
-            </div>
-          </div>
-          <div class="ecwp-group form-group mt-4 relative">
-            <label :for="key" class="ecwp-label form-label">{{
-              translations.note
-            }}</label>
-            <textarea
-              id="note"
-              v-model="formData.note"
-              class="ecwp-input textarea textarea-bordered w-full peer"
-              rows="4"
-              placeholder=" "
-            ></textarea>
-          </div>
-          <div
-            v-if="options.addon_user_active"
-            class="ecwp-group form-group mt-6 w-52 flex justify-between"
-          >
-            <label>{{ translations.create_user }}</label>
-            <input
-              class="ecwp-switch"
-              type="checkbox"
-              v-model="formData.user_create"
-            />
-          </div>
-          <div class="form-group mt-4 flex justify-end">
-            <button
-              type="submit"
-              class="btn btn-primary rounded-full"
-              :disabled="loadingBtn"
-            >
-              {{ translations.add }}
-              <span
-                v-if="loadingBtn"
-                class="loading loading-spinner loading-sm"
-              ></span>
+
+    <!-- Modal -->
+    <dialog :open="showModal" :class="['fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 w-full h-full border-none m-0 max-w-none max-h-none', showModal ? 'block' : 'hidden']">
+      <div class="bg-white dark:bg-slate-900 rounded-[2.5rem] p-8 w-full max-w-2xl shadow-2xl border border-slate-100 dark:border-slate-800 text-left relative max-h-[90vh] overflow-y-auto">
+        
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-8 sticky top-0 bg-white dark:bg-slate-900 z-10 pb-4 border-b border-slate-100 dark:border-slate-800">
+            <h3 class="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+                <UserPlus class="w-6 h-6 text-purple-600" />
+                {{ translations.add_client }}
+            </h3>
+            <button @click="closeModal" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors p-2 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl">
+                <X class="w-6 h-6" />
             </button>
-          </div>
+        </div>
+
+        <form @submit.prevent="submitForm" class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                 <div v-for="(field, key) in fields" :key="key" class="space-y-2">
+                    <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">
+                        {{ field.label }}
+                    </label>
+                    <input :type="field.type || 'text'" v-model="newClient[key]" :placeholder="field.label" class="kloxy-input" />
+                 </div>
+
+                 <!-- Currency -->
+                 <div class="space-y-2">
+                    <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">
+                        {{ translations.currency }}
+                    </label>
+                    <div class="relative">
+                        <select v-model="newClient.currency_id" class="kloxy-select-native">
+                            <option v-for="opt in currencyOptions" :key="opt.id" :value="opt.id">
+                                {{ opt.name }} - {{ opt.code }} ({{ opt.symbol }})
+                            </option>
+                        </select>
+                         <ChevronDown class="w-4 h-4 text-slate-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    </div>
+                 </div>
+            </div>
+
+             <div class="space-y-2">
+                <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">{{ translations.note }}</label>
+                <textarea v-model="newClient.note" class="kloxy-input min-h-[100px]" :placeholder="translations.note"></textarea>
+            </div>
+
+            <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800 sticky bottom-0 bg-white dark:bg-slate-900 z-10 py-4">
+               <button type="button" @click="closeModal" class="px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                   {{ translations.cancel || 'Annuler' }}
+               </button>
+               <button type="submit" :disabled="loadingBtn" class="bg-purple-600 text-white px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg shadow-purple-500/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+                   <span v-if="loadingBtn" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                   <Check v-else class="w-4 h-4" />
+                   {{ translations.save }}
+               </button>
+            </div>
         </form>
       </div>
     </dialog>
   </div>
 </template>
 
-<script>
-import axios from "axios";
+<script setup>
+import { ref, reactive, computed, onMounted } from 'vue';
+import { X, CheckCircle2, AlertCircle, ChevronDown, UserPlus, Check } from 'lucide-vue-next';
 
-export default {
-  data() {
-    const translations = window.myEasyComptaAdmin.easyComptaTranslations;
-    return {
-      formData: {
-        siret: "",
-        company_name: "",
-        siren_number: "",
-        manager_name: "",
-        address: "",
-        city: "",
-        postal_code: "",
-        country: "",
-        phone: "",
-        mobile_phone: "",
-        email: "",
-        website: "",
-        currency_id: "",
-        note: "",
-        user_create: "",
-      },
-      fields: {
-        company_name: {
-          label: translations.company_name,
-          type: "text",
-          required: true,
-        },
-        manager_name: {
-          label: translations.manager_name,
-          type: "text",
-        },
-        address: {
-          label: translations.address,
-          type: "text",
-          required: true,
-        },
-        city: { label: translations.city, type: "text", required: true },
-        postal_code: {
-          label: translations.postal_code,
-          type: "text",
-        },
-        country: {
-          label: translations.country,
-          type: "text",
-        },
-        phone: { label: translations.phone, type: "tel", required: true },
-        mobile_phone: {
-          label: translations.mobile,
-          type: "tel",
-        },
-        email: {
-          label: translations.email,
-          type: "email",
-          required: true,
-        },
-        website: {
-          label: translations.website,
-          type: "url",
-        },
-        currency_id: {
-          label: translations.currency,
-          type: "text",
-          required: true,
-        },
-      },
-      options: {
-        currency_options: [],
-        default_currency: "",
-        addon_user_active: false,
-        addon_siret_active: false,
-      },
-      toast: {
-        visible: false,
-        message: "",
-        type: "alert-success",
-        position: "toast-bottom toast-end",
-      },
-      loadingBtn: false,
-      loadingSiret: false,
-    };
-  },
-  computed: {
-    translations() {
-      return window.myEasyComptaAdmin.easyComptaTranslations;
-    },
-  },
-  methods: {
-    submitForm() {
-      this.loadingBtn = true;
-      axios
-        .post("/wp-json/my-easy-compta/v1/clients/add", this.formData, {
-          headers: {
-            "X-WP-Nonce": myEasyComptaAdmin.nonce,
-          },
-        })
-        .then((response) => {
-          if (response.data.success) {
-            this.showToast(response.data.message, "alert-success");
-            this.loadingBtn = false;
-            this.resetForm();
-            this.closeModal();
-            this.$emit("clientAdded");
-          } else {
-            this.showToast(response.data.message, "alert-error");
-            this.loadingBtn = false;
-          }
-        })
-        .catch((error) => {
-          const errorMessage =
-            error.response && error.response.data && error.response.data.message
-              ? error.response.data.message
-              : "Erreur serveur";
-          console.error(error);
-          this.showToast(errorMessage, "alert-error");
-          this.loadingBtn = false;
-        });
-    },
-    closeModal() {
-      const modal = document.getElementById("modal_clients");
-      modal.close();
-    },
-    showToast(message, type) {
-      this.toast.message = message;
-      this.toast.type = type;
-      this.toast.visible = true;
-      setTimeout(() => {
-        this.toast.visible = false;
-      }, 3000);
-    },
-    resetForm() {
-      for (let key in this.formData) {
-        this.formData[key] = "";
-      }
-    },
-    getOptions(key) {
-      if (key === "currency_id") {
-        return this.options.currency_options;
-      }
-      return [];
-    },
-    fetchOptions() {
-      axios
-        .get("/wp-json/my-easy-compta/v1/options", {
-          headers: {
-            "X-WP-Nonce": myEasyComptaAdmin.nonce,
-          },
-        })
-        .then((response) => {
-          this.options.currency_options = response.data.currency_options;
-          this.options.default_currency = response.data.default_currency;
-          this.options.addon_user_active = response.data.addon_user_active;
-          this.options.addon_siret_active = response.data.addon_siret_active;
-        })
-        .catch((error) => {
-          console.error("Erreur lors de la récupération des options", error);
-        });
-    },
+const props = defineProps({
+    showModal: Boolean
+});
+const emit = defineEmits(['close', 'clientAdded']);
 
-    fetchCompanyInfo(event) {
-      event.preventDefault();
-      this.loadingSiret = true;
-      const siret = this.formData.siret;
+const newClient = reactive({});
+const currencyOptions = ref([]);
+const loadingBtn = ref(false);
+const toast = reactive({ visible: false, message: "", type: "alert-success" });
 
-      if (siret) {
-        fetch(`/wp-json/my-easy-compta/v1/fetch-company-info/${siret}`, {
-          headers: {
-            "X-WP-Nonce": myEasyComptaAdmin.nonce,
-          },
-        })
-          .then((response) => {
-            if (!response.ok) {
-              throw new Error("Network response was not ok");
-            }
-            return response.json();
-          })
-          .then((data) => {
-            if (data) {
-              this.formData.company_name = data.company_name;
-              this.formData.manager_name = data.manager_name;
-              this.formData.address = data.address;
-              this.formData.postal_code = data.postal_code;
-              this.formData.city = data.city;
-              this.formData.siren_number = data.siren;
+const translations = computed(() => window.myEasyComptaAdmin?.easyComptaTranslations || {});
 
-              this.showToast(
-                "Informations chargées avec succès",
-                "alert-success"
-              );
-              this.loadingSiret = false;
-            } else {
-              this.showToast(
-                "Aucune information trouvée pour ce SIRET",
-                "alert-error"
-              );
-              this.loadingSiret = false;
-            }
-          })
-          .catch((error) => {
-            console.error("Error fetching company info:", error);
-            this.showToast(
-              "Erreur lors du chargement des informations",
-              "alert-error"
-            );
-            this.loadingSiret = false;
-          });
-      } else {
-        this.showToast("Veuillez saisir un numéro SIRET", "alert-error");
-        this.loadingSiret = false;
-      }
-    },
-  },
-  mounted() {
-    this.fetchOptions();
-  },
+const fields = computed(() => ({
+    siren_number: { label: translations.value.siren },
+    tax_number: { label: translations.value.tax_number },
+    company_name: { label: translations.value.company_name },
+    manager_name: { label: translations.value.manager_name },
+    email: { label: translations.value.email },
+    phone: { label: translations.value.phone, type: "tel" },
+    mobile_phone: { label: translations.value.mobile, type: "tel" },
+    website: { label: translations.value.website, type: "url" },
+    address: { label: translations.value.address },
+    city: { label: translations.value.city },
+    postal_code: { label: translations.value.postal_code },
+    country: { label: translations.value.country },
+}));
+
+const showToast = (message, type) => {
+    toast.message = message;
+    toast.type = type;
+    toast.visible = true;
+    setTimeout(() => toast.visible = false, 3000);
 };
+
+const closeModal = () => {
+    emit('close');
+    // newClient should be reset? Kinda better UI if it persists briefly or reset on open?
+    // Let's reset.
+    Object.keys(newClient).forEach(k => delete newClient[k]);
+};
+
+const fetchOptions = async () => {
+    try {
+        const res = await fetch(`/wp-json/my-easy-compta/v1/options`, {
+            headers: { "X-WP-Nonce": window.myEasyComptaAdmin.nonce }
+        });
+        if(res.ok) {
+            const data = await res.json();
+            currencyOptions.value = data.currency_options;
+        }
+    } catch (e) {}
+};
+
+const submitForm = async () => {
+    loadingBtn.value = true;
+    try {
+        const res = await fetch("/wp-json/my-easy-compta/v1/clients/add", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-WP-Nonce": window.myEasyComptaAdmin.nonce,
+            },
+            body: JSON.stringify(newClient),
+        });
+        const data = await res.json();
+        if (res.ok) {
+             showToast(data.message, "alert-success");
+             emit('clientAdded', data.client);
+             closeModal();
+        } else {
+             showToast(data.message || "Error", "alert-error");
+        }
+    } catch (e) {
+        showToast("Server Error", "alert-error");
+    } finally { loadingBtn.value = false; }
+};
+
+onMounted(fetchOptions);
 </script>
+
+<style scoped>
+.kloxy-input {
+    @apply w-full bg-slate-50 dark:bg-slate-950 border-none rounded-2xl px-6 py-4 font-bold text-sm focus:ring-4 focus:ring-purple-500/10 transition-all outline-none dark:text-white placeholder:text-slate-400;
+}
+.kloxy-select-native {
+    @apply w-full bg-slate-50 dark:bg-slate-950 border-none rounded-2xl px-6 py-4 font-bold text-sm focus:ring-4 focus:ring-purple-500/10 transition-all outline-none dark:text-white appearance-none cursor-pointer;
+}
+</style>

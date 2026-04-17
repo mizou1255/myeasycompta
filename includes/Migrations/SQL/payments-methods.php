@@ -10,6 +10,7 @@ $charset_collate = $wpdb->get_charset_collate();
 $sql = "CREATE TABLE IF NOT EXISTS " . ECWP_TABLE_PAYMENTS_METHODS . " (
     id int(11) NOT NULL AUTO_INCREMENT,
     method_name varchar(255) NOT NULL,
+    facturx_code varchar(10) DEFAULT '30',
     PRIMARY KEY (id)
 ) $charset_collate;";
 

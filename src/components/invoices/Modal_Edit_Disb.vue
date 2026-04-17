@@ -1,81 +1,95 @@
 <template>
   <div>
+    <!-- Toast Notification -->
     <div
       v-if="toast.visible"
-      :class="['toast', toast.position]"
-      :style="{ zIndex: 9999 }"
+      :class="['ecwp-toast', toast.type === 'alert-success' ? 'ecwp-toast-success' : 'ecwp-toast-error']"
     >
-      <div :class="['alert', toast.type, 'text-white']">
-        <span>{{ toast.message }}</span>
+      <div class="ecwp-toast-icon">
+        <i :class="toast.type === 'alert-success' ? 'fas fa-check-circle' : 'fas fa-exclamation-circle'"></i>
+      </div>
+      <div class="ecwp-toast-content">{{ toast.message }}</div>
+    </div>
+
+    <!-- Modal -->
+    <div v-if="showModal" class="ecwp-modal-overlay">
+      <div class="ecwp-modal-box max-w-2xl">
+        <div class="ecwp-modal-header">
+          <h3 class="ecwp-modal-title">{{ modalTitle }}</h3>
+          <button
+            class="ecwp-btn ecwp-btn-sm ecwp-btn-ghost ecwp-btn-circle"
+            @click="closeModal()"
+          >
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+
+        <div class="ecwp-modal-body">
+          <div v-if="loading" class="w-full">
+            <!-- Skeleton -->
+            <div class="grid grid-cols-1 gap-4">
+              <div v-for="n in 5" :key="n" class="py-2">
+                <div class="skeleton h-4 w-full mb-2 bg-gray-200 dark:bg-dark-hover rounded"></div>
+                <div class="skeleton h-8 w-full bg-gray-200 dark:bg-dark-hover rounded"></div>
+              </div>
+            </div>
+          </div>
+          <form v-else @submit.prevent="submitForm" class="space-y-4">
+            <div class="grid grid-cols-1 gap-4">
+              <div
+                v-for="(field, key) in fields"
+                :key="key"
+                class="form-control w-full"
+              >
+                <template v-if="field.type !== 'textarea'">
+                  <label :for="key" class="ecwp-label">
+                    {{ field.label }}
+                  </label>
+                  <input
+                    :id="key"
+                    :type="field.type || 'text'"
+                    v-model="editedDisb[key]"
+                    class="ecwp-input"
+                    :step="field.type === 'number' ? 'any' : undefined"
+                  />
+                </template>
+                <template v-else>
+                  <label :for="key" class="ecwp-label">
+                    {{ field.label }}
+                  </label>
+                  <div class="ecwp-editor-container">
+                    <vue-editor
+                      :id="key"
+                      v-model="editedDisb[key]"
+                      :editorToolbar="toolbarOptions"
+                    ></vue-editor>
+                  </div>
+                </template>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <div class="ecwp-modal-footer">
+          <button
+            type="button"
+            class="ecwp-btn ecwp-btn-ghost"
+            @click="closeModal()"
+          >
+            {{ translations.cancel || 'Annuler' }}
+          </button>
+          <button
+            type="button"
+            class="ecwp-btn ecwp-btn-primary"
+            :disabled="loadingBtn"
+            @click="submitForm"
+          >
+            <span v-if="loadingBtn" class="animate-spin mr-2"><i class="fas fa-spinner"></i></span>
+            {{ translations.save }}
+          </button>
+        </div>
       </div>
     </div>
-    <dialog :id="modalId" class="modal" :open="showModal">
-      <div class="modal-box">
-        <h3 class="font-bold text-lg">{{ modalTitle }}</h3>
-        <button
-          class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-          @click="closeModal()"
-        >
-          ✕
-        </button>
-        <div v-if="loading">
-          <!-- Skeleton -->
-          <div class="grid grid-cols-1 gap-4">
-            <div v-for="n in skeletonItems" :key="n" class="py-2">
-              <div class="skeleton h-4 w-full mb-2"></div>
-              <div class="skeleton h-4 w-full"></div>
-            </div>
-          </div>
-        </div>
-        <form v-else @submit.prevent="submitForm" class="form">
-          <div class="grid grid-cols-1 gap-4">
-            <div
-              v-for="(field, key) in fields"
-              :key="key"
-              class="ecwp-group form-group"
-            >
-              <div
-                v-if="field.type !== 'textarea'"
-                :type="field.type || 'text'"
-              >
-                <label :for="key" class="ecwp-label form-label">{{
-                  field.label
-                }}</label>
-                <input
-                  :id="key"
-                  v-model="editedDisb[key]"
-                  :class="[
-                    'ecwp-input input input-bordered',
-                    field.class || 'w-full',
-                  ]"
-                />
-              </div>
-              <div v-else>
-                <label :for="key" class="form-label">{{ field.label }}</label>
-                <vue-editor
-                  :id="key"
-                  v-model="editedDisb[key]"
-                  :editorToolbar="toolbarOptions"
-                ></vue-editor>
-              </div>
-            </div>
-          </div>
-          <div class="form-group mt-4 flex justify-end">
-            <button
-              type="submit"
-              class="btn btn-primary rounded-full"
-              :disabled="loadingBtn"
-            >
-              {{ translations.save }}
-              <span
-                v-if="loadingBtn"
-                class="loading loading-spinner loading-sm"
-              ></span>
-            </button>
-          </div>
-        </form>
-      </div>
-    </dialog>
   </div>
 </template>
     
@@ -115,9 +129,6 @@ export default {
     };
   },
   computed: {
-    skeletonItems() {
-      return Array.from({ length: 10 }, (_, index) => index);
-    },
     translations() {
       return window.myEasyComptaAdmin.easyComptaTranslations;
     },
@@ -151,7 +162,6 @@ export default {
         } else {
           const errorMessage = `Error editing item: ${response.statusText}`;
           this.showToast(errorMessage, "alert-error");
-          console.error(errorMessage);
           this.loadingBtn = false;
         }
       } catch (error) {
@@ -160,7 +170,6 @@ export default {
             ? error.response.data.message
             : "Error editing item";
         this.showToast(errorMessage, "alert-error");
-        console.error("Error editing item:", error);
         this.loadingBtn = false;
       }
     },
@@ -171,14 +180,6 @@ export default {
       setTimeout(() => {
         this.toast.visible = false;
       }, 3000);
-    },
-    increase() {
-      this.newItem.quantity++;
-    },
-    decrease() {
-      if (this.newItem.quantity > 1) {
-        this.newItem.quantity--;
-      }
     },
   },
   watch: {
@@ -191,4 +192,3 @@ export default {
   },
 };
 </script>
-    

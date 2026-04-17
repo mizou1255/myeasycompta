@@ -5,41 +5,16 @@ use ECWP\API\Routes;
 use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
+use ECWP\Admin\Encrypt\ECWP_Encrypt;
 
 class ECWP_Payments
 {
     protected $routes;
     public function __construct()
     {
-        add_action('admin_menu', array($this, 'add_submenu_page'));
-        add_action('admin_enqueue_scripts', array($this, 'enqueue_scripts'));
-
+        // Plus de sous-menu WordPress - navigation SPA uniquement
         $this->routes = new Routes();
         $this->register_api_routes();
-    }
-
-    public function add_submenu_page()
-    {
-        add_submenu_page(
-            'my-easy-compta',
-            __('Payments', 'my-easy-compta'),
-            __('Payments', 'my-easy-compta'),
-            'manage_options',
-            'my-easy-compta-payments',
-            array($this, 'render_page'),
-            5
-        );
-    }
-    public function enqueue_scripts($hook_suffix)
-    {
-        if ('myeasycompta_page_my-easy-compta-payments' === $hook_suffix) {
-            wp_enqueue_script('my-easy-compta-payments', ECWP_URL . '/assets/dist/payments.min.js', array(), ECWP_VERSION, true);
-        }
-    }
-
-    public function render_page()
-    {
-        echo '<div id="my-easy-compta-payments-app" class="ecwp-content"></div>';
     }
 
     private function register_api_routes()
@@ -47,7 +22,7 @@ class ECWP_Payments
         $this->routes->add_route('/payments', 'GET', $this, 'get_payments', function () {
             return current_user_can('manage_options');
         });
-        
+
         $this->routes->add_route('/payments/find-page/(?P<id>\d+)', 'GET', $this, 'find_payment_page', function () {
             return current_user_can('manage_options');
         });
@@ -59,6 +34,7 @@ class ECWP_Payments
         $this->routes->add_route('/payments/details/(?P<id>\d+)', 'GET', $this, 'get_payment_details', function () {
             return current_user_can('manage_options');
         });
+
         $this->routes->add_route('/payments/(?P<id>\d+)', 'PUT', $this, 'update_payment', function () {
             return current_user_can('manage_options');
         });
@@ -73,90 +49,128 @@ class ECWP_Payments
     public function get_payments($request)
     {
         global $wpdb;
-        $per_page = isset($request['per_page']) ? intval($request['per_page']) : 10;
-        $page = isset($request['page']) ? intval($request['page']) : 1;
-        $offset = ($page - 1) * $per_page;
 
-        $where_clauses = [];
-        $query_params = [];
+        $per_page = max(1, absint($request['per_page'] ?? 10));
+        $page     = max(1, absint($request['page']     ?? 1));
+        $offset   = ($page - 1) * $per_page;
 
-        $encrypt = new \ECWP\Admin\Encrypt\ECWP_Encrypt();
-
-        // Récupérer toutes les factures sans filtre direct sur les champs chiffrés
-        $payments_table = ECWP_TABLE_PAYMENTS;
-        $clients_table = ECWP_TABLE_CLIENTS;
-        $invoices_table = ECWP_TABLE_INVOICES;
-        $methods_table = ECWP_TABLE_PAYMENTS_METHODS;
-        $currency_table = ECWP_TABLE_CURRENCY;
-
-        // Récupération sans pagination pour filtrage manuel
-        $query = "SELECT p.*, c.company_name, m.method_name, i.invoice_number, o.symbol
-                  FROM {$payments_table} p
-                  LEFT JOIN {$clients_table} c ON p.client_id = c.id
-                  LEFT JOIN {$invoices_table} i ON p.invoice_id = i.id
-                  LEFT JOIN {$methods_table} m ON p.payment_method_id = m.id
-                  LEFT JOIN {$currency_table} o ON c.currency_id = o.id
-                  ORDER BY p.id DESC";
-
-        $payments = $wpdb->get_results($query, OBJECT);
-
+        $encrypt  = new \ECWP\Admin\Encrypt\ECWP_Encrypt();
         $settings = new \ECWP\Admin\Settings\ECWP_Settings();
         $format_date_response = $settings->get_format_date();
-        $format_date = isset($format_date_response->data) ? $format_date_response->data : 'Y-m-d';
+        $format_date = $format_date_response->data ?? 'Y-m-d';
 
-        $filtered_data = [];
-        foreach ($payments as $payment) {
-            $decrypted_invoice_number = $encrypt->decrypt($payment->invoice_number);
-            $match = true;
+        $payments_table = ECWP_TABLE_PAYMENTS;
+        $clients_table  = ECWP_TABLE_CLIENTS;
+        $invoices_table = ECWP_TABLE_INVOICES;
+        $methods_table  = ECWP_TABLE_PAYMENTS_METHODS;
+        $currency_table = ECWP_TABLE_CURRENCY;
 
-            if (!empty($request['invoice_number']) && stripos($decrypted_invoice_number, $request['invoice_number']) === false) {
-                $match = false;
-            }
-            if (!empty($request['client']) && stripos($payment->company_name, $request['client']) === false) {
-                $match = false;
-            }
-            if (!empty($request['payment_method']) && $payment->method_name !== $request['payment_method']) {
-                $match = false;
-            }
-            if (!empty($request['payment_date']) && date('Y-m-d', strtotime($payment->payment_date)) !== $request['payment_date']) {
-                $match = false;
+        $filter_invoice_number = trim($request['invoice_number'] ?? '');
+        $filter_client         = trim($request['client']         ?? '');
+        $filter_method         = trim($request['payment_method'] ?? '');
+        $filter_date           = trim($request['payment_date']   ?? '');
+
+        // Build SQL WHERE for plaintext-filterable columns
+        $where_parts  = ['1=1'];
+        $query_params = [];
+
+        if ($filter_client !== '') {
+            $where_parts[]  = 'c.company_name LIKE %s';
+            $query_params[] = '%' . $wpdb->esc_like($filter_client) . '%';
+        }
+        if ($filter_method !== '') {
+            $where_parts[]  = 'm.method_name = %s';
+            $query_params[] = $filter_method;
+        }
+        if ($filter_date !== '') {
+            $where_parts[]  = 'DATE(p.payment_date) = %s';
+            $query_params[] = $filter_date;
+        }
+
+        $filter_date_from = trim($request['date_from'] ?? '');
+        $filter_date_to   = trim($request['date_to']   ?? '');
+        if ($filter_date_from !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $filter_date_from)) {
+            $where_parts[]  = 'p.payment_date >= %s';
+            $query_params[] = $filter_date_from . ' 00:00:00';
+        }
+        if ($filter_date_to !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $filter_date_to)) {
+            $where_parts[]  = 'p.payment_date <= %s';
+            $query_params[] = $filter_date_to . ' 23:59:59';
+        }
+
+        $where_sql = implode(' AND ', $where_parts);
+
+        $base_from = "FROM {$payments_table} p
+                      LEFT JOIN {$clients_table} c  ON p.client_id = c.id
+                      LEFT JOIN {$invoices_table} i ON p.invoice_id = i.id
+                      LEFT JOIN {$methods_table} m  ON p.payment_method_id = m.id
+                      LEFT JOIN {$currency_table} o ON c.currency_id = o.id
+                      WHERE {$where_sql}";
+
+        if ($filter_invoice_number !== '') {
+            // invoice_number is encrypted — fetch all plaintext-filtered rows, then filter in PHP
+            $sql  = "SELECT p.*, c.company_name, m.method_name, i.invoice_number, o.symbol {$base_from} ORDER BY p.id DESC";
+            $rows = $query_params
+                ? $wpdb->get_results($wpdb->prepare($sql, $query_params), OBJECT)
+                : $wpdb->get_results($sql, OBJECT);
+
+            $filtered = [];
+            foreach ($rows as $row) {
+                $decrypted = $encrypt->decrypt($row->invoice_number);
+                if (stripos($decrypted, $filter_invoice_number) !== false) {
+                    $filtered[] = $this->format_payment_row($row, $decrypted, $format_date);
+                }
             }
 
-            if ($match) {
-                $filtered_data[] = [
-                    'id' => $payment->id,
-                    'company_name' => $payment->company_name,
-                    'client_currency' => $payment->symbol,
-                    'invoice_number' => $decrypted_invoice_number,
-                    'amount' => number_format(floatval($payment->amount), 2, '.', ''),
-                    'payment_method' => $payment->method_name,
-                    'payment_date' => date_i18n($format_date, strtotime($payment->payment_date)),
-                    'notes' => $payment->notes,
-                ];
+            $total_count = count($filtered);
+            $total_pages = (int) ceil($total_count / $per_page);
+            $paged_data  = array_slice($filtered, $offset, $per_page);
+        } else {
+            // All filters are plaintext → fully SQL-paginated (efficient)
+            $count_sql   = "SELECT COUNT(*) {$base_from}";
+            $total_count = (int) ($query_params
+                ? $wpdb->get_var($wpdb->prepare($count_sql, $query_params))
+                : $wpdb->get_var($count_sql));
+
+            $total_pages = (int) ceil($total_count / $per_page);
+
+            $data_sql    = "SELECT p.*, c.company_name, m.method_name, i.invoice_number, o.symbol {$base_from} ORDER BY p.id DESC LIMIT %d OFFSET %d";
+            $data_params = array_merge($query_params, [$per_page, $offset]);
+            $rows        = $wpdb->get_results($wpdb->prepare($data_sql, $data_params), OBJECT);
+
+            $paged_data = [];
+            foreach ($rows as $row) {
+                $paged_data[] = $this->format_payment_row($row, $encrypt->decrypt($row->invoice_number), $format_date);
             }
         }
 
-        $total_count = count($filtered_data);
-        $total_pages = ceil($total_count / $per_page);
-
-        // Pagination des données filtrées
-        $paged_data = array_slice($filtered_data, $offset, $per_page);
-
-        $response = array(
-            'payments' => $paged_data,
+        return rest_ensure_response([
+            'payments'    => $paged_data,
             'total_count' => $total_count,
             'total_pages' => $total_pages,
-            'page' => $page,
-            'per_page' => $per_page,
-            'filters' => [
-                'invoice_number' => $request['invoice_number'] ?? '',
-                'client' => $request['client'] ?? '',
-                'payment_method' => $request['payment_method'] ?? '',
-                'payment_date' => $request['payment_date'] ?? '',
+            'page'        => $page,
+            'per_page'    => $per_page,
+            'filters'     => [
+                'invoice_number' => $filter_invoice_number,
+                'client'         => $filter_client,
+                'payment_method' => $filter_method,
+                'payment_date'   => $filter_date,
             ],
-        );
+        ]);
+    }
 
-        return rest_ensure_response($response);
+    private function format_payment_row(object $row, string $invoice_number, string $format_date): array
+    {
+        return [
+            'id'              => $row->id,
+            'company_name'    => $row->company_name,
+            'client_currency' => $row->symbol,
+            'invoice_number'  => $invoice_number,
+            'amount'          => number_format(floatval($row->amount), 2, '.', ''),
+            'payment_method'  => $row->method_name,
+            'payment_date'    => date_i18n($format_date, strtotime($row->payment_date)),
+            'notes'           => $row->notes,
+        ];
     }
 
     /**
@@ -193,7 +207,7 @@ class ECWP_Payments
     {
         global $wpdb;
         $params = $request->get_params();
-        $payment_id = isset($params['id']) ? intval($params['id']) : 0;
+        $payment_id = isset($params['id']) ? absint($params['id']) : 0;
 
         if ($payment_id <= 0) {
             return new WP_Error('invalid_payment_id', __('Invalid payment ID.', 'my-easy-compta'), array('status' => 400));
@@ -232,6 +246,50 @@ class ECWP_Payments
         return rest_ensure_response($payment_details);
     }
 
+    /**
+     * Recalcule paid_amount et met à jour le statut commercial de la facture.
+     *
+     * @param int $invoice_id
+     */
+    private function sync_invoice_paid_amount(int $invoice_id): void
+    {
+        global $wpdb;
+
+        $encrypt        = new ECWP_Encrypt();
+        $invoices_table = ECWP_TABLE_INVOICES;
+        $payments_table = ECWP_TABLE_PAYMENTS;
+
+        $invoice = $wpdb->get_row($wpdb->prepare(
+            "SELECT total_amount FROM {$invoices_table} WHERE id = %d",
+            $invoice_id
+        ));
+
+        if (!$invoice) {
+            return;
+        }
+
+        $total_amount = floatval($encrypt->decrypt($invoice->total_amount));
+
+        $new_paid = (float) $wpdb->get_var($wpdb->prepare(
+            "SELECT COALESCE(SUM(amount), 0) FROM {$payments_table} WHERE invoice_id = %d",
+            $invoice_id
+        ));
+
+        $new_status = ($new_paid >= $total_amount - 0.005) ? 'paid' : (($new_paid > 0) ? 'partial' : 'unpaid');
+
+        $wpdb->update(
+            $invoices_table,
+            [
+                'paid_amount'  => $new_paid,
+                'status'       => $encrypt->encrypt($new_status),
+                'status_stats' => $new_status,
+            ],
+            ['id' => $invoice_id],
+            ['%f', '%s', '%s'],
+            ['%d']
+        );
+    }
+
     public function update_payment(WP_REST_Request $request)
     {
         $nonce = sanitize_text_field(wp_unslash($request->get_header('X-WP-Nonce')));
@@ -244,35 +302,40 @@ class ECWP_Payments
             return new WP_Error('invalid_payment_id', 'ID payment invalid.', array('status' => 400));
         }
 
-        $amount = $request->get_param('amount');
-        $payment_date = $request->get_param('payment_date');
-        $payment_method_id = $request->get_param('payment_method_id');
-        $notes = $request->get_param('notes');
+        // Récupérer l'invoice_id avant mise à jour pour recalcul paid_amount
+        $payment = $wpdb->get_row($wpdb->prepare(
+            "SELECT invoice_id FROM " . ECWP_TABLE_PAYMENTS . " WHERE id = %d",
+            intval($payment_id)
+        ));
+
+        $amount            = floatval($request->get_param('amount'));
+        $payment_date      = sanitize_text_field($request->get_param('payment_date'));
+        $payment_method_id = absint($request->get_param('payment_method_id'));
+        $notes             = sanitize_textarea_field($request->get_param('notes'));
         $payment_data = array(
-            'amount' => $amount,
-            'payment_date' => $payment_date,
+            'amount'            => $amount,
+            'payment_date'      => $payment_date,
             'payment_method_id' => $payment_method_id,
-            'notes' => $notes,
+            'notes'             => $notes,
         );
 
         $result = $wpdb->update(
             ECWP_TABLE_PAYMENTS,
             $payment_data,
             array('id' => $payment_id),
-            array(
-                '%f',
-                '%s',
-                '%d',
-                '%s',
-            ),
-            array(
-                '%d',
-            )
+            array('%f', '%s', '%d', '%s'),
+            array('%d')
         );
 
         if ($result === false) {
             return new WP_REST_Response(array('success' => false, 'message' => __('Failed to edit payment', 'my-easy-compta')), 500);
         }
+
+        // Recalculer paid_amount sur la facture
+        if ($payment && $payment->invoice_id) {
+            $this->sync_invoice_paid_amount(intval($payment->invoice_id));
+        }
+
         return new WP_REST_Response(array('success' => true, 'message' => __('Payment edited successfully', 'my-easy-compta')), 200);
     }
 
@@ -282,21 +345,28 @@ class ECWP_Payments
         if (!wp_verify_nonce($nonce, 'wp_rest')) {
             return new WP_Error('invalid_nonce', 'Nonce verification failed.', array('status' => 403));
         }
-        $payment_id = $request['id'];
 
         global $wpdb;
+        $payment_id = absint($request['id']);
 
-        $result = $wpdb->delete(
-            ECWP_TABLE_PAYMENTS,
-            array('id' => $payment_id),
-            array('%d')
-        );
+        // Récupérer l'invoice_id avant suppression
+        $payment = $wpdb->get_row($wpdb->prepare(
+            "SELECT invoice_id FROM " . ECWP_TABLE_PAYMENTS . " WHERE id = %d",
+            $payment_id
+        ));
 
-        if ($result) {
-            return new WP_REST_Response(array('success' => true, 'message' => __('Payment deleted successfully', 'my-easy-compta')), 200);
-        } else {
-            return new WP_REST_Response(array('success' => false, 'message' => __('Failed to delete payment', 'my-easy-compta')), 500);
+        $result = $wpdb->delete(ECWP_TABLE_PAYMENTS, ['id' => $payment_id], ['%d']);
+
+        if (!$result) {
+            return new WP_REST_Response(['success' => false, 'message' => __('Failed to delete payment', 'my-easy-compta')], 500);
         }
+
+        // Recalculer paid_amount sur la facture
+        if ($payment && $payment->invoice_id) {
+            $this->sync_invoice_paid_amount(intval($payment->invoice_id));
+        }
+
+        return new WP_REST_Response(['success' => true, 'message' => __('Payment deleted successfully', 'my-easy-compta')], 200);
     }
 
     public function get_payment_methods($request)

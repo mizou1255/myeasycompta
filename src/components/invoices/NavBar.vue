@@ -1,717 +1,404 @@
 <template>
-  <div>
-    <div v-if="emailActive == 1">
-      <send-invoice-modal
+  <div class="bg-white dark:bg-slate-900 rounded-3xl p-3 px-6 shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 mb-8 flex flex-col xl:flex-row items-center justify-between gap-4">
+      
+      <!-- Left Actions -->
+       <div class="flex flex-wrap gap-2 items-center justify-center xl:justify-start w-full xl:w-auto">
+           <!-- Back -->
+           <router-link :to="{ name: 'Invoices' }" class="kloxy-btn-secondary btn-expandable"><ArrowLeft class="w-4 h-4 icon-no-margin" /><span class="btn-label">{{ translations.back || 'Retour' }}</span></router-link>
+
+           <div class="h-8 w-px bg-slate-100 dark:bg-slate-800 mx-2 hidden xl:block"></div>
+
+           <!-- Edit Draft -->
+           <router-link
+              v-if="invoiceInfo.status == 'draft'"
+              :to="{ name: 'InvoiceEdit', params: { id: invoiceInfo.id } }"
+              class="kloxy-btn-primary btn-expandable"
+           ><Pencil class="w-4 h-4 icon-no-margin" /><span class="btn-label">{{ translations.edit_invoice || 'Modifier' }}</span></router-link>
+
+           <!-- Validate -->
+           <button
+              v-if="invoiceInfo.status === 'draft' && !noItems"
+              @click="changeInvoiceStatus('unpaid')"
+              class="kloxy-btn-success btn-expandable"
+           ><Check class="w-4 h-4 icon-no-margin" /><span class="btn-label">{{ translations.validate || 'Valider' }}</span></button>
+            <button v-else-if="invoiceInfo.status === 'draft' && noItems" disabled class="kloxy-btn-disabled btn-expandable" :title="translations.min_article"><Check class="w-4 h-4 icon-no-margin" /><span class="btn-label">{{ translations.validate || 'Valider' }}</span></button>
+
+           <!-- Mark Paid (unpaid ou partial) -->
+           <button
+              v-if="(invoiceInfo.status === 'unpaid' || invoiceInfo.status === 'partial') && !noItems"
+              @click="showConfirmPaidModal = true"
+              class="kloxy-btn-success hover:bg-emerald-600 btn-expandable"
+           ><CheckCheck class="w-4 h-4 icon-no-margin" /><span class="btn-label">{{ translations.mark_as_paid || 'Marquer Payée' }}</span></button>
+
+           <!-- Credit Invoice -->
+           <button
+              v-if="invoiceInfo.status == 'paid' && invoiceInfo.credit != 1"
+              @click="confirmCreditInvoice"
+              class="kloxy-btn-warning btn-expandable"
+           ><Undo class="w-4 h-4 icon-no-margin" /><span class="btn-label">{{ translations.credit_invoice || 'Avoir' }}</span></button>
+
+           <!-- Recurring -->
+           <button
+              v-if="recurringActive == 1"
+              @click="createRecurringInvoice"
+              class="kloxy-btn-primary bg-blue-600 hover:bg-blue-700 shadow-blue-600/20 btn-expandable"
+           ><RefreshCw class="w-4 h-4 icon-no-margin" /><span class="btn-label">{{ translations.create_recurring_invoice || 'Récurrente' }}</span></button>
+           <button v-else disabled class="kloxy-btn-disabled opacity-50 cursor-not-allowed btn-expandable" title="Activez le module Factures Récurrentes pour automatiser vos factures"><RefreshCw class="w-4 h-4 icon-no-margin" /><span class="btn-label">Récurrente</span></button>
+
+           <!-- Fiscal Validation -->
+           <button
+              v-if="invoiceInfo.fiscal_status === 'draft' && invoiceInfo.status !== 'draft'"
+              @click="validateFiscal"
+              class="kloxy-btn-success bg-cyan-600 hover:bg-cyan-700 shadow-cyan-600/20 btn-expandable"
+              :disabled="loadingFiscal"
+           >
+              <ShieldCheck v-if="!loadingFiscal" class="w-4 h-4 icon-no-margin" />
+              <Loader2 v-else class="w-4 h-4 animate-spin icon-no-margin" />
+              <span class="btn-label">{{ translations.validate_fiscally || 'Validate fiscally' }}</span>
+           </button>
+
+           <!-- Transmit PDP -->
+           <template v-if="invoiceInfo.fiscal_status === 'validated'">
+             <button
+               v-if="pdpAddonActive"
+               @click="transmitToPDP"
+               class="kloxy-btn-primary bg-fuchsia-600 hover:bg-fuchsia-700 shadow-fuchsia-600/20 btn-expandable"
+               :disabled="loadingFiscal"
+             >
+               <Upload v-if="!loadingFiscal" class="w-4 h-4 icon-no-margin" />
+               <Loader2 v-else class="w-4 h-4 animate-spin icon-no-margin" />
+               <span class="btn-label">{{ translations.transmit_pdp || 'Transmettre PDP' }}</span>
+             </button>
+             <button
+               v-else
+               disabled
+               class="kloxy-btn-disabled opacity-50 cursor-not-allowed btn-expandable"
+               title="Configurez un PDP dans Réglages › Facturation électronique"
+             >
+               <Upload class="w-4 h-4 icon-no-margin" />
+               <span class="btn-label">{{ translations.transmit_pdp || 'Transmettre PDP' }}</span>
+             </button>
+           </template>
+       </div>
+
+       <!-- Right Actions -->
+       <div class="flex flex-wrap gap-2 items-center justify-center xl:justify-end w-full xl:w-auto">
+           <!-- Send -->
+           <div v-if="emailActive == 1" class="flex gap-2">
+                <button
+                   v-if="invoiceInfo.status != 'draft'"
+                   @click="sendInvoice"
+                   class="kloxy-btn-primary bg-indigo-600 hover:bg-indigo-700 shadow-indigo-600/20 btn-expandable"
+                ><Send class="w-4 h-4 icon-no-margin" /><span class="btn-label">{{ invoiceInfo.sent == 1 ? (translations.resend_invoice || 'Renvoyer') : (translations.send_invoice || 'Envoyer') }}</span></button>
+                <button v-else disabled class="kloxy-btn-disabled btn-expandable"><Send class="w-4 h-4 icon-no-margin" /><span class="btn-label">{{ translations.send_invoice || 'Envoyer' }}</span></button>
+
+                <!-- Relancer -->
+                <button
+                   v-if="(invoiceInfo.status === 'unpaid' || invoiceInfo.status === 'partial') && invoiceInfo.sent == 1"
+                   @click="sendRemind"
+                   class="kloxy-btn-primary bg-amber-500 hover:bg-amber-600 shadow-amber-500/20 btn-expandable"
+                ><Bell class="w-4 h-4 icon-no-margin" /><span class="btn-label">{{ translations.remind_invoice || 'Relancer' }}</span></button>
+           </div>
+           <button v-else disabled class="kloxy-btn-disabled opacity-50 cursor-not-allowed btn-expandable" :title="translations.activate_email_addon || 'Activez le module Email pour envoyer vos documents'"><Send class="w-4 h-4 icon-no-margin" /><span class="btn-label">{{ translations.send_invoice || 'Envoyer' }}</span></button>
+
+           <!-- SMS / WhatsApp -->
+           <button
+             v-if="smsActive == 1"
+             @click="showSmsModal = true"
+             class="kloxy-btn-secondary bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 btn-expandable"
+           ><MessageSquare class="w-4 h-4 icon-no-margin" /><span class="btn-label">SMS / WA</span></button>
+           <button v-else disabled class="kloxy-btn-disabled opacity-50 cursor-not-allowed btn-expandable" title="Activez le module SMS pour envoyer des SMS et WhatsApp"><MessageSquare class="w-4 h-4 icon-no-margin" /><span class="btn-label">SMS / WA</span></button>
+
+           <!-- PDF -->
+           <button @click="downloadPdf" class="kloxy-btn-secondary btn-expandable"><FileText class="w-4 h-4 icon-no-margin" /><span class="btn-label">PDF</span></button>
+
+           <!-- QR Code -->
+           <button v-if="qrCodeActive == 1" @click="showQrCode" class="kloxy-btn-secondary btn-expandable"><QrCode class="w-4 h-4 icon-no-margin" /><span class="btn-label">QR</span></button>
+           <button v-else disabled class="kloxy-btn-disabled opacity-50 cursor-not-allowed btn-expandable" title="Activez le module QR Code Stripe pour afficher un QR code de paiement"><QrCode class="w-4 h-4 icon-no-margin" /><span class="btn-label">QR</span></button>
+       </div>
+    
+  </div>  
+    <!-- Modals -->
+    <remind-modal
+        v-if="sendRemindModal"
+        :show-modal="sendRemindModal"
+        :client="client_detail"
+        :invoice-id="invoiceInfo.id"
+        :subject="processedRemindSubject"
+        :content="processedRemindContent"
+        @close="sendRemindModal = false"
+    />
+
+    <send-invoice-modal
+        v-if="sendInvoiceModal"
         :loading="loadingModal"
         :show-modal="sendInvoiceModal"
         modal-id="modal_send_invoice"
         :client="client_detail"
         :invoice-id="invoiceInfo.id"
-        :subject="subject"
-        :content="content"
+        :subject="processedSubject"
+        :content="processedContent"
         @close="sendInvoiceModal = false"
-      />
-    </div>
+    />
+    
+    <ConfirmAlertPaid
+      v-if="showConfirmPaidModal"
+      :isVisible="showConfirmPaidModal"
+      :showModal="showConfirmPaidModal"
+      :title="translations.are_you_sure || 'Êtes-vous sûr ?'"
+      :message="translations.mark_as_paid_message || 'Cette facture sera marquée comme payée.'"
+      :confirmText="translations.yes_confirm_it || 'Confirmer'"
+      :cancelText="translations.cancel || 'Annuler'"
+      status="paid"
+      @confirm="(method) => { changeInvoiceStatus('paid', method); showConfirmPaidModal = false; }"
+      @cancel="showConfirmPaidModal = false"
+    />
 
     <confirm-modal
-      :show-modal="showConfirmModal"
-      :title="translations.are_you_sure"
-      :message="translations.no_turning_back"
-      :confirmText="translations.yes_confirm_it"
-      :cancelText="translations.cancel"
-      :status="selectedStatus"
-      @confirm="changeInvoiceStatus('unpaid')"
-      @cancel="showConfirmModal = false"
-    />
-
-    <confirm-modal-paid
-      :show-modal="showConfirmModal"
-      :title="translations.are_you_sure"
-      :message="translations.no_turning_back"
-      :confirmText="translations.yes_confirm_it"
-      :cancelText="translations.cancel"
-      :status="selectedStatus"
-      @confirm="changeInvoiceStatusWithPaymentMethod"
-      @cancel="showConfirmModal = false"
-    />
-
-    <confirm-modal-credit
       :show-modal="showConfirmCreditModal"
       :title="translations.are_you_sure"
       :message="translations.no_turning_back"
       :confirmText="translations.yes_confirm_it"
       :cancelText="translations.cancel"
-      @confirm="this.addCreditInvoice()"
+      @confirm="addCreditInvoice"
       @cancel="showConfirmCreditModal = false"
     />
-    <div v-if="qrCodeActive == 1 && showQrCodeModal" class="modal modal-open">
-      <div class="modal-box">
-        <h3 class="font-bold text-lg">{{ translations.download_qr_code }}</h3>
-        <button
-          class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-          @click="closeQrCodeModal()"
-        >
-          ✕
-        </button>
+    
+     <!-- SMS Modal -->
+    <SmsModal
+      v-if="showSmsModal"
+      doc-type="invoice"
+      :doc-id="invoiceInfo.id"
+      :doc-number="invoiceInfo.invoice_number"
+      :client-phone="client_detail?.phone || ''"
+      :default-message="smsDefaultMessage"
+      @close="showSmsModal = false"
+      @sent="showSmsModal = false"
+    />
 
-        <div class="mb-4">
-          <img
-            :src="qrCodeSrc"
-            alt="QR Code"
-            class="max-w-full h-auto mx-auto"
-          />
-        </div>
-
-        <div class="flex justify-end space-x-4">
-          <button @click="downloadQRCode" class="btn btn-primary">
-            {{ translations.download_qr_code }}
-          </button>
-        </div>
-      </div>
+    <!-- QR Code Modal -->
+    <div v-if="showQrCodeModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+         <div class="bg-white dark:bg-slate-900 rounded-[2rem] p-8 w-full max-w-sm shadow-2xl relative text-center">
+             <button @click="showQrCodeModal = false" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><X class="w-6 h-6" /></button>
+             <h3 class="text-xl font-black text-slate-900 dark:text-white mb-6">{{ translations.download_qr_code }}</h3>
+             <div class="bg-white p-4 rounded-xl shadow-inner mb-6 inline-block">
+                 <img :src="qrCodeSrc" class="max-w-full h-auto" />
+             </div>
+             <button @click="downloadQRCode" class="kloxy-btn-primary w-full justify-center">
+                 <Download class="w-4 h-4 mr-2" /> {{ translations.download_qr_code }}
+             </button>
+         </div>
     </div>
-    <div
-      v-if="loading"
-      class="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-gray-900 bg-opacity-50 z-50"
-    >
-      <span class="loading loading-spinner text-primary loading-lg"></span>
-    </div>
-    <div
-      class="navbar bg-base-100 mb-4 shadow-xl rounded-box flex justify-between"
-    >
-      <div>
-        <div class="dropdown">
-          <div tabindex="0" role="button" class="btn btn-ghost lg:hidden">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-5 w-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M4 6h16M4 12h8m-8 6h16"
-              />
-            </svg>
-          </div>
-          <ul
-            tabindex="0"
-            class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52"
-          >
-            <li><a>Item</a></li>
-            <li>
-              <a>Parent</a>
-              <ul class="p-2">
-                <li><a>Submenu</a></li>
-                <li><a>Submenu</a></li>
-              </ul>
-            </li>
-            <li><a>Item</a></li>
-          </ul>
-        </div>
-        <div class="hidden lg:flex gap-2">
-          <router-link
-            v-if="invoiceInfo.status == 'draft'"
-            :to="{
-              name: 'InvoiceEdit',
-              params: { id: invoiceInfo.id },
-            }"
-          >
-            <button class="btn btn-sm">
-              <i class="far fa-edit"></i>
-              {{ translations.edit_invoice }}
-            </button>
-          </router-link>
-
-          <div v-else>
-            <button class="btn btn-sm" disabled>
-              <i class="far fa-edit"></i>
-              {{ translations.edit_invoice }}
-            </button>
-          </div>
-
-          <template v-if="invoiceInfo.status == 'unpaid' && !noItems">
-            <div>
-              <button
-                class="btn btn-outline btn-success btn-sm hover:text-white"
-                @click="confirmValidateInvoice('paid')"
-              >
-                <i class="fa fa-check"></i>
-                {{ translations.mark_as_paid }}
-              </button>
-            </div>
-          </template>
-          <template v-else>
-            <div>
-              <button
-                class="btn btn-outline btn-success btn-sm hover:text-white"
-                disabled
-              >
-                <i class="fa fa-check"></i>
-                {{ translations.mark_as_paid }}
-              </button>
-            </div>
-            <div
-              v-if="
-                invoiceInfo.credit != 0 &&
-                invoiceInfo.status == 'paid' &&
-                !noItems
-              "
-            >
-              <button class="btn btn-sm ms-2" disabled>
-                <i class="fas fa-undo"></i>
-                {{ translations.credit_invoice }}
-              </button>
-            </div>
-            <div
-              v-if="
-                invoiceInfo.credit == 0 &&
-                invoiceInfo.status == 'paid' &&
-                !noItems
-              "
-            >
-              <button class="btn btn-sm ms-2" @click="confirmCreditInvoice()">
-                <i class="fas fa-undo"></i>
-                {{ translations.credit_invoice }}
-              </button>
-            </div>
-          </template>
-
-          <!-- Bouton pour créer une facture récurrente -->
-          <div
-            v-if="recurringActive == 1"
-            class="tooltip tooltip-bottom"
-            :data-tip="translations.create_recurring_invoice || 'Créer une facture récurrente'"
-          >
-            <button
-              @click="createRecurringInvoice"
-              class="btn btn-outline btn-info btn-sm hover:text-white"
-            >
-              <i class="fas fa-redo"></i>
-              {{ translations.create_recurring_invoice || 'Facture récurrente' }}
-            </button>
-          </div>
-          <div
-            v-else
-            class="tooltip tooltip-bottom tooltip-warning"
-            :data-tip="translations.active_recurring_addon || 'Achetez l\'addon Factures Récurrentes pour automatiser vos factures récurrentes'"
-          >
-            <button
-              class="btn btn-outline btn-info btn-sm"
-              disabled
-            >
-              <i class="fas fa-redo"></i>
-              {{ translations.create_recurring_invoice || 'Facture récurrente' }}
-            </button>
-          </div>
-        </div>
-      </div>
-      <div class="flex gap-2">
-        <button
-          @click.prevent="sendInvoice(invoiceInfo.client_id)"
-          class="btn btn-outline btn-primary btn-sm hover:text-white"
-          v-if="emailActive == 1 && invoiceInfo.status != 'draft'"
-        >
-          <i class="fas fa-paper-plane"></i>
-          <span v-if="invoiceInfo.sent == 1">{{
-            translations.resend_invoice
-          }}</span>
-          <span v-else>{{ translations.send_invoice }}</span>
-          <i class="far fa-envelope" v-if="invoiceInfo.sent == 1"></i>
-        </button>
-
-        <div
-          v-else-if="emailActive == 1 && invoiceInfo.status == 'draft'"
-          class="tooltip tooltip-bottom tooltip-warning"
-          :data-tip="translations.draft_cannot_send"
-        >
-          <button
-            click="#"
-            class="btn btn-outline btn-primary btn-sm hover:text-white"
-            disabled
-          >
-            <i class="fas fa-paper-plane"></i>
-            {{ translations.send_invoice }}
-          </button>
-        </div>
-
-        <div
-          v-else
-          class="tooltip tooltip-bottom tooltip-warning"
-          :data-tip="translations.active_email_addon"
-        >
-          <button
-            click="#"
-            class="btn btn-outline btn-primary btn-sm hover:text-white"
-            disabled
-          >
-            <i class="fas fa-paper-plane"></i>
-            {{ translations.send_invoice }}
-          </button>
-        </div>
-
-        <div v-if="qrCodeActive == 1">
-          <button
-            v-if="invoiceInfo.status == 'unpaid'"
-            class="btn btn-outline btn-accent btn-sm"
-            @click="generateQRCode"
-          >
-            <i class="fas fa-qrcode"></i> {{ translations.generate_qrcode }}
-          </button>
-          <button
-            v-else
-            click="#"
-            class="btn btn-outline btn-primary btn-sm hover:text-white"
-            disabled
-          >
-            <i class="fas fa-qrcode"></i>
-            {{ translations.generate_qrcode }}
-          </button>
-        </div>
-
-        <div
-          v-else
-          class="tooltip tooltip-bottom tooltip-warning"
-          :data-tip="translations.active_qrcode_addon"
-        >
-          <button
-            click="#"
-            class="btn btn-outline btn-primary btn-sm hover:text-white"
-            disabled
-          >
-            <i class="fas fa-qrcode"></i>
-            {{ translations.generate_qrcode }}
-          </button>
-        </div>
-
-        <!-- Dropdown unifié pour PDF et Factur-X -->
-        <div
-          v-if="invoiceInfo.status != 'draft'"
-          class="dropdown dropdown-end"
-        >
-          <div
-            tabindex="0"
-            role="button"
-            class="btn btn-outline btn-success btn-sm"
-          >
-            <i class="far fa-file-pdf"></i>
-            {{ translations.exportToPDF }}
-            <i class="fas fa-chevron-down ml-1"></i>
-            <span
-              v-if="loadingPdf || loadingPdfFacturX"
-              class="loading loading-spinner loading-sm ml-1"
-            ></span>
-          </div>
-          <ul
-            tabindex="0"
-            class="dropdown-content menu bg-base-100 rounded-box z-[1] w-56 p-2 shadow"
-          >
-            <li>
-              <a
-                @click="exportToPDF(currencyDefault.currency_id)"
-                :disabled="loadingPdf"
-              >
-                <i class="far fa-file-pdf"></i>
-                PDF {{ translations.invoice_in }}
-                {{ currencyDefault.currency_symbol }}
-              </a>
-            </li>
-            <li v-if="currencyDefault.currency_id !== currencyClient.currency_id">
-              <a
-                @click="exportToPDF(currencyClient.currency_id)"
-                :disabled="loadingPdf"
-              >
-                <i class="far fa-file-pdf"></i>
-                PDF {{ translations.invoice_in }}
-                {{ currencyClient.currency_symbol }}
-              </a>
-            </li>
-            <li>
-              <a
-                @click="exportToPDFFacturX(currencyDefault.currency_id)"
-                :disabled="loadingPdfFacturX"
-              >
-                <i class="fas fa-file-invoice"></i>
-                Factur-X {{ translations.invoice_in }}
-                {{ currencyDefault.currency_symbol }}
-              </a>
-            </li>
-            <li v-if="currencyDefault.currency_id !== currencyClient.currency_id">
-              <a
-                @click="exportToPDFFacturX(currencyClient.currency_id)"
-                :disabled="loadingPdfFacturX"
-              >
-                <i class="fas fa-file-invoice"></i>
-                Factur-X {{ translations.invoice_in }}
-                {{ currencyClient.currency_symbol }}
-              </a>
-            </li>
-          </ul>
-        </div>
-        <button
-          v-else
-          @click="exportToPDF(currencyDefault.currency_id)"
-          class="btn btn-outline btn-secondary btn-sm"
-          :disabled="loadingPdf"
-        >
-          <i class="far fa-file-pdf"></i>
-          {{ translations.previewPDF }}
-          <span
-            v-if="loadingPdf"
-            class="loading loading-spinner loading-sm"
-          ></span>
-        </button>
-
-        <button
-          v-if="invoiceInfo.status == 'draft' && !noItems"
-          class="btn btn-outline btn-success btn-sm hover:text-white"
-          @click="confirmValidateInvoice('unpaid')"
-        >
-          <i class="fas fa-check"></i>
-          {{ translations.validateInvoice }}
-        </button>
-
-        <div
-          v-if="invoiceInfo.status == 'draft' && noItems"
-          class="tooltip tooltip-left tooltip-warning"
-          :data-tip="translations.min_article"
-        >
-          <button
-            click="#"
-            class="btn btn-outline btn-primary btn-sm hover:text-white"
-            disabled
-          >
-            <i class="fas fa-check"></i>
-            {{ translations.validateInvoice }}
-          </button>
-        </div>
-
-      </div>
-    </div>
-  </div>
+    
 </template>
-  
-<script>
+
+<script setup>
+import { ref, reactive, computed, watch, toRefs } from 'vue';
+import { useRouter } from 'vue-router';
+import axios from 'axios';
 import SendInvoiceModal from "@/components/invoices/Send.vue";
+import RemindModal from "@/components/invoices/Remind.vue";
 import ConfirmModal from "@/components/ConfirmAlert.vue";
-import ConfirmModalPaid from "@/components/ConfirmAlertPaid.vue";
-import ConfirmModalCredit from "@/components/ConfirmAlertCredit.vue";
-import RemoveModal from "@/components/RemoveAlert.vue";
-export default {
-  name: "InvoiceNavBar",
-  components: {
-    SendInvoiceModal,
-    RemoveModal,
-    ConfirmModal,
-    ConfirmModalPaid,
-    ConfirmModalCredit,
-  },
-  props: {
+import ConfirmAlertPaid from "@/components/ConfirmAlertPaid.vue";
+import SmsModal from "@/components/SmsModal.vue";
+import { ArrowLeft, Pencil, Check, CheckCheck, Undo, RefreshCw, Send, Bell, FileText, QrCode, X, Download, ShieldCheck, Loader2, Upload, MessageSquare } from 'lucide-vue-next';
+
+const props = defineProps({
     invoiceInfo: Object,
-    currencyDefault: Object,
-    currencyClient: Object,
-    emailActive: String,
-    qrCodeActive: String,
-    recurringActive: String,
-    totalAmount: String,
+    currencyDefault: String,
+    currencyClient: String,
+    emailActive: [Number, Boolean],
+    qrCodeActive: [Number, Boolean],
+    recurringActive: [Number, Boolean],
+    smsActive: [Number, Boolean],
     noItems: Boolean,
-  },
-  data() {
-    return {
-      showConfirmModal: false,
-      showConfirmCreditModal: false,
-      loading: false,
-      sendInvoiceModal: false,
-      loadingModal: false,
-      loadingPdf: false,
-      loadingPdfFacturX: false,
-      client_detail: null,
-      selectedStatus: null,
-      subject: "",
-      content: "",
-      showQrCodeModal: false,
-      qrCodeSrc: "",
+    emailSubject: String,
+    emailContent: String,
+    remindSubject: String,
+    remindContent: String,
+});
+
+const emit = defineEmits(['refresh', 'show-toast']);
+const router = useRouter();
+
+const { invoiceInfo } = toRefs(props);
+const client_detail = ref({});
+const translations = computed(() => window.myEasyComptaAdmin?.easyComptaTranslations || {});
+const pdpAddonActive = computed(() => !!window.myEasyComptaAdmin?.pdpConfigured);
+const sendInvoiceModal = ref(false);
+const sendRemindModal = ref(false);
+const showConfirmPaidModal = ref(false);
+const processedRemindSubject = ref('');
+const processedRemindContent = ref('');
+const showConfirmCreditModal = ref(false);
+const showQrCodeModal = ref(false);
+const qrCodeSrc = ref("");
+const loadingModal = ref(false);
+const processedSubject = ref("");
+const processedContent = ref("");
+
+const processEmailTemplate = (subject, content) => {
+    let sub = subject || "";
+    let cont = content || "";
+    
+    const replacements = {
+        '{nom_client}': client_detail.value?.company_name || "",
+        '{numero_document}': invoiceInfo.value?.invoice_number || "",
+        '{montant_total}': (invoiceInfo.value?.total_amount || "0.00") + " " + (props.currencyClient || "€")
     };
-  },
-  computed: {
-    translations() {
-      return window.myEasyComptaAdmin.easyComptaTranslations;
-    },
-  },
-  methods: {
-    changeInvoiceStatusWithPaymentMethod(selectedPaymentMethod) {
-      const status = this.selectedStatus;
-      this.changeInvoiceStatus(status, selectedPaymentMethod);
-      this.showConfirmModal = false;
-    },
-    async changeInvoiceStatus(newStatus, methodPayment) {
-      this.loading = true;
-      try {
-        const response = await fetch(
-          "/wp-json/my-easy-compta/v1/invoices/update-status",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "X-WP-Nonce": myEasyComptaAdmin.nonce,
-            },
-            body: JSON.stringify({
-              id: this.invoiceInfo.id,
-              status: newStatus,
-              method: methodPayment,
-            }),
-          }
-        );
 
-        const data = await response.json();
-        if (data.success) {
-          this.invoiceInfo.status = newStatus;
-          this.loading = false;
-        } else {
-          console.error("Failed to update invoice status:", data.message);
-          this.loading = false;
-        }
-      } catch (error) {
-        console.error(
-          "An error occurred while updating invoice status:",
-          error
-        );
-      }
-    },
-    async addCreditInvoice() {
-      this.loading = true;
-      try {
-        const response = await fetch(
-          "/wp-json/my-easy-compta/v1/invoices/credit",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "X-WP-Nonce": myEasyComptaAdmin.nonce,
-            },
-            body: JSON.stringify({
-              id: this.invoiceInfo.id,
-            }),
-          }
-        );
+    Object.keys(replacements).forEach(key => {
+        sub = sub.split(key).join(replacements[key]);
+        cont = cont.split(key).join(replacements[key]);
+    });
 
-        const data = await response.json();
-        if (data.success) {
-          this.invoiceInfo.credit = 1;
-          this.loading = false;
-        } else {
-          console.error("Failed to update invoice status:", data.message);
-          this.loading = false;
-        }
-      } catch (error) {
-        console.error(
-          "An error occurred while updating invoice status:",
-          error
-        );
-      }
-    },
-    exportToPDF(currency) {
-      this.loadingPdf = true;
-      const invoiceId = this.invoiceInfo.id;
-      let url = `/wp-json/my-easy-compta/v1/invoices/pdf/${invoiceId}?currency_id=${currency}`;
-
-      fetch(url, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          "X-WP-Nonce": myEasyComptaAdmin.nonce,
-        },
-      })
-        .then((response) => {
-          if (!response.ok) {
-            this.loadingPdf = false;
-            throw new Error("Network response was not ok");
-          }
-          return response.blob();
-        })
-        .then((blob) => {
-          const url = URL.createObjectURL(blob);
-          window.open(url);
-          this.loadingPdf = false;
-        })
-        .catch((error) => {
-          console.error("There was a problem with the fetch operation:", error);
-          this.loadingPdf = false;
-        });
-    },
-    exportToPDFFacturX(currency) {
-      this.loadingPdfFacturX = true;
-      const invoiceId = this.invoiceInfo.id;
-      let url = `/wp-json/my-easy-compta/v1/invoices/pdf-facturx/${invoiceId}?currency_id=${currency}`;
-
-      fetch(url, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          "X-WP-Nonce": myEasyComptaAdmin.nonce,
-        },
-      })
-        .then((response) => {
-          if (!response.ok) {
-            this.loadingPdfFacturX = false;
-            throw new Error("Network response was not ok");
-          }
-          return response.blob();
-        })
-        .then((blob) => {
-          const url = URL.createObjectURL(blob);
-          const link = document.createElement("a");
-          link.href = url;
-          link.download = `facture_${this.invoiceInfo.invoice_number || this.invoiceInfo.id}_facturx.pdf`;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          URL.revokeObjectURL(url);
-          this.loadingPdfFacturX = false;
-        })
-        .catch((error) => {
-          console.error("There was a problem with the fetch operation:", error);
-          this.loadingPdfFacturX = false;
-        });
-    },
-    sendInvoice(clientId) {
-      this.loadingModal = true;
-      this.sendInvoiceModal = true;
-      modal_send_invoice.showModal();
-      this.fetchClient(clientId);
-      this.fetchSettings();
-    },
-    fetchClient(clientId) {
-      this.loading = true;
-      fetch(`/wp-json/my-easy-compta/v1/clients/details/${clientId}`, {
-        headers: {
-          "Content-Type": "application/json",
-          "X-WP-Nonce": myEasyComptaAdmin.nonce,
-        },
-      })
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error("Client not found");
-          }
-          return response.json();
-        })
-        .then((data) => {
-          this.client_detail = data;
-          this.loading = false;
-        })
-        .catch((error) => {
-          console.error("Error fetching client info:", error);
-          this.loading = false;
-        });
-    },
-    async fetchSettings() {
-      try {
-        this.loading = true;
-        const response = await fetch(
-          "/wp-json/my-easy-compta/v1/settings/get",
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              "X-WP-Nonce": myEasyComptaAdmin.nonce,
-            },
-          }
-        );
-
-        this.loading = false;
-        if (response.ok) {
-          const settings = await response.json();
-          this.subject = settings.email_invoice_subject;
-          this.content = settings.email_invoice_content;
-        } else {
-          const error = await response.json();
-          this.showToast(error.message, "alert-error");
-        }
-      } catch (error) {
-        this.loading = false;
-        this.showToast(error.message, "alert-error");
-      }
-    },
-    confirmValidateInvoice(status) {
-      this.selectedStatus = status;
-      if (status == "unpaid") {
-        modal_confirm.showModal();
-      } else if (status == "paid") {
-        modal_confirm_paid.showModal();
-      }
-
-      this.showConfirmModal = true;
-    },
-    confirmCreditInvoice() {
-      modal_confirm_credit.showModal();
-      this.showConfirmCreditModal = true;
-    },
-
-    async generateQRCode() {
-      this.loading = true;
-      try {
-        const response = await fetch(
-          "/wp-json/my-easy-compta/v1/generate-qrcode",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "X-WP-Nonce": myEasyComptaAdmin.nonce,
-            },
-            body: JSON.stringify({
-              invoice_ref:
-                this.invoiceInfo.invoice_number ||
-                `Facture #${this.invoiceInfo.number}`,
-              price: parseFloat(this.invoiceInfo.total_amount),
-            }),
-          }
-        );
-
-        const data = await response.json();
-
-        if (response.ok && data.qr_code) {
-          this.qrCodeSrc = data.qr_code;
-          this.showQrCodeModal = true;
-        } else {
-          console.error(
-            "Erreur lors de la génération du QR Code :",
-            data.message
-          );
-        }
-      } catch (error) {
-        console.error(
-          "Erreur lors de l'appel à l'API pour générer le QR code :",
-          error
-        );
-      } finally {
-        this.loading = false;
-      }
-    },
-    closeQrCodeModal() {
-      this.showQrCodeModal = false;
-    },
-
-    downloadQRCode() {
-      const link = document.createElement("a");
-      link.href = this.qrCodeSrc;
-      link.download = `qr_code_${
-        this.invoiceInfo.invoice_number || this.invoiceInfo.number
-      }.png`;
-      link.click();
-    },
-    createRecurringInvoice() {
-      // Rediriger vers la page des factures récurrentes avec les paramètres pré-remplis
-      const params = new URLSearchParams({
-        from_invoice: this.invoiceInfo.id,
-        client_id: this.invoiceInfo.client_id,
-        template_invoice_id: this.invoiceInfo.id,
-        invoice_number: this.invoiceInfo.invoice_number || `#${this.invoiceInfo.number}`,
-      });
-      window.location.href = `/wp-admin/admin.php?page=my-easy-compta-recurring-invoices&${params.toString()}`;
-    },
-  },
+    processedSubject.value = sub;
+    processedContent.value = cont;
 };
+
+watch(invoiceInfo, (newVal) => {
+    if(newVal && newVal.client_detail) client_detail.value = newVal.client_detail;
+}, { immediate: true, deep: true });
+
+const changeInvoiceStatus = async (status, method = null) => {
+    try {
+        const payload = { status };
+        if (method) payload.method = method;
+        const res = await axios.post(`/wp-json/my-easy-compta/v1/invoices/${invoiceInfo.value.id}/status`, payload, { headers: { "X-WP-Nonce": window.myEasyComptaAdmin.nonce } });
+        if(res.data.success) emit('refresh');
+    } catch (e) {}
+};
+
+const confirmCreditInvoice = () => showConfirmCreditModal.value = true;
+
+const addCreditInvoice = async () => {
+    showConfirmCreditModal.value = false;
+    try {
+        const res = await axios.post(`/wp-json/my-easy-compta/v1/invoices/${invoiceInfo.value.id}/credit`, {}, { headers: { "X-WP-Nonce": window.myEasyComptaAdmin.nonce } });
+        if(res.data.success) {
+             emit('refresh');
+             if(res.data.data?.id) router.push({ name: 'InvoiceViewDetail', params: { id: res.data.data.id } });
+        }
+} catch (e) {}
+};
+
+const createRecurringInvoice = () => {
+    // Recurring invoices is a separate WP admin page (not in the core SPA router)
+    const adminBase = window.location.href.split('#')[0].split('?')[0];
+    window.location.href = adminBase + '?page=my-easy-compta-recurring-invoices&from_invoice_id=' + invoiceInfo.value.id;
+};
+
+const sendInvoice = () => {
+    processEmailTemplate(props.emailSubject, props.emailContent);
+    sendInvoiceModal.value = true;
+};
+
+const sendRemind = () => {
+    const sub = props.remindSubject || '';
+    const cont = props.remindContent || '';
+    const replacements = {
+        '{nom_client}': client_detail.value?.company_name || '',
+        '{numero_document}': invoiceInfo.value?.invoice_number || '',
+        '{montant_total}': (invoiceInfo.value?.total_amount || '0.00') + ' ' + (props.currencyClient || '€'),
+    };
+    const apply = (str) => Object.keys(replacements).reduce((s, k) => s.split(k).join(replacements[k]), str);
+    processedRemindSubject.value = apply(sub);
+    processedRemindContent.value = apply(cont);
+    sendRemindModal.value = true;
+};
+
+const downloadPdf = () => {
+    // Standardize PDF route to match Quotes (/invoices/pdf/ID)
+    window.open(`/wp-json/my-easy-compta/v1/invoices/pdf/${invoiceInfo.value.id}?_wpnonce=${window.myEasyComptaAdmin.nonce}`, "_blank");
+};
+
+const showQrCode = async () => {
+    try {
+        const res = await axios.get(`/wp-json/my-easy-compta/v1/invoices/${invoiceInfo.value.id}/qrcode`, { 
+            headers: { "X-WP-Nonce": window.myEasyComptaAdmin.nonce } 
+        });
+        if(res.data.success) {
+            qrCodeSrc.value = res.data.data.url;
+            showQrCodeModal.value = true;
+        } else {
+            emit('show-toast', res.data.message || "Erreur lors de la génération du QR Code", "error");
+        }
+    } catch(e) { 
+        emit('show-toast', e.response?.data?.message || "Erreur lors de la récupération du QR Code", "error");
+    }
+};
+
+const showSmsModal = ref(false);
+const smsDefaultMessage = computed(() => {
+    const client = client_detail.value?.company_name || '';
+    const num    = invoiceInfo.value?.invoice_number  || '';
+    const amount = (invoiceInfo.value?.total_amount   || '0.00') + ' ' + (props.currencyClient || '€');
+    return `Bonjour ${client}, votre facture ${num} d'un montant de ${amount} est disponible.`;
+});
+
+const loadingFiscal = ref(false);
+
+const validateFiscal = async () => {
+    if (loadingFiscal.value) return;
+    loadingFiscal.value = true;
+    try {
+        const res = await axios.post(`/wp-json/my-easy-compta/v1/invoices/${invoiceInfo.value.id}/validate`, {}, { headers: { "X-WP-Nonce": window.myEasyComptaAdmin.nonce } });
+        if(res.data.success) emit('refresh');
+    } catch(e) { 
+        emit('show-toast', e.response?.data?.message || "Erreur lors de la validation fiscale", 'error');
+    } finally { loadingFiscal.value = false; }
+};
+
+const transmitToPDP = async () => {
+    if (loadingFiscal.value) return;
+    loadingFiscal.value = true;
+    try {
+        const res = await axios.post(`/wp-json/my-easy-compta/v1/invoices/${invoiceInfo.value.id}/transmit`, {}, { headers: { "X-WP-Nonce": window.myEasyComptaAdmin.nonce } });
+        if(res.data.success) emit('refresh');
+    } catch(e) { 
+        emit('show-toast', e.response?.data?.message || "Erreur lors de la transmission", 'error');
+    } finally { loadingFiscal.value = false; }
+};
+
+const downloadQRCode = () => {
+    const link = document.createElement("a");
+    link.href = qrCodeSrc.value;
+    link.download = `qrcode-${invoiceInfo.value.invoice_number}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+};
+
+defineExpose({ sendRemind });
 </script>
-  
+
+<style scoped>
+.btn-expandable {
+    @apply flex items-center justify-center h-11 transition-all duration-300 ease-in-out relative overflow-hidden !important;
+    min-width: 44px;
+    max-width: 44px;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    gap: 0 !important;
+}
+
+.btn-expandable:hover {
+    @apply px-5 !important;
+    max-width: 320px;
+    gap: 8px !important;
+}
+
+.btn-label {
+    @apply opacity-0 transition-opacity duration-200 whitespace-nowrap overflow-hidden inline-block;
+    max-width: 0;
+}
+
+.btn-expandable:hover .btn-label {
+    @apply opacity-100;
+    max-width: 250px;
+}
+
+.icon-no-margin {
+    @apply m-0 transition-all duration-300 flex-shrink-0;
+}
+</style>

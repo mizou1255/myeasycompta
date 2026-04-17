@@ -55,7 +55,7 @@ class ECWP_Tables
         foreach ($tables as $table) {
             $escaped_table = esc_sql($table);
 
-            $wpdb->query($wpdb->prepare("DROP TABLE IF EXISTS %i", $escaped_table));
+            $wpdb->query("DROP TABLE IF EXISTS {$escaped_table}");
 
         }
     }
@@ -86,8 +86,10 @@ class ECWP_Tables
             'default_vat' => isset($params['default_vat']) ? $params['default_vat'] : '',
             'quote_prefix' => isset($params['quote_prefix']) ? $params['quote_prefix'] : 'EST',
             'invoice_prefix' => isset($params['invoice_prefix']) ? $params['invoice_prefix'] : 'INV',
-            'quote_first' => isset($params['quote_first']) ? $params['quote_first'] : 1,
-            'invoice_first' => isset($params['invoice_first']) ? $params['invoice_first'] : 1,
+            'quote_first'           => isset($params['quote_first'])           ? $params['quote_first']           : 1,
+            'invoice_first'         => isset($params['invoice_first'])         ? $params['invoice_first']         : 1,
+            'invoice_number_format' => isset($params['invoice_number_format']) ? $params['invoice_number_format'] : 'prefix',
+            'quote_number_format'   => isset($params['quote_number_format'])   ? $params['quote_number_format']   : 'prefix',
         ];
 
         foreach ($settings as $key => $value) {
@@ -221,12 +223,14 @@ class ECWP_Tables
         }
 
         // Get client IDs
-        $client_id_tesla = $wpdb->get_var($wpdb->prepare("SELECT id FROM %i WHERE company_name = %s", ECWP_TABLE_CLIENTS, 'Tesla'));
-        $client_id_amazon = $wpdb->get_var($wpdb->prepare("SELECT id FROM %i WHERE company_name = %s", ECWP_TABLE_CLIENTS, 'Amazon'));
-        $client_id_microsoft = $wpdb->get_var($wpdb->prepare("SELECT id FROM %i WHERE company_name = %s", ECWP_TABLE_CLIENTS, 'Microsoft'));
+        $clients_table = ECWP_TABLE_CLIENTS;
+        $settings_table = ECWP_TABLE_SETTINGS;
+        $client_id_tesla = $wpdb->get_var($wpdb->prepare("SELECT id FROM {$clients_table} WHERE company_name = %s", 'Tesla'));
+        $client_id_amazon = $wpdb->get_var($wpdb->prepare("SELECT id FROM {$clients_table} WHERE company_name = %s", 'Amazon'));
+        $client_id_microsoft = $wpdb->get_var($wpdb->prepare("SELECT id FROM {$clients_table} WHERE company_name = %s", 'Microsoft'));
 
-        $invoice_first = $wpdb->get_var($wpdb->prepare("SELECT meta_value FROM %i WHERE meta_key = 'invoice_first'", ECWP_TABLE_SETTINGS));
-        $invoice_prefix = $wpdb->get_var($wpdb->prepare("SELECT meta_value FROM %i WHERE meta_key = 'invoice_prefix'", ECWP_TABLE_SETTINGS));
+        $invoice_first = $wpdb->get_var("SELECT meta_value FROM {$settings_table} WHERE meta_key = 'invoice_first'");
+        $invoice_prefix = $wpdb->get_var("SELECT meta_value FROM {$settings_table} WHERE meta_key = 'invoice_prefix'");
         $invoice_first = $invoice_first ? intval($invoice_first) : 1;
         $invoice_prefix = $invoice_prefix ? sanitize_text_field($invoice_prefix) : 'INV';
         $invoice_number = $invoice_prefix . '_' . str_pad($invoice_first, 4, '0', STR_PAD_LEFT);
@@ -241,6 +245,7 @@ class ECWP_Tables
             'invoice_number' => $invoice_number,
             'amount' => $encrypt->encrypt(1500.00),
             'total_amount' => $encrypt->encrypt(1800.00),
+            'paid_amount' => 1800.00,
             'exchange_rate' => $encrypt->encrypt(1.3000),
             'status' => $encrypt->encrypt('paid'),
             'status_stats' => 'paid',
@@ -250,7 +255,8 @@ class ECWP_Tables
         ]);
 
         // Get invoice ID
-        $invoice_id_tesla = $wpdb->get_var($wpdb->prepare("SELECT id FROM %i WHERE invoice_number = %s", ECWP_TABLE_INVOICES, $invoice_number));
+        $invoices_table = ECWP_TABLE_INVOICES;
+        $invoice_id_tesla = $wpdb->get_var($wpdb->prepare("SELECT id FROM {$invoices_table} WHERE invoice_number = %s", $invoice_number));
 
         // Insert a new invoice item
         $wpdb->insert(ECWP_TABLE_INVOICE_ELEMENTS, [
@@ -268,8 +274,9 @@ class ECWP_Tables
             'item_order' => 1,
         ]);
 
-        $quote_first = $wpdb->get_var($wpdb->prepare("SELECT meta_value FROM %i WHERE meta_key = 'quote_first'", ECWP_TABLE_SETTINGS));
-        $quote_prefix = $wpdb->get_var($wpdb->prepare("SELECT meta_value FROM %i WHERE meta_key = 'quote_prefix'", ECWP_TABLE_SETTINGS));
+        $settings_table = ECWP_TABLE_SETTINGS;
+        $quote_first = $wpdb->get_var("SELECT meta_value FROM {$settings_table} WHERE meta_key = 'quote_first'");
+        $quote_prefix = $wpdb->get_var("SELECT meta_value FROM {$settings_table} WHERE meta_key = 'quote_prefix'");
         $quote_first = $quote_first ? intval($quote_first) : 1;
         $quote_prefix = $quote_prefix ? sanitize_text_field($quote_prefix) : 'INV';
         $quote_number = $quote_prefix . '_' . str_pad($quote_first, 4, '0', STR_PAD_LEFT);
@@ -286,7 +293,8 @@ class ECWP_Tables
         ]);
 
         // Get quote ID
-        $quote_id_amazon = $wpdb->get_var($wpdb->prepare("SELECT id FROM %i WHERE quote_number = %s", ECWP_TABLE_QUOTES, 'EST_0001'));
+        $quotes_table = ECWP_TABLE_QUOTES;
+        $quote_id_amazon = $wpdb->get_var($wpdb->prepare("SELECT id FROM {$quotes_table} WHERE quote_number = %s", $quote_number));
 
         // Insert a new quote element
         $wpdb->insert(ECWP_TABLE_QUOTE_ELEMENTS, [

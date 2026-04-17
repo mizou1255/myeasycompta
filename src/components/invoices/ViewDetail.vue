@@ -1,1508 +1,809 @@
 <template>
-  <div class="pt-2 pr-4">
-    <InvoiceNavBar
-      :invoiceInfo="invoice"
-      :currencyDefault="defaultCurrency"
-      :currencyClient="clientCurrency"
-      :emailActive="settings.easy_compta_email_addon_active"
-      :qrCodeActive="settings.easy_compta_qrcode_addon_active"
-      :recurringActive="settings.easy_compta_recurring_invoices_addon_active"
-      :noItems="no_items"
-    />
+  <MainLayout :title="invoice.invoice_number || (translations.loading || 'Loading...')" :subtitle="invoice.created_at ? `${translations.created_at}: ${invoice.created_at}` : ''">
+    
+    <!-- Toast -->
+    <div v-if="toast.visible" class="fixed bottom-8 right-8 z-[9999] animate-in fade-in slide-in-from-bottom-8 duration-300">
+      <div :class="['flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl border backdrop-blur-md', toast.type === 'success' ? 'bg-emerald-500/90 text-white border-emerald-400/50' : 'bg-rose-500/90 text-white border-rose-400/50']">
+        <component :is="toast.type === 'success' ? 'CheckCircle2' : 'AlertCircle'" class="w-6 h-6" />
+        <span class="font-bold text-sm">{{ toast.message }}</span>
+        <button @click="toast.visible = false" class="ml-2 hover:bg-white/20 p-1 rounded-full transition-colors"><X class="w-4 h-4" /></button>
+      </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div v-if="loading" class="fixed inset-0 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center">
+       <div class="w-10 h-10 border-4 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
+    </div>
+
+    <!-- Remove Item Modal -->
     <remove-modal
-      modal-id="modal_remove_item"
       :show-modal="showRemoveModal"
+      modal-id="remove_item_modal"
       :title="translations.are_you_sure"
       :message="translations.no_turning_back"
       :confirmText="translations.yes_delete_it"
       :cancelText="translations.cancel"
-      @confirm="this.removeItem(selectedItem, SelectedInvoiceId)"
+      @confirm="removeItem"
       @cancel="showRemoveModal = false"
     />
+
+    <!-- Remove Payment Modal -->
     <remove-modal
-      modal-id="modal_remove_disb"
-      :show-modal="showRemoveModalDisb"
-      :title="translations.are_you_sure"
-      :message="translations.no_turning_back"
-      :confirmText="translations.yes_delete_it"
-      :cancelText="translations.cancel"
-      @confirm="this.removeDisb(selectedDisb, SelectedInvoiceId)"
-      @cancel="showRemoveModalDisb = false"
+      :show-modal="showDeletePaymentModal"
+      modal-id="remove_payment_modal"
+      :title="translations.are_you_sure || 'Êtes-vous sûr ?'"
+      :message="'Ce paiement sera supprimé et le statut de la facture sera mis à jour.'"
+      :confirmText="translations.yes_delete_it || 'Oui, supprimer'"
+      :cancelText="translations.cancel || 'Annuler'"
+      @confirm="deletePayment"
+      @cancel="showDeletePaymentModal = false"
     />
 
-    <article-modal
-      :show-modal="showArticlesModal"
-      modal-id="modal_articles"
-      :modal-title="translations.select"
-      @select-article="applySelectedArticle"
-      @close="showArticlesModal = false"
-    />
-
-    <div v-if="settings.easy_compta_email_addon_active == 1">
-      <remind-invoice-modal
-        :loading="loadingModal"
-        :show-modal="RemindInvoiceModal"
-        modal-id="modal_send_remind"
-        :client="client_detail"
-        :invoice-id="invoice.id"
-        :subject="settings.remind_invoice_subject"
-        :content="settings.remind_invoice_content"
-        @close="RemindInvoiceModal = false"
+    <div class="space-y-8">
+      <!-- Navbar (Actions) -->
+      <InvoiceNavBar
+        ref="navBarRef"
+        :invoiceInfo="invoice"
+        :currencyDefault="defaultCurrency"
+        :currencyClient="clientCurrency"
+        :emailActive="isEmailActive"
+        :emailSubject="settings.invoice_email_subject"
+        :emailContent="settings.invoice_email_content"
+        :remindSubject="settings.invoice_email_remind_subject"
+        :remindContent="settings.invoice_email_remind_content"
+        :qrCodeActive="isQrCodeActive"
+        :recurringActive="isRecurringActive"
+        :smsActive="isSmsActive"
+        :noItems="no_items"
+        @refresh="fetchInvoiceDetails"
+        @show-toast="showToast"
       />
-    </div>
-    <div
-      v-if="toast.visible"
-      :class="['toast', toast.position]"
-      :style="{ zIndex: 9999 }"
-    >
-      <div :class="['alert', toast.type, 'text-white']">
-        <span>{{ toast.message }}</span>
-      </div>
-    </div>
-    <div
-      v-if="loading"
-      class="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-gray-900 bg-opacity-50 z-50"
-    >
-      <span class="loading loading-spinner text-primary loading-lg"></span>
-    </div>
-    <div v-if="isInvoiceOverdue && invoice.status == 'unpaid'">
-      <div role="alert" class="alert alert-warning">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-6 w-6 shrink-0 stroke-current"
-          fill="none"
-          viewBox="0 0 24 24"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-          />
-        </svg>
-        <span>{{ translations.invoice_overdue }}</span>
-        <div v-if="settings.easy_compta_email_addon_active == 1">
+
+      <!-- Overdue Alert -->
+      <div v-if="isInvoiceOverdue && (invoice.status == 'unpaid' || invoice.status == 'partial')" class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/50 rounded-2xl p-6 flex items-center justify-between gap-4 text-amber-700 dark:text-amber-400">
+          <div class="flex items-center gap-4">
+              <AlertTriangle class="w-6 h-6 stroke-2 flex-shrink-0" />
+              <h3 class="font-bold">{{ translations.invoice_overdue }}</h3>
+          </div>
           <button
-            @click.prevent="sendRemind(invoice.client_id)"
-            class="btn btn-sm btn-primary"
+              v-if="isEmailActive"
+              @click="navBarRef?.sendRemind()"
+              class="flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-black uppercase tracking-widest px-4 py-2 rounded-xl shadow shadow-amber-500/30 transition-all active:scale-95 flex-shrink-0"
           >
-            {{ translations.remind_invoice }}
+              <Bell class="w-4 h-4" />
+              {{ translations.remind_invoice || 'Relancer' }}
+          </button>
+      </div>
+
+      <!-- Main Content Card -->
+      <div class="bg-white dark:bg-slate-900 rounded-[2.5rem] p-10 shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 relative overflow-hidden">
+         
+         <!-- Header Section -->
+         <div class="flex flex-col md:flex-row justify-between gap-10 mb-12 border-b border-slate-100 dark:border-slate-800 pb-12">
+            <!-- Logo -->
+            <div class="flex-1">
+               <img v-if="settings.logo_url" :src="settings.logo_url" :style="{ width: settings.logo_width + 'px' }" class="max-w-full h-auto object-contain rounded-xl" alt="Company Logo" />
+            </div>
+            
+            <!-- Invoice Meta -->
+            <div class="text-right space-y-3">
+               <h2 class="text-4xl font-black text-purple-600">{{ invoice.invoice_number }}</h2>
+               <div class="space-y-1">
+                  <p class="text-slate-500 font-bold text-sm"><span class="text-slate-900 dark:text-white">{{ translations.created_at }}:</span> {{ invoice.created_at }}</p>
+                  <p class="text-slate-500 font-bold text-sm"><span class="text-slate-900 dark:text-white">{{ translations.due_date }}:</span> {{ invoice.due_date }}</p>
+               </div>
+                <div class="pt-2 flex flex-col items-end gap-2">
+                   <div class="flex items-center justify-end gap-3">
+                       <span class="text-slate-900 dark:text-white font-black text-sm uppercase tracking-widest">{{ translations.status || 'Statut' }}:</span>
+                       <span :class="[
+                           'px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest',
+                           invoice.status == 'draft' ? 'bg-slate-100 text-slate-500' :
+                           invoice.status == 'unpaid' ? 'bg-amber-100 text-amber-600' :
+                           invoice.status == 'partial' ? 'bg-orange-100 text-orange-600' :
+                           'bg-emerald-100 text-emerald-600'
+                       ]">
+                           {{ invoice.status == 'draft' ? (translations.draft || 'Brouillon') :
+                              invoice.status == 'unpaid' ? (translations.unpaid || 'Impayée') :
+                              invoice.status == 'partial' ? (translations.partial || 'Partielle') :
+                              (translations.paid || 'Payée') }}
+                       </span>
+                   </div>
+                   <div v-if="invoice.fiscal_status" class="flex items-center justify-end gap-3">
+                       <span class="text-slate-900 dark:text-white font-black text-[10px] uppercase tracking-widest">{{ translations.fiscal || 'Fiscal' }}:</span>
+                       <FiscalStatusBadge :status="invoice.fiscal_status" />
+                   </div>
+                   <!-- PDP rejection reason -->
+                   <div v-if="invoice.pdp_rejection_reason" class="mt-1 text-xs text-rose-600 font-bold text-right max-w-xs">
+                       <span class="font-black">{{ translations.pdp_rejection || 'Rejet PDP' }} :</span> {{ invoice.pdp_rejection_reason }}
+                   </div>
+                   <!-- PDP transmission ID -->
+                   <div v-if="invoice.pdp_transmission_id" class="mt-1 text-xs text-slate-400 font-mono text-right">
+                       {{ translations.pdp_ref || 'Réf. PDP' }} : {{ invoice.pdp_transmission_id }}
+                   </div>
+                   <!-- Factur-X download -->
+                   <button
+                     v-if="invoice.fiscal_status && invoice.fiscal_status !== 'draft'"
+                     @click="downloadFacturX"
+                     class="mt-2 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-black text-[10px] uppercase tracking-widest hover:bg-indigo-100 transition-colors"
+                   >
+                     <FileDown class="w-3.5 h-3.5" /> Factur-X PDF
+                   </button>
+                </div>
+            </div>
+         </div>
+
+         <!-- Addresses -->
+         <div class="grid grid-cols-1 md:grid-cols-2 gap-10 mb-12">
+             <!-- Bill To -->
+             <div class="bg-slate-50 dark:bg-slate-950/50 rounded-3xl p-8 border border-slate-100 dark:border-slate-800">
+                  <div class="flex items-center gap-3 mb-6">
+                      <div class="w-10 h-10 rounded-xl bg-purple-100 dark:bg-purple-900/30 text-purple-600 flex items-center justify-center">
+                          <User class="w-5 h-5" />
+                      </div>
+                      <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest">{{ translations.bill_to }}</h3>
+                  </div>
+                  <h4 class="text-xl font-bold text-slate-900 dark:text-white mb-4">{{ client_detail.company_name }}</h4>
+                  <div class="text-slate-500 space-y-1 text-sm font-medium">
+                      <p>{{ client_detail.address }}</p>
+                      <p>{{ client_detail.postal_code }}, {{ client_detail.city }}</p>
+                      <p>{{ client_detail.country }}</p>
+                      <a v-if="client_detail.phone" :href="'tel:' + client_detail.phone" class="text-purple-600 hover:underline mt-2 block">{{ client_detail.phone }}</a>
+                  </div>
+             </div>
+
+             <!-- Bill From -->
+             <div class="bg-slate-50 dark:bg-slate-950/50 rounded-3xl p-8 border border-slate-100 dark:border-slate-800">
+                  <div class="flex items-center gap-3 mb-6">
+                      <div class="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 flex items-center justify-center">
+                          <Building class="w-5 h-5" />
+                      </div>
+                      <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest">{{ translations.received_from }}</h3>
+                  </div>
+                  <h4 class="text-xl font-bold text-slate-900 dark:text-white mb-4">{{ settings.company_name }}</h4>
+                  <div class="text-slate-500 space-y-1 text-sm font-medium">
+                      <p>{{ settings.company_address }}</p>
+                      <p>{{ settings.postal_code }}, {{ settings.city }}</p>
+                      <p>{{ settings.country }}</p>
+                      <a v-if="settings.company_phone" :href="'tel:' + settings.company_phone" class="text-indigo-600 hover:underline mt-2 block">{{ settings.company_phone }}</a>
+                  </div>
+             </div>
+         </div>
+
+         <!-- Items Table -->
+         <div class="overflow-hidden rounded-3xl border border-slate-200 dark:border-slate-800 mb-10">
+             <table class="w-full text-left border-collapse">
+                 <thead>
+                     <tr class="bg-slate-50 dark:bg-slate-950 text-xs font-black text-slate-400 uppercase tracking-widest border-b border-slate-200 dark:border-slate-800">
+                         <th class="p-4 w-12"></th> <!-- Grip -->
+                         <th class="p-4">{{ translations.item_ref || translations.reference }}</th>
+                         <th class="p-4">{{ translations.item_name || translations.name }}</th>
+                         <th class="p-4">{{ translations.description }}</th>
+                         <th class="p-4 text-center">{{ translations.quantity }}</th>
+                         <th class="p-4 text-right">{{ translations.unit_price }}</th>
+                         <th class="p-4 text-center">{{ translations.tax }}</th>
+                         <th class="p-4 text-right">{{ translations.total }}</th>
+                         <th class="p-4 text-center w-24">{{ translations.actions }}</th>
+                     </tr>
+                 </thead>
+                 <tbody id="items-body">
+                     <tr v-for="item in items" :key="item.id" :data-id="item.id" class="group border-b border-slate-100 dark:border-slate-800 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                         <td class="p-4 text-center text-slate-300 cursor-move drag-handle group-hover:text-slate-500"><GripVertical v-if="!isLocked" class="w-4 h-4" /></td>
+                          <td class="p-4 text-sm font-bold text-slate-600 dark:text-slate-300">{{ item.item_ref }}</td>
+                          <td class="p-4 text-sm font-bold text-slate-900 dark:text-white">{{ item.item_name }}</td>
+                          <td class="p-4 text-sm text-slate-500 dark:text-slate-400 max-w-xs truncate" :title="item.description"><div class="truncate">{{ item.description }}</div></td>
+                          <td class="p-4 text-sm font-bold text-center text-slate-900 dark:text-white">{{ item.quantity }}</td>
+                          <td class="p-4 text-sm font-mono text-right text-slate-600 dark:text-slate-300">{{ formatCurrency(item.unit_price).replace(clientCurrency.value || defaultCurrency.value, '') }}</td>
+                          <td class="p-4 text-sm text-center text-slate-500">{{ item.vat_rate }}%</td>
+                          <td class="p-4 text-sm font-bold font-mono text-right text-slate-900 dark:text-white">{{ formatCurrency(item.total_amount) }}</td>
+                         <td class="p-4 text-center">
+                             <div 
+                                v-if="!isLocked"
+                                class="flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                             >
+                                 <button @click="editItem(item)" class="p-2 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"><Pencil class="w-4 h-4" /></button>
+                                 <button @click="confirmRemoveItem(item)" class="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"><Trash2 class="w-4 h-4" /></button>
+                             </div>
+                             <div v-else class="text-slate-300">
+                                 <Lock class="w-4 h-4 mx-auto opacity-20" />
+                             </div>
+                         </td>
+                     </tr>
+                     <tr v-if="items.length === 0">
+                         <td colspan="9" class="p-12 text-center text-slate-400 font-medium italic">{{ translations.no_items || 'Aucun élément' }}</td>
+                     </tr>
+                     <!-- Add Item Button -->
+                     <tr v-if="invoice.id && !isLocked">
+                         <td colspan="9" class="p-6 text-center bg-slate-50/50 dark:bg-slate-950/30">
+                             <button 
+                                @click="showAddItemModal = true" 
+                                class="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 font-black text-xs uppercase tracking-widest hover:border-purple-500 hover:text-purple-600 transition-all shadow-sm"
+                             >
+                                 <Plus class="w-4 h-4" />
+                                 {{ translations.add_item || 'Ajouter une ligne' }}
+                             </button>
+                         </td>
+                     </tr>
+                 </tbody>
+             </table>
+         </div>
+
+         <!-- Totals -->
+         <div class="flex flex-col items-end">
+             <div class="w-full md:w-1/3 space-y-4 bg-slate-50 dark:bg-slate-950/50 rounded-3xl p-8 border border-slate-100 dark:border-slate-800">
+                 <div class="flex justify-between items-center text-slate-500 font-bold text-sm">
+                     <span>{{ translations.subtotal }}:</span>
+                     <span class="font-mono text-slate-900 dark:text-white">{{ formatCurrency(invoice.subtotal) }}</span>
+                 </div>
+                  <div class="flex justify-between items-center text-slate-500 font-bold text-sm">
+                     <span>{{ translations.tax }}:</span>
+                     <span class="font-mono text-slate-900 dark:text-white">{{ formatCurrency(invoice.tax) }}</span>
+                 </div>
+                 <div class="h-px bg-slate-200 dark:bg-slate-800 my-4"></div>
+                 <div class="flex justify-between items-center text-lg font-black text-slate-900 dark:text-white">
+                     <span>{{ translations.total }}:</span>
+                     <span class="text-purple-600 font-mono">{{ formatCurrency(invoice.total_amount) }}</span>
+                 </div>
+             </div>
+         </div>
+
+      </div>
+
+      <!-- Paiements partiels (addon Advance requis) -->
+      <div v-if="isAdvanceActive && invoice.status && invoice.status !== 'draft'" class="mt-8 bg-white dark:bg-slate-900 rounded-[2.5rem] p-8 shadow-sm border border-slate-100 dark:border-slate-800">
+        <div class="flex items-center justify-between mb-6">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 flex items-center justify-center">
+              <CreditCard class="w-5 h-5" />
+            </div>
+            <div>
+              <h3 class="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest">{{ translations.payments_section || 'Payments' }}</h3>
+              <p v-if="paymentsData.total_amount" class="text-xs text-slate-400 font-bold mt-0.5">
+                {{ formatCurrency(paymentsData.paid_amount) }} / {{ formatCurrency(paymentsData.total_amount) }}
+              </p>
+            </div>
+          </div>
+          <button
+            v-if="isAdvanceActive && invoice.status !== 'paid'"
+            @click="showPartialPaymentModal = true"
+            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-emerald-600 text-white font-black text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg shadow-emerald-500/30"
+          >
+            <Plus class="w-4 h-4" />
+            {{ translations.add_payment || 'Add payment' }}
           </button>
         </div>
-        <div
-          v-else
-          class="tooltip tooltip-bottom tooltip-warning"
-          :data-tip="translations.active_email_addon"
-        >
-          <button class="btn btn-sm btn-primary" disabled>
-            {{ translations.remind_invoice }}
-          </button>
+
+        <!-- Progress bar -->
+        <div v-if="paymentsData.total_amount > 0" class="mb-6">
+          <div class="flex justify-between text-xs font-bold text-slate-500 mb-2">
+            <span>{{ Math.round((paymentsData.paid_amount / paymentsData.total_amount) * 100) }}% réglé</span>
+            <span class="text-slate-400">Reste : <span class="text-rose-500 font-black font-mono">{{ formatCurrency(paymentsData.remaining_amount) }}</span></span>
+          </div>
+          <div class="h-2.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+            <div
+              class="h-full rounded-full transition-all duration-500"
+              :class="paymentsData.remaining_amount <= 0 ? 'bg-emerald-500' : 'bg-amber-400'"
+              :style="{ width: Math.min(100, Math.round((paymentsData.paid_amount / paymentsData.total_amount) * 100)) + '%' }"
+            ></div>
+          </div>
+        </div>
+
+        <!-- Payment list -->
+        <div v-if="paymentsLoading" class="space-y-3">
+          <div v-for="i in 2" :key="i" class="h-16 bg-slate-50 dark:bg-slate-800 rounded-2xl animate-pulse"></div>
+        </div>
+        <div v-else-if="paymentsData.payments && paymentsData.payments.length === 0" class="py-8 text-center text-slate-400 font-bold text-sm">
+          {{ translations.no_payments_recorded || 'No payment recorded.' }}
+        </div>
+        <div v-else class="space-y-3">
+          <div
+            v-for="payment in paymentsData.payments"
+            :key="payment.id"
+            class="flex items-center justify-between p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700 group"
+          >
+            <div class="flex items-center gap-4">
+              <div class="w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-900/20 text-emerald-600 flex items-center justify-center flex-shrink-0">
+                <CheckCircle2 class="w-4 h-4" />
+              </div>
+              <div>
+                <div class="font-black text-slate-900 dark:text-white text-sm font-mono">{{ formatCurrency(payment.amount) }}</div>
+                <div class="text-xs text-slate-400 font-bold mt-0.5">{{ payment.payment_date }} · {{ payment.payment_method }}</div>
+                <div v-if="payment.notes" class="text-xs text-slate-500 mt-0.5 italic">{{ payment.notes }}</div>
+              </div>
+            </div>
+            <button
+              @click="confirmDeletePayment(payment)"
+              class="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-colors opacity-0 group-hover:opacity-100"
+              title="Supprimer ce paiement"
+            >
+              <Trash2 class="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Historique fiscal -->
+      <div v-if="fiscalHistory.length > 0" class="mt-12 bg-white dark:bg-slate-900 rounded-[2.5rem] p-8 shadow-sm border border-slate-100 dark:border-slate-800">
+        <div class="flex items-center gap-3 mb-6">
+          <div class="w-10 h-10 rounded-xl bg-violet-100 dark:bg-violet-900/30 text-violet-600 flex items-center justify-center">
+            <History class="w-5 h-5" />
+          </div>
+          <h3 class="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest">Historique fiscal</h3>
+        </div>
+        <div class="space-y-3">
+          <div v-for="entry in fiscalHistory" :key="entry.id" class="flex items-start gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700">
+            <div class="w-2 h-2 rounded-full mt-2 flex-shrink-0" :class="{
+              'bg-emerald-500': entry.action === 'validate',
+              'bg-purple-500': entry.action === 'transmit' || entry.action === 'sent_pdp',
+              'bg-rose-500':   entry.action === 'reject' || entry.action === 'rejected',
+              'bg-indigo-500': entry.action === 'accept' || entry.action === 'accepted',
+              'bg-slate-400':  !['validate','transmit','sent_pdp','reject','rejected','accept','accepted'].includes(entry.action)
+            }"></div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between gap-2">
+                <span class="text-xs font-black text-slate-900 dark:text-white capitalize">{{ entry.action.replace('_', ' ') }}</span>
+                <span class="text-[10px] text-slate-400 font-mono flex-shrink-0">{{ entry.created_at }}</span>
+              </div>
+              <p v-if="entry.description" class="text-xs text-slate-500 mt-1">{{ entry.description }}</p>
+              <p v-if="entry.new_value" class="text-[10px] font-mono text-slate-400 mt-1">{{ entry.new_value }}</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-    <Card topMargin="mt-8" id="invoice-content">
-      <div class="grid grid-cols-2">
-        <div class="md:col-span-1">
-          <div>
-            <img
-              :src="settings.logo_url"
-              :style="{ width: settings.logo_width + 'px' }"
-              alt="Logo"
-            />
-          </div>
+
+    <!-- Notes internes -->
+    <div v-if="invoice.internal_notes" class="mt-6 bg-amber-50 dark:bg-amber-900/10 rounded-[2.5rem] p-8 border border-amber-100 dark:border-amber-800/30">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+          <StickyNote class="w-5 h-5" />
         </div>
-        <div class="md:col-span-1 text-right">
-          <p class="text-lg font-semibold">{{ invoice.invoice_number }}</p>
-          <div>
-            {{ translations.created_at }}:
-            <strong>{{ invoice.created_at }}</strong>
+        <h3 class="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest">{{ translations.internal_notes || 'Notes internes' }}</h3>
+        <span class="text-[10px] font-bold text-amber-500 uppercase tracking-widest bg-amber-100 dark:bg-amber-900/30 px-2 py-0.5 rounded-lg">Non imprimé</span>
+      </div>
+      <p class="text-sm text-slate-600 dark:text-slate-300 font-medium whitespace-pre-wrap">{{ invoice.internal_notes }}</p>
+    </div>
+
+    <!-- Historique des modifications -->
+    <div v-if="invoiceHistory.length > 0" class="mt-6 bg-white dark:bg-slate-900 rounded-[2.5rem] p-8 shadow-sm border border-slate-100 dark:border-slate-800">
+      <button @click="showHistory = !showHistory" class="w-full flex items-center justify-between gap-3 group">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 flex items-center justify-center">
+            <History class="w-5 h-5" />
           </div>
-          <div>
-            {{ translations.due_date }}:
-            <strong>{{ invoice.due_date }}</strong>
-          </div>
-          <div>
-            {{ translations.status }}:
-            <span
-              v-if="invoice.status == 'draft'"
-              class="badge badge-error text-white"
-              >{{ translations.draft }}</span
-            >
-            <span
-              v-if="invoice.status == 'unpaid'"
-              class="badge badge-error text-white"
-              >{{ translations.unpaid }}</span
-            >
-            <span
-              v-if="invoice.status == 'paid'"
-              class="badge badge-success text-white"
-              >{{ translations.paid }}</span
-            >
+          <h3 class="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest">{{ translations.invoice_history || 'Historique' }}</h3>
+          <span class="text-[10px] font-black px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500">{{ invoiceHistory.length }}</span>
+        </div>
+        <ChevronDown class="w-4 h-4 text-slate-400 transition-transform" :class="{ 'rotate-180': showHistory }" />
+      </button>
+      <div v-if="showHistory" class="mt-6 space-y-2">
+        <div v-for="entry in invoiceHistory" :key="entry.id" class="flex items-start gap-3 p-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+          <div class="w-2 h-2 rounded-full mt-2 flex-shrink-0" :class="{
+            'bg-emerald-500': ['payment_added','invoice_created'].includes(entry.action),
+            'bg-rose-500': ['payment_deleted','item_deleted'].includes(entry.action),
+            'bg-amber-500': ['item_updated','price_updated','invoice_updated'].includes(entry.action),
+            'bg-blue-400': entry.action === 'item_added',
+            'bg-slate-400': !['payment_added','invoice_created','payment_deleted','item_deleted','item_updated','price_updated','invoice_updated','item_added'].includes(entry.action),
+          }"></div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-xs font-bold text-slate-700 dark:text-slate-300">{{ entry.action_label || entry.action }}</span>
+              <span class="text-[10px] text-slate-400 font-mono flex-shrink-0">{{ entry.created_at }}</span>
+            </div>
+            <p v-if="entry.description" class="text-xs text-slate-500 mt-0.5">{{ entry.description }}</p>
           </div>
         </div>
       </div>
+    </div>
 
-      <div
-        class="bg-base-300 rounded-lg shadow-md flex justify-between p-4 mt-4 gap-4"
-      >
-        <div>
-          <strong>{{ translations.bill_to }}:</strong>
-          <h4>
-            <strong>{{ client_detail.company_name }}</strong>
-          </h4>
-          <p>
-            {{ client_detail.address }}<br />
-            {{ client_detail.postal_code }}, {{ client_detail.city }} <br />
-            {{ client_detail.country }}<br />
-            <a
-              v-if="client_detail.phone"
-              :href="'tel:' + client_detail.phone"
-              >{{ client_detail.phone }}</a
-            >
-          </p>
-        </div>
-        <div>
-          <strong>{{ translations.received_from }}:</strong>
-          <h4>
-            <strong>{{ settings.company_name }}</strong>
-          </h4>
-          <p>
-            {{ settings.company_address }}<br />
-            {{ settings.postal_code }}, {{ settings.city }} <br />
-            {{ settings.country }}<br />
-            <a
-              v-if="settings.company_phone"
-              :href="'tel:' + settings.company_phone"
-              >{{ settings.company_phone }}</a
-            ><br />
-            <a
-              v-if="settings.mobile_phone"
-              :href="'tel:' + settings.mobile_phone"
-              >{{ settings.mobile_phone }}</a
-            >
-          </p>
-        </div>
-      </div>
-      <edit-item-modal
-        :loading="loadingModal"
-        :show-modal="editItemsModal"
-        modal-id="modal_edit_item"
-        :modal-title="translations.edit_item"
-        :item="selectedItem"
-        @close="editItemsModal = false"
-        @itemEdited="fetchItems"
-      />
+    <!-- Partial Payment Modal (addon Advance) -->
+    <PartialPaymentModal
+      v-if="isAdvanceActive"
+      :show-modal="showPartialPaymentModal"
+      modal-id="modal_partial_payment"
+      :modal-title="translations.add_payment || 'Add payment'"
+      :invoice-id="invoice.id"
+      :remaining-amount="paymentsData.remaining_amount || 0"
+      :currency="clientCurrency || defaultCurrency"
+      :payment-methods="paymentMethods"
+      @close="showPartialPaymentModal = false"
+      @success="onPaymentAdded"
+    />
 
-      <edit-disb-modal
-        :loading="loadingModal"
-        :show-modal="editDisbModal"
-        modal-id="modal_edit_disb"
-        :modal-title="translations.edit_item"
-        :disb="selectedDisb"
-        @close="editDisbModal = false"
-        @disbEdited="fetchDisbursements"
-      />
+    <!-- Edit Item Modal -->
+    <EditItemModal
+      v-if="editItemsModal"
+      :show-modal="editItemsModal"
+      modal-id="edit_item_modal"
+      :modal-title="translations.edit_item || 'Modifier'"
+      :item="selectedItem"
+      @close="editItemsModal = false"
+      @itemEdited="onItemEdited"
+    />
 
-      <form @submit.prevent="submitItems">
-        <table class="table mt-8">
-          <thead>
-            <tr>
-              <th></th>
-              <th width="5%">{{ translations.item_ref }}</th>
-              <th width="19%">{{ translations.item_name }}</th>
-              <th width="21%">{{ translations.description }}</th>
-              <th width="10%" class="text-center">
-                {{ translations.quantity }}
-              </th>
-              <th width="8%" class="text-center">
-                {{ translations.unit_price }}
-              </th>
-              <th
-                v-if="settings.vat_active == 1"
-                width="5%"
-                class="text-center"
-              >
-                {{ translations.vat }}
-              </th>
-              <th v-else width="5%"></th>
-              <th width="10%" class="text-center">
-                {{ translations.discount }}
-              </th>
-              <th width="10%" class="text-right">{{ translations.total }}</th>
-              <th width="18%" class="text-right inv-actions"></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(item, index) in invoiceItems" :key="item.id || index">
-              <td class="draggable-item drag-handle px-2">
-                <i v-if="invoice.status == 'draft'" class="fas fa-sort"></i>
-              </td>
-              <td>{{ item.item_ref }}</td>
-              <td>
-                <div
-                  v-if="item.category_name"
-                  class="badge badge-ghost badge-xs"
-                >
-                  {{ item.category_name }}
-                </div>
-                <div>{{ item.item_name }}</div>
-              </td>
-              <td v-html="nl2br(item.item_description)"></td>
-              <td class="text-center">{{ item.quantity }}</td>
-              <td class="text-center">
-                {{ item.unit_price
-                }}<span v-if="default_currency_symbol == client_currency">{{
-                  default_currency_symbol
-                }}</span>
-                <span v-else>{{ client_currency }}</span>
-              </td>
-              <td v-if="settings.vat_active == 1" class="text-center">
-                {{ item.vat_rate }}%
-              </td>
-              <td v-else></td>
-              <td v-if="settings.vat_active == 1" class="text-center">
-                {{ item.discount }}% <br />
-                {{
-                  calculateDiscountAmountWithVAT(
-                    item.quantity,
-                    item.unit_price,
-                    item.vat_rate,
-                    item.discount
-                  )
-                }}
-              </td>
-              <td v-else class="text-center">
-                {{ item.discount }}% <br />
-                {{
-                  calculateDiscountAmount(
-                    item.quantity,
-                    item.unit_price,
-                    item.discount
-                  )
-                }}
-              </td>
-              <td class="text-right">
-                {{ item.total_amount }}
-                <span v-if="default_currency_symbol == client_currency">{{
-                  default_currency_symbol
-                }}</span>
-                <span v-else>{{ client_currency }}</span>
-              </td>
-              <td>
-                <div v-if="invoice.status == 'draft'">
-                  <span class="lg:tooltip" :data-tip="translations.edit">
-                    <button
-                      @click.prevent="editItem(item.id)"
-                      class="bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-3 rounded"
-                    >
-                      <i class="far fa-edit"></i></button
-                  ></span>
-                  <span class="lg:tooltip" :data-tip="translations.delete">
-                    <button
-                      @click.prevent="confirmremoveItem(item.id, invoice.id)"
-                      class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-3 mx-2 rounded"
-                    >
-                      <i v-if="!item.loading_del" class="far fa-trash-alt"></i>
-                      <span
-                        v-if="item.loading_del"
-                        class="loading loading-spinner loading-xs"
-                      ></span></button
-                  ></span>
-                </div>
-              </td>
-            </tr>
-            <tr v-if="invoice.status == 'draft'">
-              <td class="align-top px-2">
-                <span class="cursor-pointer" @click.prevent="ShowModalArticles">
-                  <i class="fas fa-list-ul"></i>
-                </span>
-              </td>
-              <td class="align-top px-2">
-                <div class="flex items-center border rounded-md relative">
-                  <input
-                    type="text"
-                    v-model="newItem.item_ref"
-                    @input="fetchRefs"
-                    @focus="showDropdownRef = true"
-                    :placeholder="translations.item_ref"
-                    class="w-full p-2.5 input-xs outline-none"
-                  />
-                  <ul
-                    v-if="showDropdownRef && refs.length"
-                    class="autocomplete-dropdown bg-base-100"
-                  >
-                    <li
-                      v-for="ref in refs"
-                      :key="ref.ref"
-                      @click="selectItem(ref)"
-                      class="autocomplete-item"
-                      v-html="highlightMatch(ref.ref)"
-                    ></li>
-                  </ul>
-                </div>
-              </td>
-              <td class="align-top px-2">
-                <select
-                  class="select select-xs w-full mb-1 ecwp-select"
-                  v-model="newItem.item_category"
-                >
-                  <option disabled selected>Type</option>
-                  <option
-                    v-for="category in categories"
-                    :key="category.id"
-                    :value="category.id"
-                  >
-                    {{ category.name }}
-                  </option>
-                </select>
-                <div class="flex items-center border rounded-md relative">
-                  <span
-                    id="loader_articles"
-                    class="loading loading-spinner loading-xs absolute right-2 hidden"
-                  ></span>
-                  <input
-                    type="text"
-                    v-model="newItem.item_name"
-                    @input="fetchArticles"
-                    @focus="showDropdown = true"
-                    :placeholder="translations.item_name"
-                    class="w-full p-2.5 bg-transparent input-xs outline-none"
-                  />
-                  <ul
-                    v-if="showDropdown && articles.length"
-                    class="autocomplete-dropdown bg-base-100"
-                  >
-                    <li
-                      v-for="item in articles"
-                      :key="item.name"
-                      @click="selectItem(item)"
-                      class="autocomplete-item bt-primary"
-                      v-html="highlightMatch(item.name)"
-                    ></li>
-                  </ul>
-                </div>
-              </td>
-              <td class="align-top">
-                <div class="flex items-center rounded-md">
-                  <textarea
-                    v-model="newItem.item_description"
-                    :placeholder="translations.item_description"
-                    class="textarea textarea-bordered input-xs w-full"
-                    @input="resize()"
-                    ref="textarea"
-                  ></textarea>
-                </div>
-              </td>
-              <td class="align-top">
-                <div class="flex items-center border rounded-lg">
-                  <div class="inline-flex">
-                    <div
-                      class="select-none border py-3 px-2 cursor-pointer bg-base-300 hover:bg-gray-200 rounded-l"
-                      @click="decrease"
-                    >
-                      -
-                    </div>
+    <!-- Add Item Modal -->
+    <AddItemModal
+      :show-modal="showAddItemModal"
+      modal-id="modal_add_item_invoice"
+      :modal-title="translations.add_item || 'Ajouter une ligne'"
+      :categories="categories"
+      :invoice-id="invoice.id"
+      @close="showAddItemModal = false"
+      @itemAdded="fetchInvoiceDetails"
+    />
 
-                    <input
-                      type="text"
-                      pattern="([0-9]+.{0,1}[0-9]*,{0,1})*[0-9]"
-                      v-model="newItem.quantity"
-                      :placeholder="translations.quantity"
-                      class="w-full p-2.5 bg-transparent outline-none max-w-40 min-w-10"
-                      @input="updateTotal"
-                    />
-
-                    <div
-                      class="select-none border py-3 px-2 cursor-pointer bg-base-300 hover:bg-gray-200 rounded-r"
-                      @click="increase"
-                    >
-                      +
-                    </div>
-                  </div>
-                </div>
-              </td>
-              <td class="align-top">
-                <div class="flex items-center border rounded-md">
-                  <input
-                    type="text"
-                    pattern="([0-9]+.{0,1}[0-9]*,{0,1})*[0-9]"
-                    v-model="newItem.unit_price"
-                    :placeholder="translations.unit_price"
-                    class="w-full p-2.5 bg-transparent outline-none max-w-40 min-w-10"
-                    @input="updateTotal"
-                  />
-                </div>
-              </td>
-              <td v-if="settings.vat_active == 1" class="align-top">
-                <select
-                  v-model="newItem.vat_rate"
-                  @change="updateTotal"
-                  class="select select-md w-full mb-1 ecwp-select min-w-20"
-                >
-                  <option
-                    v-for="rate in list_vats"
-                    :key="rate"
-                    :value="rate.rate"
-                  >
-                    {{ rate.rate }}%
-                  </option>
-                </select>
-              </td>
-              <td v-else class="align-top"></td>
-              <td class="align-top">
-                <div class="flex items-center border rounded-md">
-                  <input
-                    type="number"
-                    v-model="newItem.discount"
-                    min="0"
-                    max="100"
-                    :placeholder="translations.discount"
-                    class="w-full p-2.5 bg-transparent outline-none max-w-40 min-w-10"
-                    @input="updateTotal"
-                  />
-                  <div class="px-3 py-2.5 rounded-l-md bg-base-300 border-r">
-                    %
-                  </div>
-                </div>
-              </td>
-              <td class="text-right" v-if="settings.vat_active == 1">
-                {{
-                  calculateTotalWithVat(
-                    newItem.quantity,
-                    newItem.unit_price,
-                    newItem.vat_rate,
-                    newItem.discount
-                  )
-                }}
-              </td>
-              <td class="text-right" v-else>
-                {{
-                  calculateTotal(
-                    newItem.quantity,
-                    newItem.unit_price,
-                    newItem.discount
-                  )
-                }}
-              </td>
-              <td>
-                <div v-if="invoice.status == 'draft'">
-                  <span class="lg:tooltip" :data-tip="translations.add">
-                    <button
-                      type="submit"
-                      class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
-                    >
-                      <i v-if="!loading_add" class="fa fa-plus"></i>
-                      <span
-                        v-if="loading_add"
-                        class="loading loading-spinner loading-xs"
-                      ></span></button
-                  ></span>
-                </div>
-              </td>
-            </tr>
-            <tr v-if="settings.active_disbursements == 1">
-              <td colspan="12" class="font-bold text-lg pl-0 pt-10">
-                <button
-                  v-if="invoice.status == 'draft'"
-                  @click.prevent="toggleDisbursements"
-                  class="btn btn-primary py-2 px-4 rounded text-white"
-                >
-                  <i
-                    :class="{
-                      'fas fa-plus': !showDisbursements,
-                      'fas fa-minus': showDisbursements,
-                    }"
-                  ></i>
-                </button>
-                <span
-                  class="ml-2"
-                  v-if="invoice.status == 'draft' || disbursementsExist"
-                >
-                  {{ translations.disbursements }}
-                </span>
-              </td>
-            </tr>
-            <tr
-              v-if="
-                settings.active_disbursements == 1 &&
-                disbursementsList &&
-                disbursementsList.length > 0
-              "
-            >
-              <th class="p-2" colspan="3">{{ translations.item_name }}</th>
-              <th class="p-2">{{ translations.description }}</th>
-              <th class="p-2" colspan="1">
-                {{ translations.unit_price }}
-              </th>
-            </tr>
-            <tr
-              v-for="disbursement in disbursementsList"
-              :key="disbursement.id"
-            >
-              <td class="p-2" colspan="3">{{ disbursement.title }}</td>
-              <td class="p-2" v-html="nl2br(disbursement.description)"></td>
-              <td class="p-2">
-                {{ calculateTotal(1, disbursement.unit_price, 0) }}
-              </td>
-              <td class="p-2" colspan="2">
-                <div v-if="invoice.status == 'draft'">
-                  <span class="lg:tooltip" :data-tip="translations.edit">
-                    <button
-                      @click.prevent="editDisb(disbursement.id)"
-                      class="bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-3 rounded"
-                    >
-                      <i class="far fa-edit"></i></button
-                  ></span>
-                  <span class="lg:tooltip" :data-tip="translations.delete">
-                    <button
-                      @click.prevent="
-                        confirmremoveDisb(disbursement.id, invoice.id)
-                      "
-                      class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-3 mx-2 rounded"
-                    >
-                      <i
-                        v-if="!disbursement.loading_del"
-                        class="far fa-trash-alt"
-                      ></i>
-                      <span
-                        v-if="disbursement.loading_del"
-                        class="loading loading-spinner loading-xs"
-                      ></span></button
-                  ></span>
-                </div>
-              </td>
-            </tr>
-            <tr
-              v-if="
-                settings.active_disbursements == 1 &&
-                showDisbursements &&
-                invoice.status == 'draft'
-              "
-            >
-              <td class="align-top px-2" colspan="3">
-                <div class="flex items-center border rounded-md">
-                  <input
-                    type="text"
-                    v-model="disbursementsItem.title"
-                    :placeholder="translations.title"
-                    class="w-full p-2.5 bg-transparent input-xs outline-none"
-                  />
-                </div>
-              </td>
-              <td class="align-top px-2">
-                <div class="flex items-center rounded-md">
-                  <textarea
-                    v-model="disbursementsItem.description"
-                    :placeholder="translations.description"
-                    class="textarea textarea-bordered input-xs w-full"
-                  ></textarea>
-                </div>
-              </td>
-              <td class="align-top">
-                <div class="flex items-center border rounded-md">
-                  <input
-                    type="text"
-                    pattern="([0-9]+.{0,1}[0-9]*,{0,1})*[0-9]"
-                    v-model="disbursementsItem.unit_price"
-                    :placeholder="translations.price"
-                    class="w-full p-2.5 bg-transparent input-xs outline-none"
-                  />
-                </div>
-              </td>
-              <td class="align-top" colspan="3"></td>
-              <td class="text-right">
-                {{ calculateTotal(1, disbursementsItem.unit_price, 0) }}
-              </td>
-              <td>
-                <span
-                  class="lg:tooltip"
-                  :data-tip="translations.add_disbursements"
-                >
-                  <button
-                    type="submit"
-                    class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
-                    @click.prevent="addDisbursements"
-                  >
-                    <i v-if="!loading_add_disbursements" class="fa fa-plus"></i>
-                    <span
-                      v-if="loading_add_disbursements"
-                      class="loading loading-spinner loading-xs"
-                    ></span>
-                  </button>
-                </span>
-              </td>
-            </tr>
-
-            <tr class="border-t-4">
-              <td colspan="8" class="text-right no-border">
-                <strong>{{ translations.subtotal }}</strong>
-              </td>
-              <td class="text-right">
-                <span
-                  v-if="totalAmount !== totalAmountWithoutDiscount"
-                  class="line-through"
-                >
-                  {{ totalAmountWithoutDiscount }}
-                </span>
-                {{ totalAmount }}
-              </td>
-              <td></td>
-            </tr>
-            <template v-if="settings.vat_active == 1">
-              <tr v-for="(rate, index) in getUniqueVATRates()" :key="index">
-                <td colspan="8" class="text-right no-border">
-                  <strong> {{ translations.tax }} ({{ rate }}%) </strong>
-                </td>
-                <td class="text-right">{{ calculateVATForRate(rate) }}</td>
-                <td></td>
-              </tr>
-            </template>
-
-            <tr v-if="invoice.shipping_amount">
-              <td colspan="8" class="text-right no-border">
-                <strong>{{ translations.shipping_fees }}</strong>
-              </td>
-              <td class="text-right no-border">
-                {{ formatShippingAmout(invoice.shipping_amount) }}
-              </td>
-            </tr>
-            <tr v-if="settings.active_disbursements == 1 && disbursementsExist">
-              <td colspan="8" class="text-right no-border">
-                <strong>{{ translations.total_disbursements }}</strong>
-              </td>
-              <td class="text-right no-border">
-                {{ totalDisbursements() }}
-              </td>
-              <td></td>
-            </tr>
-            <tr>
-              <td colspan="8" class="text-right no-border font-bold text-xl">
-                <strong>{{ translations.total }}</strong>
-              </td>
-              <td class="text-right no-border font-bold text-xl">
-                {{ calculateTotalAmountWithVAT() }}
-              </td>
-              <td></td>
-            </tr>
-            <tr v-if="client_currency != default_currency_symbol">
-              <td colspan="8" class="text-right no-border">
-                <strong>{{ translations.exchange_rate }}</strong>
-              </td>
-              <td class="text-right no-border">
-                {{ invoice.exchange_rate }}
-              </td>
-            </tr>
-            <tr v-if="client_currency != default_currency_symbol">
-              <td colspan="8" class="text-right no-border">
-                <strong
-                  >{{ translations.total }}
-                  {{ default_currency_symbol }}</strong
-                >
-              </td>
-              <td class="text-right no-border font-bold text-xl">
-                {{ totalAmountDefaultCurrency }}{{ default_currency_symbol }}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </form>
-    </Card>
-  </div>
+  </MainLayout>
 </template>
-  
-<script>
-import Card from "@/components/Card.vue";
+
+<script setup>
+import { ref, reactive, computed, onMounted, nextTick, onUpdated } from 'vue';
+import { useRoute } from 'vue-router';
+import axios from 'axios';
+import MainLayout from '@/components/layout/MainLayout.vue';
+import RemoveModal from "@/components/RemoveAlert.vue";
 import InvoiceNavBar from "@/components/invoices/NavBar.vue";
 import EditItemModal from "@/components/invoices/Modal_Edit_Item.vue";
-import EditDisbModal from "@/components/invoices/Modal_Edit_Disb.vue";
-import RemoveModal from "@/components/RemoveAlert.vue";
-import ArticleModal from "@/components/ArticlesModal.vue";
+import AddItemModal from "@/components/invoices/Modal_Add_Item.vue";
+import FiscalStatusBadge from "@/components/invoices/FiscalStatusBadge.vue";
+import { CheckCircle2, AlertCircle, X, AlertTriangle, Bell, User, Building, GripVertical, Pencil, Trash2, Plus, Lock, FileDown, History, CreditCard, StickyNote, ChevronDown } from 'lucide-vue-next';
+import PartialPaymentModal from "@/components/invoices/PartialPaymentModal.vue";
 import Sortable from "sortablejs";
-import { fetchSettings } from "@/api/api";
-import RemindInvoiceModal from "@/components/invoices/Remind.vue";
 
-export default {
-  name: "InvoiceViewDetail",
-  components: {
-    Card,
-    InvoiceNavBar,
-    EditItemModal,
-    EditDisbModal,
-    RemoveModal,
-    RemindInvoiceModal,
-    ArticleModal,
-  },
-  data() {
-    return {
-      selectedItem: null,
-      selectedDisb: null,
-      SelectedInvoiceId: null,
-      editItemsModal: false,
-      editDisbModal: false,
-      RemindInvoiceModal: false,
-      no_items: true,
-      loading: false,
-      loading_add: false,
-      invoice: [],
-      invoiceItems: [],
-      newItem: {
-        loading_del: false,
-        item_name: "",
-        item_ref: "",
-        item_category: "Type",
-        item_description: "",
-        quantity: 1,
-        vat_rate: 0,
-        unit_price: 0,
-        discount: 0,
-        total_price: 0,
-        total_amount: 0,
-      },
-      settings: [],
-      client_detail: [],
-      list_vats: [],
-      client_currency: "",
-      default_vat: "",
-      default_currency: "",
-      default_currency_symbol: "",
-      showArticlesModal: false,
-      articles: [],
-      categories: [],
-      refs: [],
-      showDropdown: false,
-      showDropdownRef: false,
-      toast: {
-        visible: false,
-        message: "",
-        type: "alert-success",
-        position: "toast-bottom toast-end",
-      },
-      showDisbursements: false,
-      disbursementsExist: false,
-      disbursementsItem: {
-        title: "",
-        description: "",
-        unit_price: "",
-      },
-      loading_add_disbursements: false,
-      disbursementsList: [],
-    };
-  },
-  computed: {
-    translations() {
-      return window.myEasyComptaAdmin.easyComptaTranslations;
-    },
-    isInvoiceOverdue() {
-      const today = new Date().getTime();
 
-      const dueDateTimestamp = this.invoice.due_date
-        ? new Date(this.invoice.due_date).getTime()
-        : null;
 
-      return dueDateTimestamp && dueDateTimestamp < today;
-    },
-    defaultCurrency() {
-      return {
-        currency_id: this.settings.default_currency,
-        currency_symbol: this.default_currency_symbol,
-      };
-    },
-    clientCurrency() {
-      return {
-        currency_id: this.client_detail.currency_id,
-        currency_symbol: this.client_currency,
-      };
-    },
-    totalAmountWithoutDiscount() {
-      const total = this.invoiceItems.reduce((total, item) => {
-        const priceWithoutDiscount = item.quantity * item.unit_price;
-        return total + priceWithoutDiscount;
-      }, 0);
-      return this.formatCurrency(total);
-    },
+const route = useRoute();
+const navBarRef = ref(null);
+const invoice = ref({});
+const client_detail = ref({});
+const items = ref([]);
+const loading = ref(true);
+const settings = ref({});
+const showRemoveModal = ref(false);
+const fiscalHistory = ref([]);
+const itemToRemove = ref(null);
+const editItemsModal = ref(false);
+const selectedItem = ref({});
+const no_items = ref(false);
+const defaultCurrency = ref("EUR");
+const clientCurrency = ref("EUR");
+const categories = ref([]);
+const showAddItemModal = ref(false);
+const toast = reactive({ visible: false, message: "", type: "success" });
+const licenseData = ref(null);
+const showPartialPaymentModal = ref(false);
+const showDeletePaymentModal = ref(false);
+const paymentToDelete = ref(null);
+const paymentsLoading = ref(false);
+const paymentsData = ref({ payments: [], total_amount: 0, paid_amount: 0, remaining_amount: 0 });
+const paymentMethods = ref([]);
+const invoiceHistory = ref([]);
+const showHistory = ref(false);
 
-    totalAmount() {
-      const total = this.invoiceItems.reduce(
-        (totalPrice, item) => totalPrice + parseFloat(item.total_price),
-        0
-      );
-      return this.formatCurrency(total);
-    },
+const translations = computed(() => window.myEasyComptaAdmin?.easyComptaTranslations || {});
 
-    totalAmountDefaultCurrency() {
-      let total = this.invoiceItems.reduce((totalAmount, item) => {
-        return totalAmount + parseFloat(item.total_amount);
-      }, 0);
-
-      let total_amount = total;
-
-      const total_amount_with_exchange =
-        total_amount * this.invoice.exchange_rate;
-
-      return total_amount_with_exchange.toFixed(2);
-    },
-
-    totalAmountWithVAT() {
-      const totalAmount = parseFloat(this.totalAmount);
-      if (this.settings.vat_active == 1) {
-        const vatAmount = parseFloat(this.calculateVAT());
-        return this.formatCurrency(totalAmount + vatAmount);
-      } else {
-        return this.formatCurrency(totalAmount);
-      }
-    },
-  },
-  methods: {
-    getUniqueVATRates() {
-      const vatRates = new Set();
-      this.invoiceItems.forEach((item) => {
-        if (item.vat_rate) {
-          vatRates.add(item.vat_rate);
+const checkLicense = async () => {
+    try {
+        const res = await axios.get('/wp-json/my-easy-compta/v1/license/check-license', {
+            headers: { "X-WP-Nonce": window.myEasyComptaAdmin.nonce }
+        });
+        if (res.data.success) {
+            licenseData.value = res.data.license_data;
         }
-      });
-      return Array.from(vatRates);
-    },
-    calculateVATForRate(rate) {
-      let totalVAT = 0;
-      this.invoiceItems.forEach((item) => {
-        if (item.vat_rate === rate) {
-          const totalBeforeVAT = item.quantity * item.unit_price;
-          const discountAmount = (totalBeforeVAT * item.discount) / 100;
-          const totalAfterDiscount = totalBeforeVAT - discountAmount;
-          const vatAmount = (totalAfterDiscount * rate) / 100;
-          totalVAT += vatAmount;
-        }
-      });
-      return this.formatCurrency(totalVAT);
-    },
-
-    totalDisbursements() {
-      let total = 0;
-      if (this.disbursementsList && this.disbursementsList.length > 0) {
-        total += this.disbursementsList.reduce(
-          (totalDisbursements, disbursement) => {
-            return (
-              totalDisbursements + parseFloat(disbursement.unit_price || 0)
-            );
-          },
-          0
-        );
-      }
-      return this.formatCurrency(total);
-    },
-
-    calculateTotalAmountWithVAT() {
-      let total = this.invoiceItems.reduce((totalAmount, item) => {
-        return totalAmount + parseFloat(item.total_amount);
-      }, 0);
-      if (this.disbursementsList && this.disbursementsList.length > 0) {
-        total += this.disbursementsList.reduce(
-          (totalDisbursements, disbursement) => {
-            return (
-              totalDisbursements + parseFloat(disbursement.unit_price || 0)
-            );
-          },
-          0
-        );
-      }
-      if (this.settings.easy_compta_woo_addon_active == 1) {
-        total += parseFloat(this.invoice.shipping_amount || 0);
-      }
-      return this.formatCurrency(total);
-    },
-    formatShippingAmout(amount) {
-      return this.formatShippingCurrency(amount);
-    },
-    formatShippingCurrency(amount) {
-      const numericAmount = parseFloat(amount) || 0;
-      const formattedAmount = numericAmount.toFixed(2);
-      const currencySymbol =
-        this.client_currency !== this.default_currency_symbol
-          ? this.client_currency
-          : this.default_currency_symbol;
-
-      return `${formattedAmount}${currencySymbol}`;
-    },
-    fetchInvoice() {
-      this.loading = true;
-      fetch(`/wp-json/my-easy-compta/v1/invoices/${this.$route.params.id}`, {
-        headers: {
-          "Content-Type": "application/json",
-          "X-WP-Nonce": myEasyComptaAdmin.nonce,
-        },
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          if (data) {
-            this.invoice = data;
-            this.fetchClientInfo(data.client_id);
-          } else {
-            console.error("Invoice not found");
-          }
-        })
-        .catch((error) => {
-          console.error("Error fetching invoice:", error);
-          this.loading = false;
-        });
-    },
-    fetchClientInfo(clientId) {
-      this.loading = true;
-      fetch(`/wp-json/my-easy-compta/v1/clients/details/${clientId}`, {
-        headers: {
-          "Content-Type": "application/json",
-          "X-WP-Nonce": myEasyComptaAdmin.nonce,
-        },
-      })
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error("Client not found");
-          }
-          return response.json();
-        })
-        .then((data) => {
-          this.client_detail = data;
-          const currencyId = data.currency_id;
-          if (currencyId) {
-            this.fetchCurrencyDetails(currencyId);
-          }
-        })
-        .catch((error) => {
-          console.error("Error fetching client info:", error);
-          this.loading = false;
-        });
-    },
-    fetchItems() {
-      this.loading = true;
-      fetch(
-        `/wp-json/my-easy-compta/v1/invoices/${this.$route.params.id}/items`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            "X-WP-Nonce": myEasyComptaAdmin.nonce,
-          },
-        }
-      )
-        .then((response) => response.json())
-        .then((data) => {
-          if (data.code == "no_items_found") {
-            console.error("No items found");
-            this.invoiceItems = [];
-            this.loading = false;
-            this.no_items = true;
-          } else {
-            this.invoiceItems = data;
-            this.loading = false;
-            this.no_items = false;
-          }
-        })
-        .catch((error) => {
-          console.error("Error fetching items:", error);
-          this.loading = false;
-        });
-    },
-    fetchDisbursements() {
-      this.loading = true;
-
-      fetch(
-        `/wp-json/my-easy-compta/v1/invoices/disbursements/${this.$route.params.id}`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            "X-WP-Nonce": myEasyComptaAdmin.nonce,
-          },
-        }
-      )
-        .then((response) => {
-          return response.json();
-        })
-        .then((data) => {
-          if (data.code === "no_disbursements") {
-            console.error("No disbursements found");
-            this.disbursementsList = [];
-            this.disbursementsExist = false;
-          } else {
-            this.disbursementsList = data;
-            this.disbursementsExist = true;
-          }
-          this.loading = false;
-        })
-        .catch((error) => {
-          console.error("Error fetching disbursements:", error);
-          this.loading = false;
-        });
-    },
-    fetchCurrencyDetails(currencyId) {
-      this.loading = true;
-      fetch(`/wp-json/my-easy-compta/v1/settings/currency/${currencyId}`, {
-        headers: {
-          "Content-Type": "application/json",
-          "X-WP-Nonce": myEasyComptaAdmin.nonce,
-        },
-      })
-        .then((response) => {
-          if (!response.ok) {
-            this.loading = false;
-            throw new Error("Currency details not found");
-          }
-          this.loading = false;
-          return response.json();
-        })
-        .then((data) => {
-          this.client_currency = data.symbol;
-          this.loading = false;
-        })
-        .catch((error) => {
-          this.loading = false;
-          console.error("Error fetching currency details:", error);
-        });
-    },
-    updateTotal() {
-      const totalBeforeDiscount =
-        this.newItem.quantity * this.newItem.unit_price;
-      const discountAmount =
-        (totalBeforeDiscount * this.newItem.discount) / 100;
-      const totalAfterDiscount = totalBeforeDiscount - discountAmount;
-      var totalAmount = 0;
-      if (this.settings.vat_active == 1) {
-        const vatAmount = (totalAfterDiscount * this.newItem.vat_rate) / 100;
-        totalAmount = totalAfterDiscount + vatAmount;
-      } else {
-        totalAmount = totalAfterDiscount;
-      }
-
-      this.newItem.total_price = this.formatCurrency(totalAfterDiscount);
-      this.newItem.total_amount = this.formatCurrency(totalAmount);
-    },
-    calculateTotalWithVat(quantity, unitPrice, vat_rate, discount) {
-      const totalBeforeDiscount = quantity * unitPrice;
-      const discountAmount = (totalBeforeDiscount * discount) / 100;
-      const totalAfterDiscount = totalBeforeDiscount - discountAmount;
-      const taxAmount = (totalAfterDiscount * vat_rate) / 100;
-      const total = totalAfterDiscount + taxAmount;
-      return this.formatCurrency(total);
-    },
-    calculateTotal(quantity, unitPrice, discount) {
-      const totalBeforeDiscount = quantity * unitPrice;
-      const discountAmount = (totalBeforeDiscount * discount) / 100;
-      const totalAfterDiscount = totalBeforeDiscount - discountAmount;
-      const total = totalAfterDiscount;
-      return this.formatCurrency(total);
-    },
-    submitItems() {
-      this.updateTotal();
-      const newElement = {
-        ...this.newItem,
-        invoice_id: this.$route.params.id,
-      };
-      this.loading_add = true;
-
-      fetch("/wp-json/my-easy-compta/v1/invoices/element-add", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-WP-Nonce": myEasyComptaAdmin.nonce,
-        },
-        body: JSON.stringify(newElement),
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          if (data.success) {
-            this.loading_add = false;
-            this.fetchItems();
-            this.newItem = {
-              item_name: "",
-              item_ref: "",
-              item_category: "Type",
-              item_description: "",
-              quantity: 1,
-              vat_rate: this.default_vat.rate,
-              unit_price: 0,
-              discount: 0,
-              total_price: 0,
-              total_amount: 0,
-            };
-          } else {
-            this.showToast(data.message, "alert-error");
-            console.error("Error submitting item:", data.message);
-            this.loading_add = false;
-          }
-        })
-        .catch((error) => {
-          this.showToast(error.message, "alert-error");
-          console.error("Error submitting item:", error);
-          this.loading_add = false;
-        });
-    },
-    increase() {
-      this.newItem.quantity++;
-    },
-    decrease() {
-      if (this.newItem.quantity > 1) {
-        this.newItem.quantity--;
-      }
-    },
-    confirmremoveItem(itemId, invoiceId) {
-      this.selectedItem = itemId;
-      this.SelectedInvoiceId = invoiceId;
-      modal_remove_item.showModal();
-      this.showRemoveModal = true;
-    },
-    removeItem(itemId, invoiceId) {
-      const itemToRemove = this.invoiceItems.find((item) => item.id === itemId);
-      itemToRemove.loading_del = true;
-      fetch(`/wp-json/my-easy-compta/v1/invoices/element-delete/${itemId}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          "X-WP-Nonce": myEasyComptaAdmin.nonce,
-        },
-        body: JSON.stringify({ invoice_id: invoiceId }),
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          if (data.success) {
-            itemToRemove.loading_del = false;
-            this.fetchItems();
-          } else {
-            this.showToast(data.message, "alert-error");
-            console.error("Error removing item:", data.message);
-            itemToRemove.loading_del = false;
-          }
-        })
-        .catch((error) => {
-          this.showToast(error.message, "alert-error");
-          console.error("Error removing item:", error);
-          itemToRemove.loading_del = false;
-        });
-    },
-    editItem(itemID) {
-      this.loadingModal = true;
-      this.editItemsModal = true;
-      modal_edit_item.showModal();
-      this.fetchItemDetails(itemID);
-    },
-    fetchItemDetails(itemID) {
-      fetch(`/wp-json/my-easy-compta/v1/invoices/item-details/${itemID}`, {
-        headers: {
-          "X-WP-Nonce": myEasyComptaAdmin.nonce,
-        },
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          this.selectedItem = data;
-          this.loading = false;
-        })
-        .catch((error) => {
-          console.error("Error fetching item details:", error);
-          this.loading = false;
-        });
-    },
-    editDisb(disbID) {
-      this.loadingModal = true;
-      this.editDisbModal = true;
-      modal_edit_disb.showModal();
-      this.fetchDisbDetails(disbID);
-    },
-    fetchDisbDetails(disbID) {
-      fetch(`/wp-json/my-easy-compta/v1/invoices/disb-details/${disbID}`, {
-        headers: {
-          "X-WP-Nonce": myEasyComptaAdmin.nonce,
-        },
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          this.selectedDisb = data;
-          this.loading = false;
-        })
-        .catch((error) => {
-          console.error("Error fetching item details:", error);
-          this.loading = false;
-        });
-    },
-    confirmremoveDisb(disbId, invoiceId) {
-      this.selectedDisb = disbId;
-      this.SelectedInvoiceId = invoiceId;
-      modal_remove_disb.showModal();
-      this.showRemoveModalDisb = true;
-    },
-    removeDisb(disbId, invoiceId) {
-      const disbToRemove = this.disbursementsList.find(
-        (disb) => disb.id === disbId
-      );
-      disbToRemove.loading_del = true;
-      fetch(`/wp-json/my-easy-compta/v1/invoices/disb-delete/${disbId}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          "X-WP-Nonce": myEasyComptaAdmin.nonce,
-        },
-        body: JSON.stringify({ invoice_id: invoiceId }),
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          if (data.success) {
-            disbToRemove.loading_del = false;
-            this.fetchDisbursements();
-          } else {
-            this.showToast(data.message, "alert-error");
-            console.error("Error removing item:", data.message);
-            disbToRemove.loading_del = false;
-          }
-        })
-        .catch((error) => {
-          this.showToast(error.message, "alert-error");
-          console.error("Error removing item:", error);
-          disbToRemove.loading_del = false;
-        });
-    },
-    formatCurrency(amount) {
-      const formattedAmount = amount.toFixed(2);
-      const currencySymbol =
-        this.client_currency !== this.default_currency_symbol
-          ? this.client_currency
-          : this.default_currency_symbol;
-      return `${formattedAmount}${currencySymbol}`;
-    },
-    calculateDiscountAmountWithVAT(quantity, unitPrice, vat_rate, discount) {
-      const totalBeforeDiscount = quantity * unitPrice;
-      const discountAmount = (totalBeforeDiscount * discount) / 100;
-      const taxAmount = (discountAmount * vat_rate) / 100;
-      const totalDiscountAmount = discountAmount + taxAmount;
-
-      return this.formatCurrency(totalDiscountAmount);
-    },
-    calculateDiscountAmount(quantity, unitPrice, discount) {
-      const totalBeforeDiscount = quantity * unitPrice;
-      const discountAmount = (totalBeforeDiscount * discount) / 100;
-      const totalDiscountAmount = discountAmount;
-
-      return this.formatCurrency(totalDiscountAmount);
-    },
-    calculateVAT() {
-      const totalAmount = parseFloat(this.totalAmount);
-      const defaultVAT = parseFloat(this.default_vat.rate);
-      const vatAmount = totalAmount * (defaultVAT / 100);
-      return this.formatCurrency(vatAmount);
-    },
-    onDragEnd(event) {
-      const draggedItem = this.invoiceItems[event.oldIndex];
-      this.invoiceItems.splice(event.oldIndex, 1);
-      this.invoiceItems.splice(event.newIndex, 0, draggedItem);
-      const order = this.invoiceItems.map((item) => item.id);
-
-      this.saveOrderToDatabase(order);
-    },
-    nl2br(text) {
-      if (!text) return "";
-      return text.replace(/\n/g, "<br>");
-    },
-    resize() {
-      let element = this.$refs["textarea"];
-
-      element.style.height = "auto";
-      element.style.height = element.scrollHeight + "px";
-    },
-    saveOrderToDatabase(order) {
-      fetch("/wp-json/my-easy-compta/v1/invoices/update-invoice-items-order", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-WP-Nonce": myEasyComptaAdmin.nonce,
-        },
-        body: JSON.stringify({ order: order }),
-      })
-        .then((response) => {
-          if (response.ok) {
-            console.log("Order saved successfully.");
-          } else {
-            console.error("Failed to save order:", response.statusText);
-          }
-        })
-        .catch((error) => {
-          console.error("Error saving order:", error);
-        });
-    },
-    fetchCategoriesArticles() {
-      fetch(`/wp-json/my-easy-compta/v1/categories-articles`, {
-        headers: {
-          "X-WP-Nonce": myEasyComptaAdmin.nonce,
-        },
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          this.categories = data;
-        })
-        .catch((error) => console.error("Error fetching categories:", error));
-    },
-    ShowModalArticles() {
-      this.showArticlesModal = true;
-      modal_articles.showModal();
-    },
-    applySelectedArticle(article) {
-      this.newItem.item_ref = article.ref;
-      this.newItem.item_name = article.name;
-      this.newItem.item_description = article.description || "";
-      this.newItem.unit_price = article.unit_price || 0;
-    },
-    fetchArticles() {
-      if (this.newItem.item_name.length < 1) {
-        this.articles = [];
-        return;
-      }
-
-      const loader = document.getElementById("loader_articles");
-      loader.classList.remove("hidden");
-      fetch(
-        `/wp-json/my-easy-compta/v1/articles?search=${this.newItem.item_name}&method=name`,
-        {
-          headers: {
-            "X-WP-Nonce": myEasyComptaAdmin.nonce,
-          },
-        }
-      )
-        .then((response) => response.json())
-        .then((data) => {
-          this.articles = data;
-        })
-        .catch((error) => console.error("Error fetching articles:", error))
-        .finally(() => {
-          loader.classList.add("hidden");
-        });
-    },
-    toggleDisbursements() {
-      this.showDisbursements = !this.showDisbursements;
-    },
-    addDisbursements() {
-      this.loading_add_disbursements = true;
-
-      fetch("/wp-json/my-easy-compta/v1/invoices/disbursements", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-WP-Nonce": myEasyComptaAdmin.nonce,
-        },
-        body: JSON.stringify({
-          invoice_id: this.invoice.id,
-          title: this.disbursementsItem.title,
-          description: this.disbursementsItem.description,
-          unit_price: parseFloat(this.disbursementsItem.unit_price),
-        }),
-      })
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          return response.json();
-        })
-        .then((data) => {
-          this.disbursementsItem = {
-            title: "",
-            description: "",
-            unit_price: "",
-          };
-          this.disbursementsList.push(data);
-          this.disbursementsExist = true;
-        })
-        .catch((error) => {
-          console.error("Erreur lors de l'ajout du débours :", error);
-        })
-        .finally(() => {
-          this.loading_add_disbursements = false;
-        });
-    },
-    selectItem(item) {
-      this.newItem.item_ref = item.ref;
-      this.newItem.item_name = item.name;
-      this.newItem.item_description = item.description;
-      this.newItem.unit_price = item.unit_price;
-      this.showDropdown = false;
-      this.showDropdownRef = false;
-    },
-    fetchRefs() {
-      if (this.newItem.item_ref.length < 1) {
-        this.refs = [];
-        return;
-      }
-      fetch(
-        `/wp-json/my-easy-compta/v1/articles?search=${this.newItem.item_ref}&method=ref`,
-        {
-          headers: {
-            "X-WP-Nonce": myEasyComptaAdmin.nonce,
-          },
-        }
-      )
-        .then((response) => response.json())
-        .then((data) => {
-          this.refs = data;
-        })
-        .catch((error) => console.error("Error fetching refrences:", error));
-    },
-    async loadSettings() {
-      try {
-        this.loadingPrice = true;
-        const { settings, currencySymbol, vatData, listVatData } =
-          await fetchSettings();
-        this.settings = settings;
-        this.default_currency_symbol = currencySymbol;
-        this.default_vat = vatData;
-        this.list_vats = listVatData;
-        this.newItem.vat_rate = this.default_vat.rate;
-        this.loadingPrice = false;
-      } catch (error) {
-        this.showToast(error.message, "alert-error");
-        this.loadingPrice = false;
-      }
-    },
-    highlightMatch(text) {
-      if (!this.newItem.item_name) return text;
-      const regex = new RegExp(
-        `(${this.escapeRegExp(this.newItem.item_name)})`,
-        "gi"
-      );
-      return text.replace(regex, "<b>$1</b>");
-    },
-    escapeRegExp(string) {
-      return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    },
-    handleClickOutside(event) {
-      if (!this.$el.contains(event.target)) {
-        this.showDropdown = false;
-        this.showDropdownRef = false;
-      }
-    },
-    sendRemind(clientId) {
-      this.loadingModal = true;
-      this.RemindInvoiceModal = true;
-      modal_send_remind.showModal();
-      this.fetchClientInfo(clientId);
-      this.loadSettings();
-    },
-    showToast(message, type) {
-      this.toast.message = message;
-      this.toast.type = type;
-      this.toast.visible = true;
-      setTimeout(() => {
-        this.toast.visible = false;
-      }, 3000);
-    },
-  },
-  beforeDestroy() {
-    document.removeEventListener("click", this.handleClickOutside);
-  },
-  mounted() {
-    this.fetchInvoice();
-    this.fetchItems();
-    this.loadSettings();
-    this.fetchCategoriesArticles();
-    this.fetchDisbursements();
-    document.addEventListener("click", this.handleClickOutside);
-
-    const tbody = document.querySelector("tbody");
-    Sortable.create(tbody, {
-      animation: 150,
-      handle: ".drag-handle",
-      onEnd: this.onDragEnd,
-    });
-  },
+} catch (e) {}
 };
+
+const checkSlug = (slug) => {
+    if (!licenseData.value || !licenseData.value.plugins) return false;
+    const plugins = Array.isArray(licenseData.value.plugins) ? licenseData.value.plugins : Object.values(licenseData.value.plugins);
+    
+    const findMatch = (s) => {
+        return plugins.some(p => p.product_slug === s);
+    };
+
+    // 1. Exact match
+    if (findMatch(slug)) return true;
+
+    // 2. Try variations
+    if (slug.startsWith('myeasycompta-')) {
+        if (findMatch(slug.replace('myeasycompta-', 'my-easy-compta-'))) return true;
+    } else if (slug.startsWith('my-easy-compta-')) {
+        if (findMatch(slug.replace('my-easy-compta-', 'myeasycompta-'))) return true;
+    }
+
+    // 3. Handle specific known spelling variations
+    if (slug.includes('e-mail')) {
+        if (findMatch(slug.replace('e-mail', 'email'))) return true;
+        if (findMatch(slug.replace('e-mail', 'email').replace('my-easy-compta-', 'myeasycompta-'))) return true;
+        if (findMatch(slug.replace('e-mail', 'email').replace('myeasycompta-', 'my-easy-compta-'))) return true;
+    }
+    if (slug.includes('email') && !slug.includes('e-mail')) {
+        if (findMatch(slug.replace('email', 'e-mail'))) return true;
+        if (findMatch(slug.replace('email', 'e-mail').replace('my-easy-compta-', 'myeasycompta-'))) return true;
+        if (findMatch(slug.replace('email', 'e-mail').replace('myeasycompta-', 'my-easy-compta-'))) return true;
+    }
+
+    if (slug.includes('user')) {
+        const plural = slug.includes('users') ? slug : slug.replace('user', 'users');
+        const singular = slug.includes('users') ? slug.replace('users', 'user') : slug;
+        if (findMatch(plural)) return true;
+        if (findMatch(singular)) return true;
+    }
+
+    return false;
+};
+
+const isEmailActive = computed(() => {
+    return settings.value.easy_compta_email_addon_active == 1 ? 1 : 0;
+});
+
+const isSmsActive = computed(() => {
+    return window.myEasyComptaAdmin?.smsAddonActive ? 1 : 0;
+});
+
+const isQrCodeActive = computed(() => {
+    const settingActive = settings.value.easy_compta_qrcode_addon_active == 1;
+    const licenseActive = licenseData.value?.valid && checkSlug('myeasycompta-qrcode-stripe');
+    return settingActive && licenseActive ? 1 : 0;
+});
+
+const isRecurringActive = computed(() => {
+    const settingActive = settings.value.easy_compta_recurring_invoices_addon_active == 1;
+    const licenseActive = licenseData.value?.valid && checkSlug('myeasycompta-recurring-invoices');
+    return settingActive && licenseActive ? 1 : 0;
+});
+
+const advanceRouteAvailable = ref(false);
+
+const isAdvanceActive = computed(() => {
+    return settings.value.easy_compta_advance_addon_active == 1 || advanceRouteAvailable.value;
+});
+
+const isLocked = computed(() => {
+    if (!invoice.value.status) return true;
+    // Lock if not draft commercially OR if validated fiscally
+    const isCommercialDraft = invoice.value.status === 'draft';
+    const isFiscalDraft = !invoice.value.fiscal_status || invoice.value.fiscal_status === 'draft' || invoice.value.fiscal_status === 'rejected';
+    
+    return !isCommercialDraft || !isFiscalDraft;
+});
+
+const isInvoiceOverdue = computed(() => {
+    if (!invoice.value.due_date) return false;
+    // Simple date comparison strings yyyy-mm-dd works if format is consistent, but safer to parse
+    // Assuming backend sends YYYY-MM-DD.
+    // However, if backend sends DD-MM-YYYY we might have issues.
+    // legacy code did new Date(invoice.due_date).
+    // Let's stick to simple new Date() logic from legacy.
+    const today = new Date();
+    const dueDate = new Date(invoice.value.due_date);
+    return today > dueDate;
+});
+
+const showToast = (message, type = "success") => {
+    toast.message = message;
+    toast.type = type;
+    toast.visible = true;
+    setTimeout(() => toast.visible = false, 3000);
+};
+
+const fetchSettings = async () => {
+    try {
+        const res = await axios.get(`/wp-json/my-easy-compta/v1/settings/get`, { headers: { "X-WP-Nonce": window.myEasyComptaAdmin.nonce } });
+        if(res.data.success && res.data.data) {
+            settings.value = res.data.data;
+        } else {
+            settings.value = res.data;
+        }
+} catch (e) {}
+};
+
+const fetchInvoiceDetails = async () => {
+    loading.value = true;
+    try {
+        const res = await axios.get(`/wp-json/my-easy-compta/v1/invoices/${route.params.id}`, { headers: { "X-WP-Nonce": window.myEasyComptaAdmin.nonce } });
+        if(res.data.success) {
+            invoice.value = res.data.data;
+            // Ensure client_detail is an object even if null
+            client_detail.value = invoice.value.client_detail ? invoice.value.client_detail : {};
+            
+            // Debug if empty
+            if (Object.keys(client_detail.value).length === 0) {
+            }
+
+            items.value = invoice.value.items || [];
+            defaultCurrency.value = invoice.value.currency_symbol || "€";
+            clientCurrency.value = invoice.value.client_currency_symbol || "€";
+            no_items.value = items.value.length === 0;
+            
+            nextTick(() => initSortable());
+        }
+    } catch(e) {
+        showToast(translations.value.error_fetching_data, "error");
+    } finally { loading.value = false; }
+};
+
+const fetchCategories = async () => {
+    try {
+         const res = await axios.get("/wp-json/my-easy-compta/v1/categories-articles", { headers: { "X-WP-Nonce": window.myEasyComptaAdmin.nonce } });
+         categories.value = res.data;
+    } catch (e) {}
+};
+
+const formatCurrency = (amount) => {
+    if (!amount) return "0.00 " + defaultCurrency.value;
+    return parseFloat(amount).toFixed(2) + " " + (clientCurrency.value || defaultCurrency.value);
+};
+
+const confirmRemoveItem = (item) => {
+    itemToRemove.value = item;
+    showRemoveModal.value = true;
+};
+
+const removeItem = async () => {
+    if(!itemToRemove.value) return;
+    showRemoveModal.value = false;
+    loading.value = true;
+    try {
+        const res = await axios.delete(`/wp-json/my-easy-compta/v1/invoices/element-delete/${itemToRemove.value.id}`, { headers: { "X-WP-Nonce": window.myEasyComptaAdmin.nonce } });
+        if(res.data.success) {
+            const message = res.data.message || translations.value.item_deleted_successfully || 'Élément supprimé';
+            showToast(message, "success");
+            fetchInvoiceDetails();
+        } else {
+             showToast(translations.value.error_deleting_item, "error");
+        }
+    } catch(e) { 
+        showToast(translations.value.error_deleting_item, "error");
+    } finally {
+        loading.value = false;
+        itemToRemove.value = null;
+    }
+};
+
+const editItem = (item) => {
+    selectedItem.value = { ...item };
+    editItemsModal.value = true;
+};
+
+const onItemEdited = () => {
+    editItemsModal.value = false;
+    fetchInvoiceDetails();
+};
+
+const updateItemOrder = async (sortedIds) => {
+    try {
+        const res = await axios.post(`/wp-json/my-easy-compta/v1/invoices/update-invoice-items-order`, { order: sortedIds }, { headers: { "X-WP-Nonce": window.myEasyComptaAdmin.nonce } });
+        if (res.data.success) {
+            showToast(translations.value.order_updated_successfully || "Ordre mis à jour");
+        }
+    } catch(e) { 
+        showToast("Erreur lors de la mise à jour de l'ordre", "error");
+    }
+};
+
+const downloadFacturX = () => {
+    window.open(`/wp-json/my-easy-compta/v1/invoices/pdf-facturx/${route.params.id}?_wpnonce=${window.myEasyComptaAdmin.nonce}`, '_blank');
+};
+
+const fetchFiscalHistory = async () => {
+    try {
+        const res = await axios.get(`/wp-json/my-easy-compta/v1/invoices/${route.params.id}/fiscal-history`, {
+            headers: { "X-WP-Nonce": window.myEasyComptaAdmin.nonce }
+        });
+        if (Array.isArray(res.data)) {
+            fiscalHistory.value = res.data;
+        } else if (res.data && Array.isArray(res.data.data)) {
+            fiscalHistory.value = res.data.data;
+        }
+} catch (e) {}
+};
+
+const initSortable = () => {
+    // Only allow sorting for non-locked invoices
+    if (isLocked.value) return;
+
+    const el = document.getElementById('items-body');
+    if (el) {
+        // Destroy existing instance if it exists to avoid duplicates
+        const existingInstance = Sortable.get(el);
+        if (existingInstance) {
+            existingInstance.destroy();
+        }
+
+        Sortable.create(el, {
+            handle: ".drag-handle",
+            animation: 150,
+            onEnd: () => {
+                const rows = el.querySelectorAll('tr[data-id]');
+                const sortedIds = Array.from(rows).map(row => row.getAttribute('data-id'));
+                updateItemOrder(sortedIds);
+            },
+        });
+    }
+};
+
+const fetchInvoicePayments = async () => {
+    if (!route.params.id) return;
+    paymentsLoading.value = true;
+    try {
+        const res = await axios.get(`/wp-json/my-easy-compta/v1/invoices/${route.params.id}/payments`, {
+            headers: { 'X-WP-Nonce': window.myEasyComptaAdmin.nonce }
+        });
+        if (res.data.success) {
+            advanceRouteAvailable.value = true;
+            paymentsData.value = res.data.data;
+        }
+    } catch (e) {
+        // 404 = addon inactif, 403 = licence invalide — section masquée
+        advanceRouteAvailable.value = false;
+    } finally { paymentsLoading.value = false; }
+};
+
+const fetchInvoiceHistory = async () => {
+    try {
+        const res = await axios.get(`/wp-json/my-easy-compta/v1/invoices/${route.params.id}/history`, {
+            headers: { 'X-WP-Nonce': window.myEasyComptaAdmin.nonce }
+        });
+        if (res.data.success && Array.isArray(res.data.history)) {
+            invoiceHistory.value = res.data.history;
+        }
+} catch (e) {}
+};
+
+const fetchPaymentMethods = async () => {
+    try {
+        const res = await axios.get('/wp-json/my-easy-compta/v1/payments/methods', {
+            headers: { 'X-WP-Nonce': window.myEasyComptaAdmin.nonce }
+        });
+        paymentMethods.value = Array.isArray(res.data) ? res.data : (res.data.data || []);
+    } catch (e) {}
+};
+
+const onPaymentAdded = () => {
+    fetchInvoicePayments();
+    fetchInvoiceDetails();
+    showToast('Paiement enregistré avec succès', 'success');
+};
+
+const confirmDeletePayment = (payment) => {
+    paymentToDelete.value = payment;
+    showDeletePaymentModal.value = true;
+};
+
+const deletePayment = async () => {
+    if (!paymentToDelete.value) return;
+    showDeletePaymentModal.value = false;
+    try {
+        const res = await axios.delete(
+            `/wp-json/my-easy-compta/v1/invoices/${route.params.id}/payments/${paymentToDelete.value.id}`,
+            { headers: { 'X-WP-Nonce': window.myEasyComptaAdmin.nonce } }
+        );
+        if (res.data.success) {
+            showToast('Paiement supprimé', 'success');
+            fetchInvoicePayments();
+            fetchInvoiceDetails();
+        } else {
+            showToast(res.data.message || 'Erreur lors de la suppression', 'error');
+        }
+    } catch (e) {
+        showToast('Erreur lors de la suppression du paiement', 'error');
+    } finally {
+        paymentToDelete.value = null;
+    }
+};
+
+onMounted(() => {
+    fetchInvoiceDetails();
+    fetchSettings();
+    fetchCategories();
+    checkLicense();
+    fetchFiscalHistory();
+    fetchInvoicePayments(); // détecte automatiquement si l'addon Advance est actif
+    fetchPaymentMethods();
+    fetchInvoiceHistory();
+});
+
+onUpdated(() => {
+    initSortable();
+});
+
 </script>

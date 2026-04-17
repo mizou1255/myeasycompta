@@ -1,225 +1,125 @@
 <template>
-  <div>
-    <div
-      v-if="toast.visible"
-      :class="['toast', toast.position]"
-      :style="{ zIndex: 9999 }"
-    >
-      <div :class="['alert', toast.type, 'text-white']">
-        <span>{{ toast.message }}</span>
-      </div>
-    </div>
-    <dialog :id="modalId" class="modal" :open="showModal">
-      <div class="modal-box">
-        <h3 class="font-bold text-lg">{{ translations.remind_invoice }}</h3>
-        <button
-          class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-          @click="closeModal()"
-        >
-          ✕
+  <dialog ref="dialogRef" class="bg-transparent p-0 border-none shadow-none backdrop:bg-slate-900/50 backdrop:backdrop-blur-sm open:animate-in open:fade-in open:zoom-in-95 duration-200">
+    <div class="bg-white dark:bg-slate-900 rounded-[2.5rem] p-8 w-[90vw] max-w-2xl shadow-2xl border border-slate-100 dark:border-slate-800 text-left relative overflow-hidden">
+
+      <!-- Header -->
+      <div class="flex items-center justify-between mb-8">
+        <h3 class="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-3">
+          <Bell class="w-6 h-6 text-amber-500" />
+          {{ translations.remind_invoice || 'Relance de facture' }}
+        </h3>
+        <button @click="closeModal" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors p-2 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl">
+          <X class="w-6 h-6" />
         </button>
-        <div v-if="loading">
-          <!-- Skeleton -->
-          <div class="grid grid-cols-1 gap-4">
-            <div v-for="n in skeletonItems" :key="n" class="py-2">
-              <div class="skeleton h-4 w-full mb-2"></div>
-              <div class="skeleton h-4 w-full"></div>
-            </div>
+      </div>
+
+      <form @submit.prevent="submitForm" class="space-y-6">
+        <!-- Client Email -->
+        <div class="space-y-2">
+          <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">{{ translations.client || 'Client' }}</label>
+          <input type="text" :value="client?.email" disabled class="kloxy-input opacity-60 cursor-not-allowed" />
+        </div>
+
+        <!-- Subject -->
+        <div class="space-y-2">
+          <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">{{ translations.email_subject || 'Objet' }}</label>
+          <input type="text" v-model="formData.subject" class="kloxy-input" />
+        </div>
+
+        <!-- Message -->
+        <div class="space-y-2">
+          <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">{{ translations.email_content || 'Message' }}</label>
+          <div class="kloxy-editor-wrapper">
+            <vue-editor v-model="formData.message" :editorToolbar="toolbarOptions" />
           </div>
         </div>
-        <form v-else @submit.prevent="submitForm" class="form">
-          <div class="grid grid-cols-1 gap-4">
-            <div
-              v-for="(field, key) in fields"
-              :key="key"
-              class="ecwp-group form-group"
-            >
-              <div
-                v-if="field.type !== 'textarea'"
-                :type="field.type || 'text'"
-              >
-                <label :for="key" class="ecwp-label form-label">{{
-                  field.label
-                }}</label>
-                <input
-                  :id="key"
-                  :class="[
-                    'ecwp-input input input-bordered',
-                    field.class || 'w-full',
-                  ]"
-                  :value="field.value"
-                  :disabled="field.disabled"
-                  @input="updateFieldValue(key, $event.target.value)"
-                />
-              </div>
-              <div v-else>
-                <label :for="key" class="form-label">{{ field.label }}</label>
-                <vue-editor
-                  v-model="field.value"
-                  :editorToolbar="toolbarOptions"
-                ></vue-editor>
-              </div>
-            </div>
-          </div>
-          <div class="form-group mt-4 flex justify-end">
-            <button
-              type="submit"
-              class="btn btn-primary rounded-full"
-              :disabled="loadingBtn"
-            >
-              {{ translations.send }}
-              <span
-                v-if="loadingBtn"
-                class="loading loading-spinner loading-sm"
-              ></span>
-            </button>
-          </div>
-        </form>
-      </div>
-    </dialog>
-  </div>
+
+        <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+          <button type="button" @click="closeModal" class="px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+            {{ translations.cancel || 'Annuler' }}
+          </button>
+          <button type="submit" :disabled="loadingBtn" class="bg-amber-500 text-white px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-amber-600 active:scale-95 transition-all shadow-lg shadow-amber-500/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+            <span v-if="loadingBtn" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+            <Bell v-else class="w-4 h-4" />
+            {{ translations.send || 'Envoyer' }}
+          </button>
+        </div>
+      </form>
+    </div>
+    <form method="dialog" class="fixed inset-0 z-[-1] cursor-default bg-transparent w-full h-full outline-none" @click="closeModal"></form>
+  </dialog>
 </template>
-  
-  <script>
+
+<script setup>
+import { ref, reactive, watch, computed, onMounted } from 'vue';
 import { VueEditor } from "vue3-editor";
-export default {
-  name: "sendRemind",
-  components: {
-    VueEditor,
-  },
-  props: {
-    showModal: Boolean,
-    modalId: String,
-    client: Object,
-    invoiceId: Number,
-    loading: Boolean,
-    subject: String,
-    content: String,
-  },
-  data() {
-    const translations = window.myEasyComptaAdmin.easyComptaTranslations;
-    return {
-      loading: false,
-      loadingBtn: false,
+import { Bell, X } from 'lucide-vue-next';
 
-      toast: {
-        visible: false,
-        message: "",
-        type: "alert-success",
-        position: "toast-bottom toast-end",
-      },
-      toolbarOptions: [
-        ["bold", "italic", "underline", "strike"],
-        ["link"],
-        [{ list: "ordered" }, { list: "bullet" }],
-        [{ header: [1, 2, 3, 4, 5, 6, false] }],
-        [{ color: [] }, { background: [] }],
-        [{ align: [] }],
-        [{ align: "right" }, { align: "center" }, { align: "justify" }],
-        ["clean"],
-      ],
-      fields: {
-        client_email: {
-          label: translations.client,
-          value: "",
-          disabled: true,
-        },
-        email_subject: { label: translations.email_subject, value: "" },
-        email_message: {
-          label: translations.email_content,
-          value: "",
-          type: "textarea",
-        },
-      },
-    };
-  },
-  watch: {
-    client: {
-      immediate: true,
-      handler(newClient) {
-        this.fields.client_email.value = newClient?.email || "";
-      },
-    },
-    subject: {
-      immediate: true,
-      handler(newSubject) {
-        this.fields.email_subject.value = newSubject || "";
-      },
-    },
-    content: {
-      immediate: true,
-      handler(newContent) {
-        this.fields.email_message.value = newContent || "";
-      },
-    },
-  },
-  computed: {
-    skeletonItems() {
-      return Array.from({ length: 10 }, (_, index) => index);
-    },
-    translations() {
-      return window.myEasyComptaAdmin.easyComptaTranslations;
-    },
-  },
-  methods: {
-    closeModal() {
-      const modal = document.getElementById(this.modalId);
-      modal.close();
-    },
-    async submitForm() {
-      this.loadingBtn = true;
-      try {
-        const response = await fetch(
-          `/wp-json/my-easy-compta/v1/emails/send-email`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "X-WP-Nonce": myEasyComptaAdmin.nonce,
-            },
-            body: JSON.stringify({
-              type: "remind",
-              id: this.invoiceId,
-              client_email: this.client.email,
-              email_subject: this.fields.email_subject.value,
-              email_message: this.fields.email_message.value,
-            }),
-          }
-        );
+const props = defineProps({
+  showModal: Boolean,
+  client: Object,
+  invoiceId: [Number, String],
+  subject: String,
+  content: String,
+});
 
-        if (response.ok) {
-          const data = await response.json();
-          this.loadingBtn = false;
-          this.closeModal();
-          this.showToast(data.message, "alert-success");
-        } else {
-          const errorMessage = `Error sending email: ${response.statusText}`;
-          this.showToast(errorMessage, "alert-error");
-          console.error(errorMessage);
-          this.loadingBtn = false;
-        }
-      } catch (error) {
-        const errorMessage =
-          error.response && error.response.data && error.response.data.message
-            ? error.response.data.message
-            : "Error sending email";
-        this.showToast(errorMessage, "alert-error");
-        console.error("Error sending email:", error);
-        this.loadingBtn = false;
-      }
-    },
-    updateFieldValue(key, value) {
-      this.fields[key].value = value;
-    },
-    showToast(message, type) {
-      this.toast.message = message;
-      this.toast.type = type;
-      this.toast.visible = true;
-      setTimeout(() => {
-        this.toast.visible = false;
-      }, 3000);
-    },
-  },
+const emit = defineEmits(['close', 'success']);
+
+const dialogRef = ref(null);
+const loadingBtn = ref(false);
+const formData = reactive({ subject: '', message: '' });
+const translations = computed(() => window.myEasyComptaAdmin?.easyComptaTranslations || {});
+
+const toolbarOptions = [
+  ['bold', 'italic', 'underline', 'strike'],
+  [{ list: 'ordered' }, { list: 'bullet' }],
+  ['clean'],
+];
+
+watch(() => props.showModal, (val) => {
+  if (!dialogRef.value) return;
+  if (val && !dialogRef.value.open) dialogRef.value.showModal();
+  if (!val && dialogRef.value.open) dialogRef.value.close();
+});
+
+watch([() => props.subject, () => props.content], ([sub, cont]) => {
+  formData.subject = sub || '';
+  formData.message = cont || '';
+}, { immediate: true });
+
+onMounted(() => {
+  if (props.showModal && dialogRef.value && !dialogRef.value.open) dialogRef.value.showModal();
+});
+
+const closeModal = () => {
+  emit('close');
+  if (dialogRef.value?.open) dialogRef.value.close();
+};
+
+const submitForm = async () => {
+  loadingBtn.value = true;
+  try {
+    const res = await fetch('/wp-json/my-easy-compta/v1/emails/send-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': window.myEasyComptaAdmin.nonce },
+      body: JSON.stringify({
+        type: 'remind',
+        id: props.invoiceId,
+        client_email: props.client?.email,
+        email_subject: formData.subject,
+        email_message: formData.message,
+      }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      emit('success', data.message);
+      closeModal();
+    } else {
+      emit('success', data.message || 'Erreur envoi');
+    }
+  } catch (e) {
+  } finally {
+    loadingBtn.value = false;
+  }
 };
 </script>
-  

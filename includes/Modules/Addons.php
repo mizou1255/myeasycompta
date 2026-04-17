@@ -6,44 +6,9 @@ class ECWP_Addons
 {
     public function __construct()
     {
-        add_action('admin_menu', array($this, 'add_submenu_page'));
+        // Plus de sous-menu WordPress - navigation SPA uniquement
     }
 
-    /**
-     * @return [type]
-     */
-    public function add_submenu_page()
-    {
-        add_submenu_page(
-            'my-easy-compta',
-            __('Addons', 'my-easy-compta'),
-            __('Addons', 'my-easy-compta'),
-            'manage_options',
-            'my-easy-compta-addons',
-            array($this, 'render_page'),
-            20
-        );
-        add_filter('parent_file', array($this, 'add_pro_badge_to_menu'));
-    }
-
-    public function add_pro_badge_to_menu($parent_file)
-    {
-        global $submenu;
-
-        $menu_slug = 'my-easy-compta';
-        $submenu_slug = 'my-easy-compta-addons';
-
-        if (isset($submenu[$menu_slug])) {
-            foreach ($submenu[$menu_slug] as $key => $menu_item) {
-                if ($menu_item[2] === $submenu_slug) {
-                    $submenu[$menu_slug][$key][0] .= ' <span class="ecwp-pro-badge">Premium</span>';
-                    break;
-                }
-            }
-        }
-
-        return $parent_file;
-    }
     /**
      * @return [type]
      */

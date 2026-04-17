@@ -1,5 +1,28 @@
 # myEasyCompta
 
+---
+
+## 🎉 NOUVEAU ! Refonte Terminée
+
+**La refonte complète avec le design system est terminée !**
+
+📚 **Documentation complète disponible** :
+- 🚀 **[START_HERE.md](START_HERE.md)** - Démarrage rapide
+- 📊 **[DASHBOARD.md](DASHBOARD.md)** - Tableau de bord visuel
+- 📖 **[INDEX.md](INDEX.md)** - Navigation dans la documentation
+- ✅ **[CHECKLIST.md](CHECKLIST.md)** - Liste de vérifications
+
+**Highlights** :
+- ✨ Design system Kloxy complet
+- ✨ Gestion de licence restaurée
+- ✨ Filtres horizontaux partout
+- ✨ Dark mode parfait
+- ✨ Animations fluides
+
+**Status** : ✅ PRÊT POUR PRODUCTION
+
+---
+
 **myEasyCompta** is a modern accounting solution for WordPress designed specifically for freelancers and small businesses. It features a sleek, responsive interface built with Vue.js and TailwindCSS, making it easy and enjoyable to manage your finances.
 
 ## Key Features

@@ -1,7 +1,283 @@
-@charset "UTF-8";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@import 'daisyui';
+@layer base {
+  :root {
+    /* 
+      Kloxy-Core Light Mode 
+      Bg: Slate-50 (#f8fafc)
+      Fg: Slate-900 (#0f172a)
+      Primary: Purple-600 (#4f46e5)
+    */
+    --background: 210 40% 98%;
+    /* Slate-50 */
+    --foreground: 222 47% 11%;
+    /* Slate-900 */
+
+    --card: 0 0% 100%;
+    /* White */
+    --card-foreground: 222 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    --primary: 255 76% 59%;
+    /* Purple-600 equivalent roughly */
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222 47% 11%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222 47% 11%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 255 76% 59%;
+
+    --radius: 1rem;
+    /* 16px default radius for small items, but we use 3rem for containers */
+
+    /* Legacy mapping for transition */
+    --c-base-100: 255 255 255;
+    --c-base-200: 248 250 252;
+    --c-base-300: 241 245 249;
+    --c-base-900: 15 23 42;
+    --c-base-content: 15 23 42;
+  }
+
+  .dark {
+    /* 
+      Kloxy-Core Dark Mode 
+      Bg: Slate-950 (#020617)
+      Fg: Slate-50 (#f8fafc)
+      Primary: Purple-500 (desaturated)
+    */
+    --background: 222 47% 11%;
+    /* Slate-950 approx or Slate-900 */
+    --foreground: 210 40% 98%;
+
+    --card: 222 47% 11%;
+    /* Slate-900 */
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222 47% 11%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 255 76% 65%;
+    /* Purple-500 equivalent */
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+
+    /* Legacy mapping for transition */
+    --c-base-100: 17 24 39;
+    --c-base-200: 15 23 42;
+    --c-base-300: 30 41 59;
+    --c-base-900: 2 6 23;
+    --c-base-content: 248 250 252;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+}
+
+@layer components {
+  .btn-premium {
+    @apply bg-white text-slate-900 px-8 py-5 rounded-2xl font-black text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all;
+  }
+
+  .kloxy-input {
+    @apply w-full !bg-slate-50 dark:!bg-slate-950 !border !border-slate-100 dark:!border-slate-800 rounded-2xl px-6 py-4 font-bold text-sm focus:ring-4 focus:ring-purple-500/10 focus:!border-purple-300 dark:focus:!border-purple-900 transition-all !outline-none dark:!text-white placeholder:text-slate-400;
+  }
+
+  /* Modern Kloxy Toggle */
+  .kloxy-toggle {
+    @apply relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900 bg-slate-200 dark:bg-slate-800;
+  }
+
+  .kloxy-toggle[aria-checked="true"] {
+    @apply bg-purple-600;
+  }
+
+  .kloxy-toggle-thumb {
+    @apply pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out translate-x-0;
+  }
+
+  .kloxy-toggle[aria-checked="true"] .kloxy-toggle-thumb {
+    @apply translate-x-5;
+  }
+
+  /* Admin BLOCK License Required Overlay */
+  .admin-overlay {
+    @apply fixed inset-0 z-[99999] flex items-center justify-center p-8;
+    top: 32px;
+    /* WordPress Admin Bar height */
+    left: 160px;
+    /* WordPress Side Menu width */
+    background: rgba(15, 23, 42, 0.4);
+    backdrop-filter: blur(4px);
+  }
+
+  /* Adjust for folded menu */
+  .auto-fold .admin-overlay {
+    left: 160px;
+  }
+
+  .admin-overlay>div {
+    @apply bg-white dark:bg-slate-900 p-10 rounded-[2.5rem] shadow-2xl border border-slate-100 dark:border-slate-800 max-w-lg text-center animate-in zoom-in-95 duration-300;
+  }
+
+  .admin-overlay p {
+    @apply text-slate-600 dark:text-slate-400 mb-4 font-medium;
+  }
+
+  .admin-overlay strong {
+    @apply block text-2xl font-black text-slate-900 dark:text-white mb-4;
+  }
+
+  .admin-overlay a {
+    @apply text-purple-600 hover:text-purple-500 font-bold underline decoration-dotted;
+  }
+
+  .blur-app {
+    filter: blur(12px);
+    pointer-events: none !important;
+    user-select: none !important;
+  }
+}
+
+/* Base resets for WordPress integration */
+#wpcontent,
+#wpbody-content,
+.auto-fold #wpcontent {
+  padding-left: 0 !important;
+  background: transparent !important;
+}
+
+#my-easy-compta-admin-app {
+  margin-right: 20px;
+}
+
+/* Ensure the root element fills the space and handles background correctly */
+#my-easy-compta-admin-root.dark {
+  background-color: #020617 !important;
+  /* slate-950 */
+}
+
+/* Hide WordPress Admin Menu background when our app is active if needed, 
+   but usually we just want our app area to be dark. */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-200 dark:bg-slate-800 rounded-full hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors;
+}
+
+/* ─── VueDatePicker — align with kloxy-input design ────────────── */
+:root {
+  --dp-font-family: inherit;
+  --dp-border-radius: 1rem;
+  --dp-input-padding: 1rem 1.5rem;
+  --dp-font-size: 0.875rem;
+  --dp-background-color: #f8fafc;
+  --dp-text-color: #0f172a;
+  --dp-placeholder-color: #94a3b8;
+  --dp-border-color: #f1f5f9;
+  --dp-border-color-hover: #c4b5fd;
+  --dp-border-color-focus: #c4b5fd;
+  --dp-primary-color: #7c3aed;
+  --dp-primary-text-color: #fff;
+  --dp-secondary-color: #f1f5f9;
+  --dp-hover-color: #f1f5f9;
+  --dp-icon-color: #94a3b8;
+  --dp-highlight-color: rgba(124, 58, 237, 0.1);
+  --dp-menu-border-color: #f1f5f9;
+}
+
+.dark {
+  --dp-background-color: #020617;
+  --dp-text-color: #f8fafc;
+  --dp-border-color: #1e293b;
+  --dp-border-color-hover: #7c3aed;
+  --dp-border-color-focus: #7c3aed;
+  --dp-secondary-color: #0f172a;
+  --dp-hover-color: #0f172a;
+  --dp-menu-border-color: #1e293b;
+}
+
+.dp__input {
+  background-color: var(--dp-background-color) !important;
+  border: 1px solid var(--dp-border-color) !important;
+  border-radius: var(--dp-border-radius) !important;
+  color: var(--dp-text-color) !important;
+  font-weight: 700 !important;
+}
+
+.dp__input:hover {
+  border-color: var(--dp-border-color-hover) !important;
+}
+
+.dp__input:focus,
+.dp__input_focus {
+  border-color: var(--dp-border-color-focus) !important;
+  box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.1) !important;
+}
+
+.dp__input_wrap,
+.dp__main {
+  border-radius: var(--dp-border-radius) !important;
+}
+
+/* When a custom icon slot is used, ensure enough left padding to clear the icon */
+.dp__input_icon_pad {
+  padding-left: 3rem !important;
+}
+
+/* Native date/datetime-local inputs — uniform appearance */
+input[type="date"].kloxy-input,
+input[type="datetime-local"].kloxy-input {
+  color-scheme: light;
+}
+
+.dark input[type="date"].kloxy-input,
+.dark input[type="datetime-local"].kloxy-input {
+  color-scheme: dark;
+}

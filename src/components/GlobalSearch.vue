@@ -1,556 +1,433 @@
 <template>
-  <div class="global-search-container">
-    <!-- Bouton de recherche (si pas contrôlé par le parent) -->
-    <label
-      v-if="shouldShowButton"
-      class="ecwp-swap bg-base-100 p-2"
-      style="position: absolute; top: 6px; left: 40px; right: auto; border-width: 1px 1px 0 1px; border-color: #c3c4c7; border-radius: 10px 10px 0px 0; cursor: pointer; transition: all 0.3s ease;"
-      @click="openSearch"
-      @mouseenter="$event.target.style.backgroundColor = 'oklch(var(--p) / 0.1)'"
-      @mouseleave="$event.target.style.backgroundColor = ''"
-    >
-      <i class="fas fa-search text-xl"></i>
-    </label>
-
-    <!-- Modal de recherche -->
+  <Transition name="fade">
     <div
       v-if="isOpenComputed"
-      class="modal modal-open search-modal"
-      style="z-index: 9999;"
+      class="fixed inset-0 z-[9999] flex items-start justify-center pt-24 px-4 sm:px-6 md:pt-32"
       @click.self="closeSearch"
     >
-      <div class="modal-box w-11/12 max-w-3xl search-modal-box" @click.stop>
-        <!-- En-tête avec gradient -->
-        <div class="flex items-center justify-between mb-6 pb-4 border-b border-base-300">
-          <div class="flex items-center gap-3">
-            <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 text-primary">
-              <i class="fas fa-search text-lg"></i>
-            </div>
-            <div>
-              <h3 class="font-bold text-xl text-base-content">
-                {{ translations.global_search || 'Recherche globale' }}
-              </h3>
-              <p class="text-xs text-base-content/60 mt-0.5">
-                Recherchez rapidement dans tous vos documents
-              </p>
-            </div>
-          </div>
-          <button
-            class="btn btn-sm btn-circle btn-ghost hover:bg-error/10 hover:text-error transition-colors"
-            @click="closeSearch"
-            aria-label="Fermer"
-          >
-            <i class="fas fa-times"></i>
-          </button>
-        </div>
-
-        <!-- Barre de recherche améliorée -->
-        <div class="form-control mb-5">
-          <div class="relative">
-            <div class="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
-              <i class="fas fa-search text-base-content/40"></i>
-            </div>
-            <input
-              v-model="searchQuery"
-              @input="performSearch"
-              @keydown.enter="handleEnter"
-              @keydown.escape="closeSearch"
-              @keydown.arrow-down.prevent="navigateResults(1)"
-              @keydown.arrow-up.prevent="navigateResults(-1)"
-              type="text"
-              placeholder="Tapez pour rechercher..."
-              class="input input-lg input-bordered w-full pl-12 pr-12 focus:input-primary transition-all"
-              ref="searchInput"
-              autofocus
-            />
-            <div class="absolute inset-y-0 right-0 flex items-center pr-4">
-              <span v-if="searchQuery && !loading" class="text-xs text-base-content/40">
-                {{ results.length }} résultat{{ results.length > 1 ? 's' : '' }}
-              </span>
-              <span v-if="loading" class="loading loading-spinner loading-sm"></span>
-            </div>
+      <!-- Backdrop Blur -->
+      <div 
+        class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity"
+        @click="closeSearch"
+      ></div>
+      
+      <!-- Modal Box -->
+      <div 
+        class="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden transform transition-all animate-in zoom-in-95 duration-200"
+        @click.stop
+      >
+        <!-- Search Input Header -->
+        <div class="relative border-b border-slate-100 dark:border-slate-800 p-2">
+          <Search class="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+          <input
+            v-model="searchQuery"
+            @keydown.enter="handleEnter"
+            @keydown.escape="closeSearch"
+            @keydown.arrow-down.prevent="navigateResults(1)"
+            @keydown.arrow-up.prevent="navigateResults(-1)"
+            type="text"
+            :placeholder="translations.search_placeholder || 'Rechercher un devis, une facture, un client...'"
+            class="w-full bg-transparent pl-14 pr-24 py-5 text-lg font-medium text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none"
+            ref="searchInput"
+            autofocus
+          />
+          <div class="absolute right-6 top-1/2 -translate-y-1/2 flex items-center gap-2">
+            <span v-if="loading" class="animate-spin"><Loader2 class="w-4 h-4 text-purple-600" /></span>
+            <span class="hidden sm:inline-block px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded-lg text-[10px] font-black text-slate-500 tracking-tighter shadow-inner">ESC</span>
           </div>
         </div>
 
-        <!-- Filtres rapides améliorés -->
-        <div class="flex flex-wrap gap-2 mb-5">
-          <button
-            v-for="filter in quickFilters"
-            :key="filter.type"
-            @click="applyQuickFilter(filter.type)"
-            :class="[
-              'btn btn-sm transition-all duration-200',
-              activeFilter === filter.type 
-                ? 'btn-primary shadow-lg scale-105' 
-                : 'btn-outline hover:btn-primary hover:scale-105'
-            ]"
-          >
-            <i :class="[filter.icon, activeFilter === filter.type ? 'text-white' : '']"></i>
-            <span :class="activeFilter === filter.type ? 'text-white font-semibold' : ''">
-              {{ filter.label }}
-            </span>
-          </button>
+        <!-- Quick Filters Area -->
+        <div class="px-4 py-3 bg-slate-50/50 dark:bg-slate-800/30 flex items-center gap-2 overflow-x-auto no-scrollbar border-b border-slate-100 dark:border-slate-800">
+           <button
+             v-for="filter in quickFilters"
+             :key="filter.type"
+             @click="applyQuickFilter(filter.type)"
+             :class="[
+               'px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all shrink-0',
+               activeFilter === filter.type 
+                 ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20' 
+                 : 'bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-100 dark:border-slate-700 hover:border-purple-200'
+             ]"
+           >
+             <component :is="filter.icon" class="w-3 h-3" />
+             {{ filter.label }}
+           </button>
         </div>
 
-        <!-- Résultats améliorés -->
-        <div v-if="searchQuery || activeFilter" class="search-results">
-          <div v-if="loading" class="flex flex-col items-center justify-center py-12">
-            <span class="loading loading-spinner loading-lg text-primary mb-4"></span>
-            <p class="text-sm text-base-content/60">Recherche en cours...</p>
-          </div>
-
-          <div v-else-if="results.length > 0" class="space-y-2 max-h-[500px] overflow-y-auto custom-scrollbar">
-            <div
-              v-for="(result, index) in results"
-              :key="`${result.type}-${result.id}`"
-              @click="navigateToResult(result)"
-              @mouseenter="selectedIndex = index"
-              :class="[
-                'result-item group cursor-pointer transition-all duration-200 rounded-lg border',
-                selectedIndex === index 
-                  ? 'bg-primary/10 border-primary shadow-md scale-[1.02]' 
-                  : 'bg-base-100 border-base-300 hover:bg-base-200 hover:border-primary/50 hover:shadow-sm'
-              ]"
-            >
-              <div class="p-4">
-                <div class="flex items-start gap-4">
-                  <!-- Icône du type -->
-                  <div :class="[
-                    'flex items-center justify-center w-12 h-12 rounded-lg flex-shrink-0 transition-all',
-                    getTypeIconClass(result.type)
-                  ]">
-                    <i :class="[getTypeIcon(result.type), 'text-lg']"></i>
-                  </div>
-                  
-                  <!-- Contenu principal -->
-                  <div class="flex-1 min-w-0">
-                    <div class="flex items-start justify-between gap-3 mb-2">
-                      <div class="flex-1 min-w-0">
-                        <div class="flex items-center gap-2 mb-1 flex-wrap">
-                          <span :class="getTypeBadgeClass(result.type)">
-                            {{ result.typeLabel }}
-                          </span>
-                          <h4 class="font-semibold text-base text-base-content truncate group-hover:text-primary transition-colors">
-                            {{ result.title }}
-                          </h4>
-                        </div>
-                        <p class="text-sm text-base-content/70 line-clamp-2 mb-2">
-                          {{ result.description }}
-                        </p>
-                      </div>
-                      <div class="flex items-center gap-2 flex-shrink-0">
-                        <span v-if="result.amount" class="text-lg font-bold text-primary whitespace-nowrap">
-                          {{ formatAmount(result.amount) }}
-                        </span>
-                        <i class="fas fa-chevron-right text-base-content/30 group-hover:text-primary group-hover:translate-x-1 transition-all"></i>
-                      </div>
-                    </div>
-                    
-                    <!-- Métadonnées -->
-                    <div class="flex items-center gap-4 flex-wrap text-xs text-base-content/60">
-                      <span v-if="result.date" class="flex items-center gap-1.5">
-                        <i class="far fa-calendar text-xs"></i>
-                        <span>{{ formatDate(result.date) }}</span>
-                      </span>
-                      <span v-if="result.status" class="flex items-center gap-1.5">
-                        <span :class="getStatusClass(result.status)">{{ result.statusLabel }}</span>
-                      </span>
-                    </div>
-                  </div>
+        <!-- Scrollable Results Area -->
+        <div class="max-h-[60vh] overflow-y-auto p-2 min-h-[300px] custom-scrollbar">
+          
+          <!-- State: Empty / Idle -->
+          <div v-if="!searchQuery && !activeFilter" class="py-12 text-center">
+             <div class="w-16 h-16 bg-slate-50 dark:bg-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-slate-100 dark:border-slate-700">
+                <Keyboard class="w-8 h-8 text-slate-300" />
+             </div>
+             <h4 class="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest mb-2">{{ translations.quick_shortcuts || 'Quick shortcuts' }}</h4>
+             <div class="flex flex-wrap justify-center gap-6 mt-6">
+                <div class="flex flex-col items-center gap-2">
+                   <div class="flex gap-1">
+                      <kbd class="px-2 py-1 bg-slate-50 dark:bg-slate-800 border-b-2 border-slate-200 dark:border-slate-700 rounded text-xs font-bold text-slate-600 dark:text-slate-400">⌘</kbd>
+                      <kbd class="px-2 py-1 bg-slate-50 dark:bg-slate-800 border-b-2 border-slate-200 dark:border-slate-700 rounded text-xs font-bold text-slate-600 dark:text-slate-400">K</kbd>
+                   </div>
+                   <span class="text-[10px] text-slate-400 font-bold uppercase">{{ translations.shortcut_open || 'Open' }}</span>
                 </div>
-              </div>
-            </div>
+                <div class="flex flex-col items-center gap-2">
+                   <kbd class="px-3 py-1 bg-slate-50 dark:bg-slate-800 border-b-2 border-slate-200 dark:border-slate-700 rounded text-xs font-bold text-slate-600 dark:text-slate-400">ESC</kbd>
+                   <span class="text-[10px] text-slate-400 font-bold uppercase">{{ translations.shortcut_close || 'Close' }}</span>
+                </div>
+                 <div class="flex flex-col items-center gap-2">
+                   <kbd class="px-2 py-1 bg-slate-50 dark:bg-slate-800 border-b-2 border-slate-200 dark:border-slate-700 rounded text-xs font-bold text-slate-600 dark:text-slate-400">↵</kbd>
+                   <span class="text-[10px] text-slate-400 font-bold uppercase">{{ translations.shortcut_choose || 'Choose' }}</span>
+                </div>
+             </div>
           </div>
 
-          <div v-else-if="searchQuery && !loading" class="flex flex-col items-center justify-center py-12">
-            <div class="w-20 h-20 rounded-full bg-base-200 flex items-center justify-center mb-4">
-              <i class="fas fa-search text-3xl text-base-content/40"></i>
-            </div>
-            <p class="text-base font-medium text-base-content mb-1">Aucun résultat trouvé</p>
-            <p class="text-sm text-base-content/60">Essayez avec d'autres mots-clés</p>
+          <!-- State: Loading -->
+          <div v-else-if="loading && results.length === 0" class="space-y-2 p-2">
+             <div v-for="i in 5" :key="i" class="h-16 bg-slate-50 dark:bg-slate-800/50 rounded-2xl animate-pulse"></div>
+          </div>
+
+          <!-- State: No Results -->
+          <div v-else-if="searchQuery && !loading && results.length === 0" class="py-12 text-center animate-in fade-in duration-500">
+             <div class="w-16 h-16 bg-rose-50 dark:bg-rose-900/20 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-rose-100 dark:border-rose-900/30">
+                <SearchX class="w-8 h-8 text-rose-500" />
+             </div>
+             <h4 class="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest">{{ translations.no_results || 'No results' }}</h4>
+             <p class="text-[11px] text-slate-500 font-medium mt-1">{{ translations.no_results_help || 'Check the spelling or try another filter.' }}</p>
+          </div>
+
+          <!-- State: Results List -->
+          <div v-else class="space-y-1">
+             <div 
+               v-for="(result, index) in results" 
+               :key="`${result.type}-${result.id}`"
+               @click="navigateToResult(result)"
+               @mouseenter="selectedIndex = index"
+               :class="[
+                 'group flex items-center gap-4 p-4 rounded-[1.25rem] cursor-pointer transition-all border border-transparent',
+                 selectedIndex === index 
+                   ? 'bg-purple-600 text-white shadow-xl shadow-purple-500/30 scale-[1.01]' 
+                   : 'hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-600 dark:text-slate-300'
+               ]"
+             >
+                <!-- Icon -->
+                <div :class="[
+                  'w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors',
+                  selectedIndex === index 
+                    ? 'bg-white/20 text-white' 
+                    : getIconContainerClass(result.type)
+                ]">
+                   <component :is="getTypeIcon(result.type)" class="w-5 h-5 transition-transform group-hover:scale-110" />
+                </div>
+
+                <!-- Info -->
+                <div class="flex-1 min-w-0">
+                   <div class="flex items-center gap-2 mb-0.5">
+                      <span :class="[
+                        'text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-md',
+                        selectedIndex === index ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
+                      ]">
+                        {{ result.typeLabel }}
+                      </span>
+                      <h4 class="text-sm font-black truncate" :class="selectedIndex === index ? 'text-white' : 'text-slate-900 dark:text-white'">
+                        {{ result.title }}
+                      </h4>
+                   </div>
+                   <p class="text-[11px] font-medium truncate opacity-70">
+                      {{ result.description }}
+                   </p>
+                </div>
+
+                <!-- Meta/Status -->
+                <div class="flex flex-col items-end gap-1">
+                   <div v-if="result.amount" class="text-sm font-black whitespace-nowrap">
+                      {{ formatAmount(result.amount) }}
+                   </div>
+                   <div v-if="result.date" class="text-[10px] font-bold opacity-60">
+                      {{ formatDate(result.date) }}
+                   </div>
+                </div>
+
+                <!-- Arrow -->
+                <ChevronRight class="w-4 h-4 opacity-0 group-hover:opacity-100 transition-all group-hover:translate-x-1" />
+             </div>
           </div>
         </div>
 
-        <!-- Raccourcis clavier améliorés -->
-        <div v-else class="flex flex-col items-center justify-center py-12">
-          <div class="w-20 h-20 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center mb-6">
-            <i class="fas fa-keyboard text-3xl text-primary"></i>
-          </div>
-          <p class="text-base font-semibold text-base-content mb-6">Raccourcis clavier</p>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 w-full max-w-2xl">
-            <div class="flex flex-col items-center p-4 rounded-lg bg-base-200/50 hover:bg-base-200 transition-colors">
-              <kbd class="kbd kbd-lg mb-2">Ctrl+K</kbd>
-              <span class="text-xs text-base-content/70 text-center">Ouvrir/Fermer</span>
-            </div>
-            <div class="flex flex-col items-center p-4 rounded-lg bg-base-200/50 hover:bg-base-200 transition-colors">
-              <kbd class="kbd kbd-lg mb-2">Esc</kbd>
-              <span class="text-xs text-base-content/70 text-center">Fermer</span>
-            </div>
-            <div class="flex flex-col items-center p-4 rounded-lg bg-base-200/50 hover:bg-base-200 transition-colors">
-              <kbd class="kbd kbd-lg mb-2">Enter</kbd>
-              <span class="text-xs text-base-content/70 text-center">Premier résultat</span>
-            </div>
-          </div>
+        <!-- Footer Help -->
+        <div class="px-6 py-4 bg-slate-50 dark:bg-slate-950 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center text-[10px] font-black uppercase tracking-tighter text-slate-400">
+           <div class="flex items-center gap-4">
+              <span class="flex items-center gap-1"><ArrowDownUp class="w-3 h-3" /> {{ translations.shortcut_navigate || 'Navigate' }}</span>
+              <span class="flex items-center gap-1"><CornerDownLeft class="w-3 h-3" /> {{ translations.shortcut_select || 'Select' }}</span>
+           </div>
+           <div v-if="results.length > 0">
+              {{ results.length }} {{ translations.no_results ? '' : 'results' }}
+           </div>
         </div>
       </div>
     </div>
-  </div>
+  </Transition>
 </template>
 
-<script>
-export default {
-  name: 'GlobalSearch',
-  props: {
-    isOpen: {
-      type: Boolean,
-      required: false,
-      default: null
-    }
-  },
-  emits: ['close', 'open'],
-  data() {
-    return {
-      internalIsOpen: false,
-      searchQuery: '',
-      loading: false,
-      results: [],
-      activeFilter: null,
-      selectedIndex: -1,
-      quickFilters: [
-        { type: 'invoices', label: 'Factures', icon: 'fas fa-file-invoice' },
-        { type: 'quotes', label: 'Devis', icon: 'fas fa-file-alt' },
-        { type: 'clients', label: 'Clients', icon: 'fas fa-users' },
-        { type: 'payments', label: 'Paiements', icon: 'fas fa-money-check-alt' },
-        { type: 'expenses', label: 'Dépenses', icon: 'fas fa-receipt' },
-        { type: 'credits', label: 'Avoirs', icon: 'fas fa-undo' },
-        { type: 'all', label: 'Tout', icon: 'fas fa-th' }
-      ]
-    };
-  },
-  computed: {
-    translations() {
-      return window.myEasyComptaAdmin?.easyComptaTranslations || {};
-    },
-    isOpenComputed() {
-      // Si isOpen est défini et n'est pas undefined (mode contrôlé), utiliser cette valeur
-      // Sinon, utiliser l'état interne
-      if (this.isOpen !== undefined && this.isOpen !== null) {
-        return this.isOpen;
-      }
-      return this.internalIsOpen;
-    },
-    shouldShowButton() {
-      // Afficher le bouton si la prop isOpen n'a pas été passée (mode autonome)
-      // En Vue 3, si une prop n'est pas passée, elle sera null avec default: null
-      // Mais on peut aussi vérifier via $attrs pour être sûr
-      const propPassed = 'isOpen' in this.$attrs || (this.isOpen !== null && this.isOpen !== undefined);
-      return !propPassed;
-    }
-  },
-  watch: {
-    isOpen(newVal) {
-      if (newVal !== undefined) {
-        this.internalIsOpen = newVal;
-      }
-    }
-  },
-  mounted() {
-    // Raccourci clavier Ctrl+K
-    document.addEventListener('keydown', this.handleKeyboard);
-    if (this.isOpen !== undefined && this.isOpen !== null) {
-      this.internalIsOpen = this.isOpen;
-    }
-  },
-  beforeUnmount() {
-    document.removeEventListener('keydown', this.handleKeyboard);
-  },
-  methods: {
-    handleKeyboard(e) {
-      // Ctrl+K ou Cmd+K pour ouvrir/fermer
-      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-        e.preventDefault();
-        const currentState = this.isOpenComputed;
-        if (currentState) {
-          this.closeSearch();
-        } else {
-          this.openSearch();
-        }
-      }
-    },
-    openSearch() {
-      if (this.isOpen === undefined || this.isOpen === null) {
-        // Mode autonome : gérer l'état interne
-        this.internalIsOpen = true;
-      } else {
-        // Mode contrôlé : émettre l'événement
-        this.$emit('open');
-        return; // Ne pas continuer si mode contrôlé
-      }
-      this.$nextTick(() => {
-        if (this.$refs.searchInput) {
-          this.$refs.searchInput.focus();
-        }
-      });
-    },
-    closeSearch() {
-      if (this.isOpen === undefined || this.isOpen === null) {
-        // Mode autonome : gérer l'état interne
-        this.internalIsOpen = false;
-        this.searchQuery = '';
-        this.results = [];
-        this.activeFilter = null;
-        this.selectedIndex = -1;
-      }
-      this.$emit('close');
-    },
-    async performSearch() {
-      if (!this.searchQuery && !this.activeFilter) {
-        this.results = [];
-        return;
-      }
+<script setup>
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue';
+import { useRouter } from 'vue-router';
+import {
+  Search,
+  Loader2,
+  Keyboard,
+  SearchX,
+  FileText,
+  FileCheck,
+  Users,
+  CreditCard,
+  Receipt,
+  Undo2,
+  ChevronRight,
+  ArrowDownUp,
+  CornerDownLeft
+} from 'lucide-vue-next';
 
-      this.loading = true;
-      try {
-        const response = await fetch(
-          `/wp-json/my-easy-compta/v1/search?q=${encodeURIComponent(this.searchQuery)}&type=${this.activeFilter || 'all'}`,
-          {
-            headers: {
-              'X-WP-Nonce': window.myEasyComptaAdmin?.nonce || ''
-            }
-          }
-        );
+const props = defineProps({
+  isOpen: {
+    type: Boolean,
+    default: null
+  }
+});
 
-        const data = await response.json();
-        this.results = data.results || [];
-        this.selectedIndex = -1; // Réinitialiser la sélection
-      } catch (error) {
-        console.error('Erreur de recherche:', error);
-        this.results = [];
-        this.selectedIndex = -1;
-      } finally {
-        this.loading = false;
-      }
-    },
-    applyQuickFilter(type) {
-      this.activeFilter = this.activeFilter === type ? null : type;
-      this.performSearch();
-    },
-    handleEnter() {
-      if (this.results.length > 0) {
-        const index = this.selectedIndex >= 0 ? this.selectedIndex : 0;
-        this.navigateToResult(this.results[index]);
-      }
-    },
-    navigateToResult(result) {
-      this.closeSearch();
-      
-      // Navigation selon le type
-      if (result.type === 'invoice') {
-        // Navigation vers le détail de la facture
-        // Utiliser le hash pour Vue Router (fonctionne même sans $router injecté)
-        window.location.href = `/wp-admin/admin.php?page=my-easy-compta-invoices#/invoice/detail/${result.id}`;
-      } else if (result.type === 'quote') {
-        // Navigation vers le détail du devis
-        // Utiliser le hash pour Vue Router (fonctionne même sans $router injecté)
-        window.location.href = `/wp-admin/admin.php?page=my-easy-compta-quotes#/quote/detail/${result.id}`;
-      } else if (result.type === 'client') {
-        // Émettre un événement pour ouvrir le modal de détail du client
-        window.dispatchEvent(new CustomEvent('ecwp:open-client-modal', { 
-          detail: { clientId: result.id } 
-        }));
-        // Si on n'est pas sur la page clients, naviguer vers cette page avec le paramètre
-        if (!window.location.href.includes('my-easy-compta-clients')) {
-          window.location.href = `/wp-admin/admin.php?page=my-easy-compta-clients&openClient=${result.id}`;
-        }
-      } else if (result.type === 'payment') {
-        // Navigation vers la liste des paiements avec highlight
-        window.location.href = `/wp-admin/admin.php?page=my-easy-compta-payments&highlight=${result.id}`;
-      } else if (result.type === 'expense') {
-        // Navigation vers la liste des dépenses avec highlight
-        window.location.href = `/wp-admin/admin.php?page=my-easy-compta-expenses&highlight=${result.id}`;
-      } else if (result.type === 'credit') {
-        // Navigation vers la liste des avoirs avec highlight
-        window.location.href = `/wp-admin/admin.php?page=my-easy-compta-credits&highlight=${result.id}`;
-      }
-    },
-    formatDate(date) {
-      if (!date) return '';
-      const d = new Date(date);
-      return d.toLocaleDateString('fr-FR');
-    },
-    formatAmount(amount) {
-      if (!amount) return '0,00 €';
-      return new Intl.NumberFormat('fr-FR', {
-        style: 'currency',
-        currency: 'EUR'
-      }).format(amount);
-    },
-    getStatusClass(status) {
-      const classes = {
-        'paid': 'badge badge-success badge-sm',
-        'unpaid': 'badge badge-warning badge-sm',
-        'sent': 'badge badge-info badge-sm',
-        'draft': 'badge badge-ghost badge-sm',
-        'accepted': 'badge badge-success badge-sm',
-        'pending': 'badge badge-warning badge-sm',
-        'rejected': 'badge badge-error badge-sm'
-      };
-      return classes[status] || 'badge badge-ghost badge-sm';
-    },
-    getTypeIcon(type) {
-      const icons = {
-        'invoice': 'fas fa-file-invoice',
-        'quote': 'fas fa-file-alt',
-        'client': 'fas fa-user',
-        'payment': 'fas fa-money-check-alt',
-        'expense': 'fas fa-receipt',
-        'credit': 'fas fa-undo'
-      };
-      return icons[type] || 'fas fa-file';
-    },
-    getTypeIconClass(type) {
-      const classes = {
-        'invoice': 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400',
-        'quote': 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400',
-        'client': 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400',
-        'payment': 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-400',
-        'expense': 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400',
-        'credit': 'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400'
-      };
-      return classes[type] || 'bg-base-200 text-base-content';
-    },
-    getTypeBadgeClass(type) {
-      const classes = {
-        'invoice': 'badge badge-sm badge-info',
-        'quote': 'badge badge-sm badge-success',
-        'client': 'badge badge-sm badge-secondary',
-        'payment': 'badge badge-sm badge-warning',
-        'expense': 'badge badge-sm badge-error',
-        'credit': 'badge badge-sm'
-      };
-      return classes[type] || 'badge badge-sm badge-ghost';
-    },
-    navigateResults(direction) {
-      if (this.results.length === 0) return;
-      
-      this.selectedIndex += direction;
-      
-      if (this.selectedIndex < 0) {
-        this.selectedIndex = this.results.length - 1;
-      } else if (this.selectedIndex >= this.results.length) {
-        this.selectedIndex = 0;
-      }
-      
-      // Scroll vers l'élément sélectionné
-      this.$nextTick(() => {
-        const selectedElement = document.querySelector(`.result-item:nth-child(${this.selectedIndex + 1})`);
-        if (selectedElement) {
-          selectedElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
-      });
-    }
-  },
-  watch: {
-    searchQuery() {
-      // Debounce de la recherche
-      clearTimeout(this.searchTimeout);
-      this.searchTimeout = setTimeout(() => {
-        this.performSearch();
-      }, 300);
+const emit = defineEmits(['close', 'open']);
+const router = useRouter();
+
+// State
+const internalIsOpen = ref(false);
+const searchQuery = ref('');
+const loading = ref(false);
+const results = ref([]);
+const activeFilter = ref(null);
+const selectedIndex = ref(-1);
+const searchInput = ref(null);
+let searchTimeout = null;
+
+const quickFilters = [
+  { type: 'invoices', label: 'Factures', icon: FileCheck },
+  { type: 'quotes', label: 'Devis', icon: FileText },
+  { type: 'clients', label: 'Clients', icon: Users },
+  { type: 'payments', label: 'Paiements', icon: CreditCard },
+  { type: 'expenses', label: 'Dépenses', icon: Receipt },
+  { type: 'credits', label: 'Avoirs', icon: Undo2 },
+];
+
+// Computed
+const isOpenComputed = computed(() => {
+  return props.isOpen !== null ? props.isOpen : internalIsOpen.value;
+});
+
+const translations = computed(() => {
+  return window.myEasyComptaAdmin?.easyComptaTranslations || {};
+});
+
+// Watchers
+watch(() => props.isOpen, (newVal) => {
+  if (newVal !== null) {
+    internalIsOpen.value = newVal;
+    if (newVal) {
+      focusInput();
     }
   }
+});
+
+watch(searchQuery, () => {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    performSearch();
+  }, 300);
+});
+
+// Methods
+const focusInput = () => {
+  nextTick(() => {
+    if (searchInput.value) {
+      searchInput.value.focus();
+    }
+  });
 };
+
+const openSearch = () => {
+  if (props.isOpen === null) {
+    internalIsOpen.value = true;
+  } else {
+    emit('open');
+  }
+  focusInput();
+};
+
+const closeSearch = () => {
+  if (props.isOpen === null) {
+    internalIsOpen.value = false;
+  }
+  emit('close');
+  // Reset
+  searchQuery.value = '';
+  results.value = [];
+  activeFilter.value = null;
+  selectedIndex.value = -1;
+};
+
+const performSearch = async () => {
+  if (!searchQuery.value && !activeFilter.value) {
+    results.value = [];
+    return;
+  }
+
+  loading.value = true;
+  try {
+    const response = await fetch(
+      `/wp-json/my-easy-compta/v1/search?q=${encodeURIComponent(searchQuery.value)}&type=${activeFilter.value || 'all'}`,
+      {
+        headers: {
+          'X-WP-Nonce': window.myEasyComptaAdmin?.nonce || ''
+        }
+      }
+    );
+
+    const data = await response.json();
+    results.value = data.results || [];
+    selectedIndex.value = results.value.length > 0 ? 0 : -1;
+  } catch (error) {
+    results.value = [];
+  } finally {
+    loading.value = false;
+  }
+};
+
+const applyQuickFilter = (type) => {
+  activeFilter.value = activeFilter.value === type ? null : type;
+  performSearch();
+};
+
+const navigateResults = (direction) => {
+  if (results.value.length === 0) return;
+  
+  selectedIndex.value += direction;
+  
+  if (selectedIndex.value < 0) {
+    selectedIndex.value = results.value.length - 1;
+  } else if (selectedIndex.value >= results.value.length) {
+    selectedIndex.value = 0;
+  }
+};
+
+const handleEnter = () => {
+  if (results.value.length > 0 && selectedIndex.value >= 0) {
+    navigateToResult(results.value[selectedIndex.value]);
+  }
+};
+
+const navigateToResult = (result) => {
+  closeSearch();
+  
+  const target = {
+    'invoice': { name: 'InvoiceViewDetail', params: { id: result.id } },
+    'quote': { name: 'QuoteViewDetail', params: { id: result.id } },
+    'client': { name: 'ClientView', params: { id: result.id } },
+    'payment': { name: 'Payments' },
+    'expense': { name: 'Expenses' },
+    'credit': { name: 'Credits' },
+  };
+  
+  const routeLocation = target[result.type];
+  if (routeLocation) {
+    router.push(routeLocation);
+  } else {
+  }
+};
+
+const formatDate = (date) => {
+  if (!date) return '';
+  return new Date(date).toLocaleDateString('fr-FR', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric'
+  });
+};
+
+const formatAmount = (amount) => {
+  if (amount === null || amount === undefined) return '';
+  return new Intl.NumberFormat('fr-FR', {
+    style: 'currency',
+    currency: 'EUR'
+  }).format(amount);
+};
+
+const getTypeIcon = (type) => {
+  const icons = {
+    'invoice': FileCheck,
+    'quote': FileText,
+    'client': Users,
+    'payment': CreditCard,
+    'expense': Receipt,
+    'credit': Undo2,
+  };
+  return icons[type] || FileText;
+};
+
+const getIconContainerClass = (type) => {
+  const classes = {
+    'invoice': 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400',
+    'quote': 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400',
+    'client': 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400',
+    'payment': 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400',
+    'expense': 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400',
+    'credit': 'bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400',
+  };
+  return classes[type] || 'bg-slate-50 dark:bg-slate-800 text-slate-500';
+};
+
+const handleGlobalKeydown = (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+    e.preventDefault();
+    if (isOpenComputed.value) closeSearch();
+    else openSearch();
+  }
+};
+
+// Lifecycle
+onMounted(() => {
+  // Listeners are handled by MainLayout to avoid conflicts with WordPress
+});
+
+onUnmounted(() => {
+});
 </script>
 
 <style scoped>
-.global-search-container {
-  position: relative;
-  display: inline-block;
-  z-index: 100;
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
 }
 
-.ecwp-search-swap {
-  position: absolute;
-  top: -37px;
-  left: 40px;
-  border-width: 1px 1px 0 1px;
-  border-color: #c3c4c7;
-  border-radius: 10px 10px 0px 0;
-  cursor: pointer;
-  transition: all 0.3s ease;
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 
-.ecwp-search-swap:hover {
-  background-color: oklch(var(--p) / 0.1);
-  border-color: oklch(var(--p));
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
-
-.search-modal {
-  animation: fadeIn 0.2s ease-out;
-}
-
-.search-modal-box {
-  animation: slideUp 0.3s ease-out;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes slideUp {
-  from {
-    transform: translateY(20px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-.search-results {
-  max-height: 500px;
-  overflow-y: auto;
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 .custom-scrollbar::-webkit-scrollbar {
-  width: 8px;
+  width: 4px;
 }
-
 .custom-scrollbar::-webkit-scrollbar-track {
   background: transparent;
-  border-radius: 4px;
 }
-
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: oklch(var(--bc) / 0.2);
-  border-radius: 4px;
-  transition: background 0.2s;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: oklch(var(--bc) / 0.4);
-}
-
-.result-item {
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.result-item:hover {
-  transform: translateX(4px);
-}
-
-.line-clamp-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  background: rgba(156, 163, 175, 0.2);
+  border-radius: 10px;
 }
 </style>
-

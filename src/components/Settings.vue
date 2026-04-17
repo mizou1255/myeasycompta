@@ -1,13 +1,12 @@
-
 <template>
-  <div class="pt-2 pr-4">
-    <div
-      v-if="toast.visible"
-      :class="['toast', toast.position]"
-      :style="{ zIndex: 9999 }"
-    >
-      <div :class="['alert', toast.type, 'text-white']">
-        <span>{{ toast.message }}</span>
+  <MainLayout title="Paramètres" subtitle="Gérez les paramètres de votre application">
+    
+    <!-- Toast -->
+    <div v-if="toast.visible" class="fixed bottom-8 right-8 z-[9999] animate-in fade-in slide-in-from-bottom-8 duration-300">
+      <div :class="['flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl border backdrop-blur-md', toast.type === 'success' ? 'bg-emerald-500/90 text-white border-emerald-400/50' : 'bg-rose-500/90 text-white border-rose-400/50']">
+        <component :is="toast.type === 'success' ? 'CheckCircle2' : 'AlertCircle'" class="w-6 h-6" />
+        <span class="font-bold text-sm">{{ toast.message }}</span>
+        <button @click="toast.visible = false" class="ml-2 hover:bg-white/20 p-1 rounded-full transition-colors"><X class="w-4 h-4" /></button>
       </div>
     </div>
 
@@ -16,3980 +15,3158 @@
       :show-modal="showRemoveModal"
       :title="translations.are_you_sure"
       :message="translations.no_turning_back"
-      :confirmText="translations.yes_delete_it"
-      :cancelText="translations.cancel"
       @confirm="handleDeletion(deleteType, selectedId)"
       @cancel="showRemoveModal = false"
     />
 
-    <Card topMargin="mt-8">
-      <div class="flex justify-between items-center">
-        <h2 class="card-title">{{ translations.settings }}</h2>
-      </div>
-      <div class="divider mt-2"></div>
-
-      <div
-        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
-      >
-        <!-- Tabs (1/3 width) -->
-        <div class="tabs tabs-vertical tabs-boxed col-span-1">
-          <a
-            :class="tabClass(1)"
-            @click="selectTab(1)"
-            class="justify-start w-full"
-          >
-            <i class="fas fa-home mr-2"></i> {{ translations.general_settings }}
-          </a>
-
-          <a
-            :class="tabClass(2)"
-            @click="selectTab(2)"
-            class="justify-start w-full"
-          >
-            <i class="fas fa-tools mr-2"></i>
-            {{ translations.system_settings }}
-          </a>
-          <a
-            :class="tabClass(3)"
-            @click="selectTab(3)"
-            class="justify-start w-full"
-          >
-            <i class="fas fa-newspaper mr-2"></i>
-            {{ translations.articles_settings }}
-          </a>
-          <a
-            :class="tabClass(4)"
-            @click="selectTab(4)"
-            class="justify-start w-full"
-          >
-            <i class="fas fa-file-invoice-dollar mr-2"></i>
-            {{ translations.invoices_settings }}
-          </a>
-          <a
-            :class="tabClass(5)"
-            @click="selectTab(5)"
-            class="justify-start w-full"
-          >
-            <i class="fas fa-undo mr-2"></i>
-            {{ translations.credits_settings }}
-          </a>
-          <a
-            :class="tabClass(6)"
-            @click="selectTab(6)"
-            class="justify-start w-full"
-          >
-            <i class="far fa-question-circle mr-2"></i>
-            {{ translations.quotes_settings }}
-          </a>
-          <a
-            :class="tabClass(7)"
-            @click="selectTab(7)"
-            class="justify-start w-full"
-          >
-            <i class="fas fa-dollar-sign mr-2"></i>
-            {{ translations.currency_vat_settings }}
-          </a>
-          <a
-            :class="tabClass(8)"
-            @click="selectTab(8)"
-            class="justify-start w-full"
-          >
-            <i class="fas fa-money-check-alt mr-2"></i>
-            {{ translations.payments_settings }}
-          </a>
-          <a
-            :class="tabClass(9)"
-            @click="selectTab(9)"
-            class="justify-start w-full"
-          >
-            <i class="fas fa-shopping-basket mr-2"></i>
-            {{ translations.expenses_settings }}
-          </a>
-          <a
-            v-if="form.easy_compta_planning_addon_active == 1"
-            :class="tabClass(10)"
-            @click="selectTab(10)"
-            class="justify-start w-full"
-          >
-            <i class="fas fa-calendar-alt mr-2"></i>
-            {{ translations.planning_settings }}
-          </a>
-          <a
-            v-if="form.easy_compta_email_addon_active == 1"
-            :class="tabClass(11)"
-            @click="selectTab(11)"
-            class="justify-start w-full"
-          >
-            <i class="far fa-envelope mr-2"></i>
-            {{ translations.email_settings }}
-          </a>
-          <a
-            v-if="form.easy_compta_user_addon_active == 1"
-            :class="tabClass(12)"
-            @click="selectTab(12)"
-            class="justify-start w-full"
-          >
-            <i class="fas fa-user mr-2"></i>
-            {{ translations.users_settings }}
-          </a>
-          <a
-            v-if="form.easy_compta_payment_addon_active == 1"
-            :class="tabClass(13)"
-            @click="selectTab(13)"
-            class="justify-start w-full"
-          >
-            <i class="far fa-credit-card mr-2"></i>
-            {{ translations.stripe_settings }}
-          </a>
-          <a
-            v-if="form.easy_compta_stats_addon_active == 1"
-            :class="tabClass(14)"
-            @click="selectTab(14)"
-            class="justify-start w-full"
-          >
-            <i class="far fa-chart-bar mr-2"></i>
-            {{ translations.stats_settings }}
-          </a>
-          <a
-            v-if="form.easy_compta_qrcode_addon_active == 1"
-            :class="tabClass(15)"
-            @click="selectTab(15)"
-            class="justify-start w-full"
-          >
-            <i class="fas fa-qrcode mr-2"></i>
-            {{ translations.qrcode_settings }}
-          </a>
-          <a
-            :class="tabClass(16)"
-            @click="selectTab(16)"
-            class="justify-start w-full"
-          >
-            <i class="far fa-id-badge mr-2"></i>
-            {{ translations.validation_license }}
-          </a>
+    <div class="flex flex-col xl:flex-row gap-6 items-start">
+      <!-- Sidebar -->
+      <aside class="w-full xl:w-60 shrink-0">
+        <div class="bg-white dark:bg-slate-900 rounded-[2rem] p-3 shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 sticky top-6">
+          <template v-for="(group, gi) in tabGroups" :key="gi">
+            <!-- Group separator + label -->
+            <div :class="['px-2 pt-3 pb-1.5 flex items-center gap-2', gi > 0 ? 'mt-1 border-t border-slate-100 dark:border-slate-800' : '']">
+              <span class="text-[9px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">{{ group.label }}</span>
+            </div>
+            <!-- Tabs in group -->
+            <button
+              v-for="tab in group.tabs"
+              :key="tab.id"
+              @click="selectedTab = tab.id"
+              :class="[
+                'w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-sm transition-all duration-200 mb-0.5',
+                selectedTab === tab.id
+                  ? 'bg-purple-600 text-white shadow-md shadow-purple-500/25 font-bold'
+                  : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-semibold'
+              ]"
+            >
+              <div :class="['w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors', selectedTab === tab.id ? 'bg-white/20' : 'bg-slate-100 dark:bg-slate-800/80']">
+                <component :is="tab.icon" class="w-3.5 h-3.5" />
+              </div>
+              <span class="truncate text-[13px]">{{ tab.label }}</span>
+            </button>
+          </template>
         </div>
+      </aside>
 
-        <div
-          class="col-span-3 p-4 bg-base-300 rounded-lg shadow-md content-tabs"
-        >
-          <div
-            v-if="loading"
-            class="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-gray-900 bg-opacity-50 z-50"
-          >
-            <span
-              class="loading loading-spinner text-primary loading-lg"
-            ></span>
-          </div>
-          <div v-if="selectedTab === 1">
-            <h2 class="text-xl font-semibold mb-4">
-              {{ translations.general_settings }}
-            </h2>
-            <form @submit.prevent="handleSubmit">
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="ecwp-group form-control">
-                  <label class="ecwp-label label" for="company-code">{{
-                    translations.company_code
-                  }}</label>
-                  <input
-                    type="text"
-                    id="company-code"
-                    v-model="form.company_code"
-                    class="ecwp-input input input-bordered"
-                  />
-                </div>
-                <div class="ecwp-group form-control">
-                  <label class="ecwp-label label" for="tax-number">{{
-                    translations.tax_number
-                  }}</label>
-                  <input
-                    type="text"
-                    id="tax-number"
-                    v-model="form.tax_number"
-                    class="ecwp-input input input-bordered"
-                  />
-                </div>
-                <div class="ecwp-group form-control">
-                  <label class="ecwp-label label" for="company-name">{{
-                    translations.company_name
-                  }}</label>
-                  <input
-                    type="text"
-                    id="company-name"
-                    v-model="form.company_name"
-                    class="ecwp-input input input-bordered"
-                    required
-                  />
-                </div>
-                <div class="ecwp-group form-control">
-                  <label class="ecwp-label label" for="company-address">{{
-                    translations.address
-                  }}</label>
-                  <input
-                    type="text"
-                    id="company-address"
-                    v-model="form.company_address"
-                    class="ecwp-input input input-bordered"
-                    required
-                  />
-                </div>
-                <div class="ecwp-group form-control">
-                  <label class="ecwp-label label" for="postal-code">{{
-                    translations.postal_code
-                  }}</label>
-                  <input
-                    type="text"
-                    id="postal-code"
-                    v-model="form.postal_code"
-                    class="ecwp-input input input-bordered"
-                  />
-                </div>
-                <div class="ecwp-group form-control">
-                  <label class="ecwp-label label" for="city">{{
-                    translations.city
-                  }}</label>
-                  <input
-                    type="text"
-                    id="city"
-                    v-model="form.city"
-                    class="ecwp-input input input-bordered"
-                  />
-                </div>
-                <div class="ecwp-group form-control">
-                  <label class="ecwp-label label" for="country">{{
-                    translations.country
-                  }}</label>
-                  <input
-                    type="text"
-                    id="country"
-                    v-model="form.country"
-                    class="ecwp-input input input-bordered"
-                  />
-                </div>
-                <div class="ecwp-group form-control">
-                  <label class="ecwp-label label" for="company-email">{{
-                    translations.email
-                  }}</label>
-                  <input
-                    type="email"
-                    id="company-email"
-                    v-model="form.company_email"
-                    class="ecwp-input input input-bordered"
-                  />
-                </div>
-                <div class="ecwp-group form-control">
-                  <label class="ecwp-label label" for="company-phone">{{
-                    translations.phone
-                  }}</label>
-                  <input
-                    type="tel"
-                    id="company-phone"
-                    v-model="form.company_phone"
-                    class="ecwp-input input input-bordered"
-                  />
-                </div>
-                <div class="ecwp-group form-control">
-                  <label class="ecwp-label label" for="mobile-phone">{{
-                    translations.mobile
-                  }}</label>
-                  <input
-                    type="tel"
-                    id="mobile-phone"
-                    v-model="form.mobile_phone"
-                    class="ecwp-input input input-bordered"
-                  />
-                </div>
-                <div class="ecwp-group form-control">
-                  <label class="ecwp-label label" for="fax">{{
-                    translations.fax
-                  }}</label>
-                  <input
-                    type="tel"
-                    id="fax"
-                    v-model="form.fax"
-                    class="ecwp-input input input-bordered"
-                  />
-                </div>
-              </div>
-              <div class="divider my-4"></div>
-              <div v-if="form.easy_compta_siret_addon_active == 1">
-                <div class="grid grid-cols-2 gap-4">
-                  <div class="ecwp-group form-control indicator">
-                    <label class="ecwp-label label" for="company-code">{{
-                      translations.siret_api_token
-                    }}</label>
-                    <span class="indicator-item badge mt-5 border-blue-700"
-                      ><a
-                        href="https://api.gouv.fr/les-api/sirene_v3"
-                        target="_blank"
-                        >?</a
-                      ></span
-                    >
-                    <input
-                      type="text"
-                      id="company-code"
-                      v-model="form.easycompta_siret_token_api"
-                      class="ecwp-input input input-bordered"
-                      required
-                    />
-                  </div>
-                </div>
-              </div>
-              <div class="mt-6 flex justify-end">
-                <button type="submit" class="btn btn-primary rounded-full">
-                  <i class="far fa-save"></i> {{ translations.save }}
-                </button>
-              </div>
-            </form>
-          </div>
-          <div v-if="selectedTab === 2">
-            <h2 class="text-xl font-semibold mb-4">
-              {{ translations.system_settings }}
-            </h2>
-            <form @submit.prevent="handleSubmit">
-              <div class="form-control mt-4 mb-1">
-                <label class="cursor-pointer">
-                  <span class="label-text mr-2 font-bold">{{
-                    translations.activate_logo_mentions
-                  }}</span>
-                  <input
-                    type="checkbox"
-                    :checked="form.logo_mentions_active == 1"
-                    @change="updateLogoMentionsActive"
-                    class="wcpa-ui-toggle"
-                  />
-                </label>
-              </div>
-              <div
-                v-if="form.logo_mentions_active == 1"
-                class="ecwp-group form-control"
-              >
-                <label class="ecwp-label label" for="logo-mentions">{{
-                  translations.logo_mentions
-                }}</label>
-                <input
-                  type="text"
-                  id="logo-mentions"
-                  v-model="form.logo_mentions"
-                  class="ecwp-input input input-bordered"
-                  required
-                />
-              </div>
-              <div class="ecwp-group form-control">
-                <label class="label">{{ translations.company_logo }}</label>
-                <div class="ecwp-file">
-                  <input
-                    id="file_logo"
-                    type="file"
-                    @change="handleLogoUpload"
-                    accept="image/*"
-                    class="ecwp-file-input file-input file-input-bordered file-input-info w-full max-w-xs"
-                  />
-                  <label for="file_logo">
-                    <span>
-                      <i class="fas fa-cloud-upload-alt mr-2"></i>
-                      {{ translations.select }}
-                    </span>
-                  </label>
-                </div>
-                <div v-if="logoPreviewUrl" class="max-w-md">
-                  <input
-                    type="range"
-                    min="0"
-                    max="400"
-                    v-model="form.logo_width"
-                    class="range mt-4"
-                    @change="updatePreviewWidth"
-                  />
-                  <div class="py-2 font-bold">{{ form.logo_width }} px</div>
-                  <div v-if="form.logo_width !== null">
-                    <img
-                      :src="logoPreviewUrl"
-                      alt="Logo Preview"
-                      class="mb-6"
-                      :style="{ width: form.logo_width + 'px' }"
-                    />
-                  </div>
-                </div>
-              </div>
+      <!-- Main Content -->
+      <div class="flex-1 min-w-0 bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 relative overflow-hidden min-h-[500px]">
 
-              <div class="ecwp-group form-control">
-                <label class="ecwp-label label">{{
-                  translations.default_currency
-                }}</label>
-                <select
-                  v-model="form.default_currency"
-                  class="ecwp-input input input-bordered"
-                >
-                  <option
-                    v-for="currency in currencies"
-                    :value="currency.id"
-                    :key="currency.id"
-                  >
-                    {{ currency.name }} ({{ currency.symbol }})
-                  </option>
-                </select>
-              </div>
+         <div v-show="loading" class="absolute inset-0 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center">
+             <div class="w-10 h-10 border-4 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
+         </div>
 
-              <div class="ecwp-group form-control">
-                <label class="ecwp-label label">{{
-                  translations.currency_position
-                }}</label>
-                <select
-                  v-model="form.currency_position"
-                  class="ecwp-input input input-bordered"
-                >
-                  <option value="before">
-                    {{ translations.before_amount }}
-                  </option>
-                  <option value="after">{{ translations.after_amount }}</option>
-                </select>
-              </div>
+         <!-- Tab Header -->
+         <div class="sticky top-0 z-10 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 px-8 py-5 flex items-center justify-between rounded-t-[2.5rem]">
+             <div class="flex items-center gap-3">
+               <div class="w-9 h-9 rounded-xl bg-purple-50 dark:bg-purple-900/30 flex items-center justify-center">
+                 <component :is="currentTabIcon" class="w-4 h-4 text-purple-600 dark:text-purple-400" />
+               </div>
+               <div>
+                 <h2 class="text-lg font-black text-slate-900 dark:text-white leading-tight">{{ getCurrentTabTitle }}</h2>
+                 <p class="text-[11px] text-slate-400 font-medium leading-tight">{{ getCurrentTabDesc }}</p>
+               </div>
+             </div>
+             <button v-if="isTableTab" @click="openAddModal" class="kloxy-btn-primary">
+                 <Plus class="w-4 h-4 mr-2" /> {{ translations.add || 'Ajouter' }}
+             </button>
+         </div>
 
-              <div class="form-control mt-4 mb-1">
-                <label class="cursor-pointer">
-                  <span class="label-text mr-2 font-bold">{{
-                    translations.activate_vat
-                  }}</span>
-                  <input
-                    type="checkbox"
-                    :checked="form.vat_active == 1"
-                    @change="updateVatActive"
-                    class="wcpa-ui-toggle"
-                  />
-                </label>
-              </div>
-              <div v-if="form.vat_active == 1" class="ecwp-group form-control">
-                <label class="ecwp-label label">{{
-                  translations.default_vat
-                }}</label>
-                <select
-                  v-model="form.default_vat"
-                  class="ecwp-input input input-bordered"
-                >
-                  <option value="0"></option>
-                  <option v-for="vat in vats" :value="vat.id" :key="vat.id">
-                    {{ vat.description }} - {{ vat.rate }}%
-                  </option>
-                </select>
-              </div>
+         <!-- Content padding wrapper -->
+         <div class="p-8">
 
-              <div class="ecwp-group form-control mt-2">
-                <label class="ecwp-label label">{{
-                  translations.format_date
-                }}</label>
-                <select
-                  v-model="form.date_format"
-                  class="ecwp-input input input-bordered"
-                >
-                  <option value="DD-MM-YYYY" selected="selected">
-                    DD-MM-YYYY
-                  </option>
-                  <option value="MM-DD-YYYY">MM-DD-YYYY</option>
-                  <option value="YYYY-MM-DD">YYYY-MM-DD</option>
-                  <option value="YYYY/MM/DD">YYYY/MM/DD</option>
-                  <option value="DD/MM/YYYY">DD/MM/YYYY</option>
-                  <option value="MM/DD/YYYY">MM/DD/YYYY</option>
-                  <option value="YYYY.MM.DD">YYYY.MM.DD</option>
-                  <option value="DD.MM.YYYY">DD.MM.YYYY</option>
-                  <option value="MM.DD.YYYY">MM.DD.YYYY</option>
-                </select>
-              </div>
-              <div class="mt-6 flex justify-end">
-                <button type="submit" class="btn btn-primary rounded-full">
-                  <i class="far fa-save"></i> {{ translations.save }}
-                </button>
-              </div>
-            </form>
-          </div>
-          <div v-if="selectedTab === 3">
-            <dialog v-if="showArticleModal" id="modal_article" class="modal">
-              <div class="modal-box">
-                <h3>
-                  {{ editingArticle ? translations.edit : translations.add }}
-                </h3>
-                <form @submit.prevent="saveArticle">
-                  <button
-                    class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-                    @click="closeArticleModal"
-                  >
-                    ✕
-                  </button>
-                  <div class="ecwp-group form-control">
-                    <label class="ecwp-label label" for="name_ref">{{
-                      translations.item_ref
-                    }}</label>
-                    <input
-                      type="text"
-                      id="name_ref"
-                      v-model="articleForm.ref"
-                      class="ecwp-input input input-bordered"
-                      required
-                    />
-                  </div>
-                  <div class="ecwp-group form-control">
-                    <label class="ecwp-label label" for="name_article">{{
-                      translations.item_name
-                    }}</label>
-                    <input
-                      type="text"
-                      id="name_article"
-                      v-model="articleForm.name"
-                      class="ecwp-input input input-bordered"
-                      required
-                    />
-                  </div>
-                  <div class="ecwp-group form-control">
-                    <label class="ecwp-label label" for="desc_article">{{
-                      translations.description
-                    }}</label>
-                    <textarea
-                      id="desc_article"
-                      v-model="articleForm.description"
-                      class="ecwp-input input input-bordered"
-                      required
-                    ></textarea>
-                  </div>
-                  <div class="ecwp-group form-control">
-                    <label class="ecwp-label label" for="price_article">{{
-                      translations.unit_price
-                    }}</label>
-                    <input
-                      type="text"
-                      id="price_article"
-                      v-model="articleForm.unit_price"
-                      class="ecwp-input input input-bordered"
-                      required
-                    />
-                  </div>
+         <!-- General / System Forms -->
+         <form v-if="[1, 2, 4, 5, 6, 10, 11, 12, 13, 14, 15, 22, 23, 24, 25].includes(selectedTab)" @submit.prevent="handleSubmit" class="space-y-6">
 
-                  <div class="form-group mt-4 flex justify-end">
-                    <button
-                      type="button"
-                      class="btn btn-secondary rounded-full"
-                      @click="closeArticleModal"
-                    >
-                      {{ translations.cancel }}
-                    </button>
-                    <button
-                      type="submit"
-                      class="btn btn-primary rounded-full mx-2"
-                    >
-                      {{
-                        editingArticle ? translations.save : translations.add
-                      }}
-                    </button>
+            
+            <!-- Tab 1: General -->
+            <div v-if="selectedTab === 1" class="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                 <div class="space-y-2">
+                     <label class="kloxy-label">{{ translations.company_code || 'SIRET' }}</label>
+                     <input type="text" v-model="form.company_code" class="kloxy-input" />
+                 </div>
+                  <div class="space-y-2">
+                     <label class="kloxy-label">{{ translations.tax_number || 'Numéro de TVA' }}</label>
+                     <input type="text" v-model="form.tax_number" class="kloxy-input" />
                   </div>
-                </form>
-              </div>
-            </dialog>
-            <div class="flex justify-between items-center mb-4">
-              <h3 class="text-lg font-semibold">
-                {{ translations.articles_settings }}
-              </h3>
-              <button class="btn btn-primary rounded-full" @click="addArticle">
-                <i class="fas fa-plus mr-2"></i>
-                {{ translations.add }}
-              </button>
+                  <div class="space-y-2">
+                     <label class="kloxy-label">{{ translations.company_name || 'Nom de l\'entreprise' }}</label>
+                     <input type="text" v-model="form.company_name" class="kloxy-input" required />
+                  </div>
+                  <div class="space-y-2">
+                     <label class="kloxy-label">{{ translations.email || 'Email' }}</label>
+                     <input type="email" v-model="form.company_email" class="kloxy-input" />
+                  </div>
+                   <div class="space-y-2 md:col-span-2">
+                     <label class="kloxy-label">{{ translations.address || 'Adresse' }}</label>
+                     <input type="text" v-model="form.company_address" class="kloxy-input" required />
+                  </div>
+                  <div class="space-y-2">
+                     <label class="kloxy-label">{{ translations.postal_code || 'Code Postal' }}</label>
+                     <input type="text" v-model="form.postal_code" class="kloxy-input" />
+                  </div>
+                   <div class="space-y-2">
+                     <label class="kloxy-label">{{ translations.city || 'Ville' }}</label>
+                     <input type="text" v-model="form.city" class="kloxy-input" />
+                  </div>
+                   <div class="space-y-2">
+                     <label class="kloxy-label">{{ translations.country || 'Pays' }}</label>
+                     <input type="text" v-model="form.country" class="kloxy-input" />
+                  </div>
+                  <div class="space-y-2">
+                     <label class="kloxy-label">{{ translations.phone || 'Téléphone' }}</label>
+                     <input type="tel" v-model="form.company_phone" class="kloxy-input" />
+                  </div>
             </div>
 
-            <div class="table-container">
-              <table class="table w-full">
-                <thead>
-                  <tr>
-                    <th>{{ translations.item_ref }}</th>
-                    <th>{{ translations.name }}</th>
-                    <th>{{ translations.description }}</th>
-                    <th>{{ translations.unit_price }}</th>
-                    <th>{{ translations.actions }}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="article in articles" :key="article.id">
-                    <td>{{ article.ref }}</td>
-                    <td>{{ article.name }}</td>
-                    <td>{{ article.description }}</td>
-                    <td>{{ article.unit_price }}</td>
-                    <td>
-                      <button
-                        class="p-2 text-secondary"
-                        @click="editArticle(article.id)"
-                      >
-                        <i class="fas fa-edit"></i>
-                      </button>
-                      <button
-                        class="p-2 text-error"
-                        @click="delete_item('article', article.id)"
-                      >
-                        <i class="fas fa-trash"></i>
-                      </button>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <div class="divider mt-2 mb-4"></div>
-            <h2 class="text-xl font-semibold mb-4">
-              {{ translations.categories }}
-            </h2>
-            <div class="table-container">
-              <table class="table w-full">
-                <thead>
-                  <tr>
-                    <th>{{ translations.name }}</th>
-                    <th>{{ translations.actions }}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="category in categories" :key="category.id">
-                    <td>{{ category.name }}</td>
-                    <td>
-                      <button
-                        class="p-2 text-error"
-                        @click="delete_item('category_article', category.id)"
-                      >
-                        <i class="fas fa-trash"></i>
-                      </button>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-          <div v-if="selectedTab === 4">
-            <h2 class="text-xl font-semibold mb-4">
-              {{ translations.invoices_settings }}
-            </h2>
-            <form @submit.prevent="handleSubmit">
-              <div class="grid grid-cols-2 gap-4">
-                <div class="ecwp-group form-control">
-                  <label class="ecwp-label label" for="invoice-color">{{
-                    translations.invoice_color
-                  }}</label>
-                  <input
-                    type="text"
-                    id="invoice-color"
-                    v-model="form.invoice_color"
-                    class="ecwp-input input input-bordered"
-                    required
-                  />
-                  <color-input v-model="form.invoice_color" />
-                </div>
-
-                <div class="ecwp-group form-control">
-                  <label class="ecwp-label label" for="invoice-prefix">{{
-                    translations.invoice_prefix
-                  }}</label>
-                  <input
-                    type="text"
-                    id="invoice-prefix"
-                    v-model="form.invoice_prefix"
-                    class="ecwp-input input input-bordered"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div class="divider my-4"></div>
-
-              <div class="grid grid-cols-1 gap-4">
-                <div class="form-control mt-4 mb-1">
-                  <label class="cursor-pointer">
-                    <input
-                      type="checkbox"
-                      :checked="form.active_disbursements == 1"
-                      @change="updateFormField($event, 'active_disbursements')"
-                      class="wcpa-ui-toggle"
-                    />
-                    <span class="label-text mr-2 font-bold">{{
-                      translations.active_disbursements
-                    }}</span>
-                  </label>
-                </div>
-              </div>
-              <div class="divider my-4"></div>
-
-              <div class="grid grid-cols-2 gap-4">
-                <div class="form-control mt-4 mb-1">
-                  <label class="cursor-pointer">
-                    <input
-                      type="checkbox"
-                      :checked="form.show_phone == 1"
-                      @change="updateFormField($event, 'show_phone')"
-                      class="wcpa-ui-toggle"
-                    />
-                    <span class="label-text mr-2 font-bold">{{
-                      translations.show_phone
-                    }}</span>
-                  </label>
-                </div>
-                <div class="form-control mt-4 mb-1">
-                  <label class="cursor-pointer">
-                    <input
-                      type="checkbox"
-                      :checked="form.show_email == 1"
-                      @change="updateFormField($event, 'show_email')"
-                      class="wcpa-ui-toggle"
-                    />
-                    <span class="label-text mr-2 font-bold">{{
-                      translations.show_email
-                    }}</span>
-                  </label>
-                </div>
-                <div class="form-control mt-4 mb-1">
-                  <label class="cursor-pointer">
-                    <input
-                      type="checkbox"
-                      :checked="form.show_siren == 1"
-                      @change="updateFormField($event, 'show_siren')"
-                      class="wcpa-ui-toggle"
-                    />
-                    <span class="label-text mr-2 font-bold">{{
-                      translations.show_siren
-                    }}</span>
-                  </label>
-                </div>
-                <div class="form-control mt-4 mb-1">
-                  <label class="cursor-pointer">
-                    <input
-                      type="checkbox"
-                      :checked="form.show_tax_number == 1"
-                      @change="updateFormField($event, 'show_tax_number')"
-                      class="wcpa-ui-toggle"
-                    />
-                    <span class="label-text mr-2 font-bold">{{
-                      translations.show_tax_number
-                    }}</span>
-                  </label>
-                </div>
-                <div class="form-control mt-4 mb-1">
-                  <label class="cursor-pointer">
-                    <input
-                      type="checkbox"
-                      :checked="form.show_watermark == 1"
-                      @change="updateFormField($event, 'show_watermark')"
-                      class="wcpa-ui-toggle"
-                    />
-                    <span class="label-text mr-2 font-bold">{{
-                      translations.show_watermark
-                    }}</span>
-                  </label>
-                </div>
-                <div
-                  class="form-control mt-4 mb-1"
-                  v-if="form.show_watermark == 1"
-                >
-                  <label class="cursor-pointer">
-                    <input
-                      type="checkbox"
-                      :checked="form.show_watermark_only_paid == 1"
-                      @change="
-                        updateFormField($event, 'show_watermark_only_paid')
-                      "
-                      class="wcpa-ui-toggle"
-                    />
-                    <span class="label-text mr-2 font-bold">{{
-                      translations.show_watermark_only_paid
-                    }}</span>
-                  </label>
-                </div>
-              </div>
-
-              <div class="divider my-4"></div>
-
-              <div class="grid grid-cols-2 gap-4">
-                <div class="ecwp-group form-control">
-                  <label class="ecwp-label label" for="conditions-payment">{{
-                    translations.payment_conditions
-                  }}</label>
-                  <input
-                    type="text"
-                    id="conditions-payment"
-                    v-model="form.payment_conditions"
-                    class="ecwp-input input input-bordered"
-                  />
-                </div>
-
-                <div class="ecwp-group form-control">
-                  <label class="ecwp-label label" for="mode-payment">{{
-                    translations.payment_mode
-                  }}</label>
-                  <input
-                    type="text"
-                    id="mode-payment"
-                    v-model="form.payment_mode"
-                    class="ecwp-input input input-bordered"
-                  />
-                </div>
-              </div>
-              <div class="grid grid-cols-1 gap-4">
-                <div class="form-control">
-                  <label class="ecwp-label label" for="invoice-prefix">{{
-                    translations.invoice_terms
-                  }}</label>
-                  <div>
-                    <vue-editor
-                      v-model="form.invoice_terms"
-                      :editorToolbar="toolbarOptions"
-                    ></vue-editor>
-                  </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4">
-                  <div class="ecwp-group form-control">
-                    <label class="ecwp-label label" for="invoice-iban">{{
-                      translations.invoice_iban
-                    }}</label>
-                    <input
-                      type="text"
-                      id="invoice-iban"
-                      v-model="form.invoice_iban"
-                      class="ecwp-input input input-bordered"
-                    />
-                  </div>
-
-                  <div class="ecwp-group form-control">
-                    <label class="ecwp-label label" for="invoice-bic">{{
-                      translations.invoice_bic
-                    }}</label>
-                    <input
-                      type="text"
-                      id="invoice-bic"
-                      v-model="form.invoice_bic"
-                      class="ecwp-input input input-bordered"
-                    />
-                  </div>
-                </div>
-
-                <div class="form-control">
-                  <label class="ecwp-label label" for="invoice-prefix">{{
-                    translations.invoice_footer
-                  }}</label>
-                  <div>
-                    <vue-editor
-                      v-model="form.invoice_footer"
-                      :editorToolbar="toolbarOptions"
-                    ></vue-editor>
-                  </div>
-                </div>
-              </div>
-              <div class="mt-6 flex justify-end">
-                <button type="submit" class="btn btn-primary rounded-full">
-                  <i class="far fa-save"></i> {{ translations.save }}
-                </button>
-              </div>
-            </form>
-          </div>
-          <div v-if="selectedTab === 5">
-            <h2 class="text-xl font-semibold mb-4">
-              {{ translations.credits_settings }}
-            </h2>
-            <form @submit.prevent="handleSubmit">
-              <div class="grid grid-cols-2 gap-4">
-                <div class="ecwp-group form-control">
-                  <label class="ecwp-label label" for="credit-color">{{
-                    translations.credit_color
-                  }}</label>
-                  <input
-                    type="text"
-                    id="credit-color"
-                    v-model="form.credit_color"
-                    class="ecwp-input input input-bordered"
-                    required
-                  />
-                  <color-input v-model="form.credit_color" />
-                </div>
-
-                <div class="ecwp-group form-control">
-                  <label class="ecwp-label label" for="credit-prefix">{{
-                    translations.credit_prefix
-                  }}</label>
-                  <input
-                    type="text"
-                    id="credit-prefix"
-                    v-model="form.credit_prefix"
-                    class="ecwp-input input input-bordered"
-                    required
-                  />
-                </div>
-              </div>
-              <div class="grid grid-cols-1 gap-4">
-                <div class="form-control">
-                  <label class="ecwp-label label" for="credit-prefix">{{
-                    translations.credit_footer
-                  }}</label>
-                  <div>
-                    <vue-editor
-                      v-model="form.credit_footer"
-                      :editorToolbar="toolbarOptions"
-                    ></vue-editor>
-                  </div>
-                </div>
-
-                <div class="form-control">
-                  <label class="ecwp-label label" for="credit-prefix">{{
-                    translations.credit_terms
-                  }}</label>
-                  <div>
-                    <vue-editor
-                      v-model="form.credit_terms"
-                      :editorToolbar="toolbarOptions"
-                    ></vue-editor>
-                  </div>
-                </div>
-              </div>
-              <div class="mt-6 flex justify-end">
-                <button type="submit" class="btn btn-primary rounded-full">
-                  <i class="far fa-save"></i> {{ translations.save }}
-                </button>
-              </div>
-            </form>
-          </div>
-          <div v-if="selectedTab === 6">
-            <h2 class="text-xl font-semibold mb-4">
-              {{ translations.quotes_settings }}
-            </h2>
-            <form @submit.prevent="handleSubmit">
-              <div class="grid grid-cols-2 gap-4">
-                <div class="ecwp-group form-control">
-                  <label class="ecwp-label label" for="quote-color">{{
-                    translations.quote_color
-                  }}</label>
-                  <input
-                    type="text"
-                    id="quote-color"
-                    v-model="form.quote_color"
-                    class="ecwp-input input input-bordered"
-                    required
-                  />
-                  <color-input v-model="form.quote_color" />
-                </div>
-
-                <div class="ecwp-group form-control">
-                  <label class="ecwp-label label" for="quote-prefix">{{
-                    translations.quote_prefix
-                  }}</label>
-                  <input
-                    type="text"
-                    id="quote-prefix"
-                    v-model="form.quote_prefix"
-                    class="ecwp-input input input-bordered"
-                    required
-                  />
-                </div>
-              </div>
-              <div class="grid grid-cols-1 gap-4">
-                <div class="form-control">
-                  <label class="ecwp-label label" for="quote-prefix">{{
-                    translations.quote_footer
-                  }}</label>
-                  <div>
-                    <vue-editor
-                      v-model="form.quote_footer"
-                      :editorToolbar="toolbarOptions"
-                    ></vue-editor>
-                  </div>
-                </div>
-
-                <div class="form-control">
-                  <label class="ecwp-label label" for="quote-prefix">{{
-                    translations.quote_terms
-                  }}</label>
-                  <div>
-                    <vue-editor
-                      v-model="form.quote_terms"
-                      :editorToolbar="toolbarOptions"
-                    ></vue-editor>
-                  </div>
-                </div>
-              </div>
-              <div class="mt-6 flex justify-end">
-                <button type="submit" class="btn btn-primary rounded-full">
-                  <i class="far fa-save"></i> {{ translations.save }}
-                </button>
-              </div>
-            </form>
-          </div>
-          <div v-if="selectedTab === 7">
-            <h2 class="text-xl font-semibold mb-4">
-              {{ translations.currency_vat_settings }}
-            </h2>
-            <dialog v-if="showCurrencyModal" id="modal_currency" class="modal">
-              <div class="modal-box">
-                <h3>
-                  {{ editingCurrency ? translations.edit : translations.add }}
-                </h3>
-                <form @submit.prevent="saveCurrency">
-                  <button
-                    class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-                    @click="closeCurrencyModal"
-                  >
-                    ✕
-                  </button>
-                  <div class="ecwp-group form-control">
-                    <label class="ecwp-label label" for="name_currency">{{
-                      translations.name
-                    }}</label>
-                    <input
-                      type="text"
-                      id="name_currency"
-                      v-model="currencyForm.name"
-                      class="ecwp-input input input-bordered"
-                      required
-                    />
-                  </div>
-                  <div class="ecwp-group form-control">
-                    <label class="ecwp-label label" for="symbol_currency">{{
-                      translations.symbol
-                    }}</label>
-                    <input
-                      type="text"
-                      id="symbol_currency"
-                      v-model="currencyForm.symbol"
-                      class="ecwp-input input input-bordered"
-                      required
-                    />
-                  </div>
-                  <div class="ecwp-group form-control">
-                    <label class="ecwp-label label" for="code_currency">{{
-                      translations.code
-                    }}</label>
-                    <input
-                      type="text"
-                      id="code_currency"
-                      v-model="currencyForm.code"
-                      class="ecwp-input input input-bordered"
-                      required
-                    />
-                  </div>
-
-                  <div class="form-group mt-4 flex justify-end">
-                    <button
-                      type="button"
-                      class="btn btn-secondary rounded-full"
-                      @click="closeCurrencyModal"
-                    >
-                      {{ translations.cancel }}
-                    </button>
-                    <button
-                      type="submit"
-                      class="btn btn-primary rounded-full mx-2"
-                    >
-                      {{
-                        editingCurrency ? translations.save : translations.add
-                      }}
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </dialog>
-
-            <!-- Currencies Section -->
-            <div class="mb-8">
-              <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-semibold">
-                  {{ translations.currencies }}
-                </h3>
-                <button
-                  class="btn btn-primary rounded-full"
-                  @click="addCurrency"
-                >
-                  <i class="fas fa-plus mr-2"></i>
-                  {{ translations.add_currency }}
-                </button>
-              </div>
-              <div class="table-container">
-                <table class="table w-full">
-                  <thead>
-                    <tr>
-                      <th>{{ translations.name }}</th>
-                      <th>{{ translations.symbol }}</th>
-                      <th>{{ translations.code }}</th>
-                      <th>{{ translations.actions }}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="currency in currencies" :key="currency.id">
-                      <td>{{ currency.name }}</td>
-                      <td>{{ currency.symbol }}</td>
-                      <td>{{ currency.code }}</td>
-                      <td>
-                        <button
-                          class="p-2 text-secondary"
-                          @click="editCurrency(currency.id)"
-                        >
-                          <i class="fas fa-edit"></i>
-                        </button>
-                        <button
-                          class="p-2 text-error"
-                          @click="delete_item('currency', currency.id)"
-                        >
-                          <i class="fas fa-trash"></i>
-                        </button>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <!-- VAT Section -->
-            <div>
-              <dialog v-if="showVATModal" id="modal_vat" class="modal">
-                <div class="modal-box">
-                  <h3>
-                    {{ editingVAT ? translations.edit : translations.add }}
-                  </h3>
-                  <form @submit.prevent="saveVAT">
-                    <button
-                      class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-                      @click="closeVATModal"
-                    >
-                      ✕
-                    </button>
-                    <div class="ecwp-group form-control">
-                      <label class="ecwp-label label" for="vat-description">{{
-                        translations.description
-                      }}</label>
-                      <input
-                        type="text"
-                        id="vat-description"
-                        v-model="vatForm.description"
-                        class="ecwp-input input input-bordered"
-                        required
-                      />
-                    </div>
-                    <div class="ecwp-group form-control">
-                      <label class="ecwp-label label" for="vat-rate"
-                        >{{ translations.rate }} (%)</label
-                      >
-                      <input
-                        type="text"
-                        id="vat-rate"
-                        v-model="vatForm.rate"
-                        class="ecwp-input input input-bordered"
-                        required
-                      />
-                    </div>
-                    <div class="form-group mt-4 flex justify-end">
-                      <button
+            <!-- Tab 2: System -->
+            <div v-if="selectedTab === 2" class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                 <div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
+                    <span class="font-bold text-slate-700 dark:text-slate-300">{{ translations.activate_logo_mentions || 'Activer mentions logo' }}</span>
+                    <button 
                         type="button"
-                        class="btn btn-secondary rounded-full"
-                        @click="closeVATModal"
-                      >
-                        {{ translations.cancel }}
-                      </button>
-                      <button
-                        type="submit"
-                        class="btn btn-primary rounded-full mx-2"
-                      >
-                        {{ editingVAT ? translations.save : translations.add }}
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              </dialog>
-              <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-semibold">
-                  {{ translations.vat_rates }}
-                </h3>
-                <button class="btn btn-primary rounded-full" @click="addVAT">
-                  <i class="fas fa-plus mr-2"></i> {{ translations.add_vat }}
-                </button>
-              </div>
-              <div class="table-container">
-                <table class="table w-full">
-                  <thead>
-                    <tr>
-                      <th>{{ translations.description }}</th>
-                      <th>{{ translations.rate }} (%)</th>
-                      <th>{{ translations.actions }}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="vat in vats" :key="vat.id">
-                      <td>{{ vat.description }}</td>
-                      <td>{{ vat.rate }}</td>
-                      <td>
-                        <button
-                          class="p-2 text-secondary"
-                          @click="editVAT(vat.id)"
-                        >
-                          <i class="fas fa-edit"></i>
-                        </button>
-                        <button
-                          class="p-2 text-error"
-                          @click="delete_item('vat', vat.id)"
-                        >
-                          <i class="fas fa-trash"></i>
-                        </button>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-          <div v-if="selectedTab === 8">
-            <h2 class="text-xl font-semibold mb-4">
-              {{ translations.payments_settings }}
-            </h2>
-            <dialog v-if="showPaymentModal" id="modal_payments" class="modal">
-              <div class="modal-box">
-                <h3>
-                  {{ editingPayment ? translations.edit : translations.add }}
-                </h3>
-                <form @submit.prevent="savePayment">
-                  <button
-                    class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-                    @click="closePaymentModal"
-                  >
-                    ✕
-                  </button>
-                  <div class="ecwp-group form-control">
-                    <label class="ecwp-label label" for="name_payment">{{
-                      translations.name
-                    }}</label>
-                    <input
-                      type="text"
-                      id="name_payment"
-                      v-model="paymentForm.method_name"
-                      class="ecwp-input input input-bordered"
-                      required
-                    />
-                  </div>
-
-                  <div class="form-group mt-4 flex justify-end">
-                    <button
-                      type="button"
-                      class="btn btn-secondary rounded-full"
-                      @click="closePaymentModal"
+                        class="kloxy-toggle"
+                        :aria-checked="(form.logo_mentions_active == 1).toString()"
+                        @click="form.logo_mentions_active = (form.logo_mentions_active == 1 ? 0 : 1)"
                     >
-                      {{ translations.cancel }}
+                        <span class="kloxy-toggle-thumb"></span>
                     </button>
-                    <button
-                      type="submit"
-                      class="btn btn-primary rounded-full mx-2"
-                    >
-                      {{
-                        editingPayment ? translations.save : translations.add
-                      }}
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </dialog>
+                 </div>
+               
+                 <div v-if="form.logo_mentions_active == 1" class="space-y-2 animate-in fade-in slide-in-from-top-2">
+                    <label class="kloxy-label">{{ translations.logo_mentions || 'Mentions Logo' }}</label>
+                    <input type="text" v-model="form.logo_mentions" class="kloxy-input" />
+                 </div>
 
-            <!-- Expenses Section -->
-            <div class="mb-8">
-              <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-semibold">
-                  {{ translations.payments_methods }}
-                </h3>
-                <button
-                  class="btn btn-primary rounded-full"
-                  @click="addPayment"
-                >
-                  <i class="fas fa-plus mr-2"></i>{{ translations.add_method }}
-                </button>
-              </div>
-              <div class="table-container">
-                <table class="table w-full">
-                  <thead>
-                    <tr>
-                      <th>{{ translations.id }}</th>
-                      <th>{{ translations.name }}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="payment in payments" :key="payment.id">
-                      <td>{{ payment.id }}</td>
-                      <td>{{ payment.method_name }}</td>
-                      <td>
-                        <button
-                          class="p-2 text-secondary"
-                          @click="editPayment(payment.id)"
-                        >
-                          <i class="fas fa-edit"></i>
-                        </button>
-                        <button
-                          class="p-2 text-error"
-                          @click="delete_item('payment', payment.id)"
-                        >
-                          <i class="fas fa-trash"></i>
-                        </button>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-          <div v-if="selectedTab === 9">
-            <h2 class="text-xl font-semibold mb-4">
-              {{ translations.expenses_settings }}
-            </h2>
-            <dialog v-if="showExpenseModal" id="modal_expenses" class="modal">
-              <div class="modal-box">
-                <h3>
-                  {{ editingExpense ? translations.edit : translations.add }}
-                </h3>
-                <form @submit.prevent="saveExpCat">
-                  <button
-                    class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-                    @click="closeExpenseModal"
-                  >
-                    ✕
-                  </button>
-                  <div class="ecwp-group form-control">
-                    <label class="ecwp-label label" for="name_expense">{{
-                      translations.name
-                    }}</label>
-                    <input
-                      type="text"
-                      id="name_expense"
-                      v-model="expenseForm.name"
-                      class="ecwp-input input input-bordered"
-                      required
-                    />
-                  </div>
-
-                  <div class="form-group mt-4 flex justify-end">
-                    <button
-                      type="button"
-                      class="btn btn-secondary rounded-full"
-                      @click="closeExpenseModal"
-                    >
-                      {{ translations.cancel }}
-                    </button>
-                    <button
-                      type="submit"
-                      class="btn btn-primary rounded-full mx-2"
-                    >
-                      {{
-                        editingExpense ? translations.save : translations.add
-                      }}
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </dialog>
-
-            <!-- Expenses Section -->
-            <div class="mb-8">
-              <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-semibold">
-                  {{ translations.expenses_categories }}
-                </h3>
-                <button class="btn btn-primary rounded-full" @click="addExpCat">
-                  <i class="fas fa-plus mr-2"></i>
-                  {{ translations.add_category }}
-                </button>
-              </div>
-              <div class="table-container">
-                <table class="table w-full">
-                  <thead>
-                    <tr>
-                      <th>{{ translations.id }}</th>
-                      <th>{{ translations.name }}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="expense in expenses" :key="expense.id">
-                      <td>{{ expense.id }}</td>
-                      <td>{{ expense.name }}</td>
-                      <td>
-                        <button
-                          class="p-2 text-secondary"
-                          @click="editExpCat(expense.id)"
-                        >
-                          <i class="fas fa-edit"></i>
-                        </button>
-                        <button
-                          class="p-2 text-error"
-                          @click="delete_item('expense', expense.id)"
-                        >
-                          <i class="fas fa-trash"></i>
-                        </button>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-          <div v-if="selectedTab === 10">
-            <h2 class="text-xl font-semibold mb-4">
-              {{ translations.planning_settings }}
-            </h2>
-            <dialog v-if="showPlanningModal" id="modal_planning" class="modal">
-              <div class="modal-box">
-                <h3>
-                  {{ editingPlanning ? translations.edit : translations.add }}
-                </h3>
-                <form @submit.prevent="savePlanningCat">
-                  <button
-                    class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-                    @click="closePlanningModal"
-                  >
-                    ✕
-                  </button>
-                  <div class="ecwp-group form-control">
-                    <label class="ecwp-label label" for="name_planning">{{
-                      translations.name
-                    }}</label>
-                    <input
-                      type="text"
-                      id="name_planning"
-                      v-model="planningForm.name"
-                      class="ecwp-input input input-bordered"
-                      required
-                    />
-                  </div>
-                  <div class="ecwp-group form-control">
-                    <label class="ecwp-label label" for="background_planning">{{
-                      translations.background
-                    }}</label>
-                    <input
-                      type="text"
-                      id="background_planning"
-                      v-model="planningForm.background"
-                      class="ecwp-input input input-bordered"
-                      required
-                    />
-                    <color-input v-model="planningForm.background" />
-                  </div>
-                  <div class="ecwp-group form-control">
-                    <label class="ecwp-label label" for="color_planning">{{
-                      translations.text_color
-                    }}</label>
-                    <input
-                      type="text"
-                      id="color_planning"
-                      v-model="planningForm.color"
-                      class="ecwp-input input input-bordered"
-                      required
-                    />
-                    <color-input v-model="planningForm.color" />
-                  </div>
-
-                  <div class="form-group mt-4 flex justify-end">
-                    <button
-                      type="button"
-                      class="btn btn-secondary rounded-full"
-                      @click="closePlanningModal"
-                    >
-                      {{ translations.cancel }}
-                    </button>
-                    <button
-                      type="submit"
-                      class="btn btn-primary rounded-full mx-2"
-                      :disabled="loading"
-                    >
-                      {{
-                        editingPlanning ? translations.save : translations.add
-                      }}
-                      <span
-                        v-if="loading"
-                        class="loading loading-spinner loading-sm"
-                      ></span>
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </dialog>
-
-            <!-- planning Section -->
-            <div class="mb-8">
-              <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-semibold">
-                  {{ translations.planning_categories }}
-                </h3>
-                <button
-                  class="btn btn-primary rounded-full"
-                  @click="addPlanningCat"
-                >
-                  <i class="fas fa-plus mr-2"></i>
-                  {{ translations.add_category }}
-                </button>
-              </div>
-              <div class="table-container">
-                <table class="table w-full">
-                  <thead>
-                    <tr>
-                      <th>{{ translations.id }}</th>
-                      <th>{{ translations.name }}</th>
-                      <th>{{ translations.background }}</th>
-                      <th>{{ translations.color }}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="p in planning" :key="p.id">
-                      <td>{{ p.id }}</td>
-                      <td>{{ p.name }}</td>
-                      <td>
-                        <span
-                          class="ecwp-color-preview"
-                          :style="{ backgroundColor: p.background }"
-                        ></span>
-                      </td>
-                      <td>
-                        <span
-                          class="ecwp-color-preview"
-                          :style="{ backgroundColor: p.color }"
-                        ></span>
-                      </td>
-
-                      <td>
-                        <button
-                          class="p-2 text-secondary"
-                          @click="editPlanningCat(p.id)"
-                        >
-                          <i class="fas fa-edit"></i>
-                        </button>
-                        <button
-                          class="p-2 text-error"
-                          @click="delete_item('planning', p.id)"
-                        >
-                          <i class="fas fa-trash"></i>
-                        </button>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-          <div v-if="selectedTab === 11">
-            <h2 class="text-xl font-semibold mb-4">
-              {{ translations.email_settings }}
-            </h2>
-            <form @submit.prevent="handleSubmit">
-              <div class="form-control mt-4 mb-4">
-                <label class="cursor-pointer">
-                  <span class="label-text mr-2 font-bold">{{
-                    translations.email_log_active
-                  }}</span>
-                  <input
-                    type="checkbox"
-                    :checked="form.email_log_active == 1"
-                    @change="updateEmailLogsActive"
-                    class="wcpa-ui-toggle"
-                  />
-                </label>
-              </div>
-              <div class="divider mt-2 mb-4"></div>
-              <div role="tablist" class="tabs tabs-boxed">
-                <a
-                  role="tab"
-                  :class="['tab', { 'tab-active': activeTabEmail === 'tab1' }]"
-                  @click="setActiveTab('tab1')"
-                >
-                  {{ translations.email_invoice }}
-                </a>
-                <a
-                  role="tab"
-                  :class="['tab', { 'tab-active': activeTabEmail === 'tab2' }]"
-                  @click="setActiveTab('tab2')"
-                >
-                  {{ translations.email_quote }}
-                </a>
-                <a
-                  role="tab"
-                  :class="['tab', { 'tab-active': activeTabEmail === 'tab3' }]"
-                  @click="setActiveTab('tab3')"
-                >
-                  {{ translations.invoice_reminder }}
-                </a>
-                <a
-                  role="tab"
-                  :class="['tab', { 'tab-active': activeTabEmail === 'tab4' }]"
-                  @click="setActiveTab('tab4')"
-                >
-                  {{ translations.payment_received }}
-                </a>
-              </div>
-
-              <div v-if="activeTabEmail === 'tab1'" class="p-4">
-                <div class="grid grid-cols-1 gap-4">
-                  <div class="ecwp-group form-control">
-                    <label
-                      class="ecwp-label label"
-                      for="email_invoice_subject"
-                      >{{ translations.email_subject }}</label
-                    >
-                    <input
-                      type="text"
-                      id="email_invoice_subject"
-                      v-model="form.email_invoice_subject"
-                      class="ecwp-input input input-bordered"
-                      required
-                    />
-                  </div>
-
-                  <div class="form-control">
-                    <label class="ecwp-label label">{{
-                      translations.email_content
-                    }}</label>
-                    <div>
-                      <vue-editor
-                        v-model="form.email_invoice_content"
-                        :editorToolbar="toolbarOptions"
-                      ></vue-editor>
-                    </div>
-                    <div class="mockup-code bg-base-900 mt-4">
-                      <pre><b>{REF}</b></pre>
-                      <pre><b>{CLIENT}</b></pre>
-                      <pre><b>{DUE_DATE}</b></pre>
-                      <pre><b>{AMOUNT}</b></pre>
-                      <pre><b>{CURRENCY}</b></pre>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div v-if="activeTabEmail === 'tab2'" class="p-4">
-                <div class="grid grid-cols-1 gap-4">
-                  <div class="ecwp-group form-control">
-                    <label class="ecwp-label label" for="email_quote_subject">{{
-                      translations.email_subject
-                    }}</label>
-                    <input
-                      type="text"
-                      id="email_quote_subject"
-                      v-model="form.email_quote_subject"
-                      class="ecwp-input input input-bordered"
-                      required
-                    />
-                  </div>
-
-                  <div class="form-control">
-                    <label class="ecwp-label label">{{
-                      translations.email_content
-                    }}</label>
-                    <div>
-                      <vue-editor
-                        v-model="form.email_quote_content"
-                        :editorToolbar="toolbarOptions"
-                      ></vue-editor>
-                    </div>
-                    <div class="mockup-code bg-base-900 mt-4">
-                      <pre><b>{REF}</b></pre>
-                      <pre><b>{CLIENT}</b></pre>
-                      <pre><b>{AMOUNT}</b></pre>
-                      <pre><b>{CURRENCY}</b></pre>
-                      <pre><b>{CREATED_DATE}</b></pre>
-                      <pre><b>{DUE_DATE}</b></pre>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div v-if="activeTabEmail === 'tab3'" class="p-4">
-                <div class="grid grid-cols-1 gap-4">
-                  <div class="ecwp-group form-control">
-                    <label
-                      class="ecwp-label label"
-                      for="remind_invoice_subject"
-                      >{{ translations.email_subject }}</label
-                    >
-                    <input
-                      type="text"
-                      id="remind_invoice_subject"
-                      v-model="form.remind_invoice_subject"
-                      class="ecwp-input input input-bordered"
-                      required
-                    />
-                  </div>
-
-                  <div class="form-control">
-                    <label class="ecwp-label label">{{
-                      translations.email_content
-                    }}</label>
-                    <div>
-                      <vue-editor
-                        v-model="form.remind_invoice_content"
-                        :editorToolbar="toolbarOptions"
-                      ></vue-editor>
-                    </div>
-                    <div class="mockup-code bg-base-900 mt-4">
-                      <pre><b>{REF}</b></pre>
-                      <pre><b>{CLIENT}</b></pre>
-                      <pre><b>{DUE_DATE}</b></pre>
-                      <pre><b>{AMOUNT}</b></pre>
-                      <pre><b>{CURRENCY}</b></pre>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div v-if="activeTabEmail === 'tab4'" class="p-4">
-                <div role="alert" class="alert shadow">
-                  <i class="fas fa-exclamation-circle"></i>
-                  <div>
-                    <h2 class="text-xl text-center my-4">
-                      {{ translations.coming_soon }}
-                    </h2>
-                  </div>
-                </div>
-              </div>
-
-              <div class="mt-6 flex justify-end">
-                <button type="submit" class="btn btn-primary rounded-full">
-                  <i class="far fa-save"></i> {{ translations.save }}
-                </button>
-              </div>
-            </form>
-          </div>
-          <div v-if="selectedTab === 12">
-            <h2 class="text-xl font-semibold mb-4">
-              {{ translations.users_settings }}
-            </h2>
-            <div role="tablist" class="tabs tabs-boxed">
-              <a
-                role="tab"
-                :class="['tab', { 'tab-active': activeTabUsers === 'user1' }]"
-                @click="setActiveTabUsers('user1')"
-              >
-                Automatic create account
-              </a>
-              <a
-                role="tab"
-                :class="['tab', { 'tab-active': activeTabUsers === 'user2' }]"
-                @click="setActiveTabUsers('user2')"
-              >
-                Lost password
-              </a>
-            </div>
-
-            <div v-if="activeTabUsers === 'user1'" class="p-4">
-              <form @submit.prevent="handleSubmit">
-                <div class="grid grid-cols-1 gap-4">
-                  <div class="ecwp-group form-control">
-                    <label
-                      class="ecwp-label label"
-                      for="email_create_account_subject"
-                      >{{ translations.email_subject }}</label
-                    >
-                    <input
-                      type="text"
-                      id="email_create_account_subject"
-                      v-model="form.email_create_account_subject"
-                      class="ecwp-input input input-bordered"
-                      required
-                    />
-                  </div>
-
-                  <div class="form-control">
-                    <label class="ecwp-label label">{{
-                      translations.email_content
-                    }}</label>
-                    <div>
-                      <vue-editor
-                        v-model="form.email_create_account_content"
-                        :editorToolbar="toolbarOptions"
-                      ></vue-editor>
-                    </div>
-                    <div class="mockup-code bg-base-900 mt-4">
-                      <pre><b>{CLIENT}</b></pre>
-                      <pre><b>{USERNAME}</b></pre>
-                      <pre><b>{PASSWORD}</b></pre>
-                    </div>
-                  </div>
-                </div>
-                <div class="mt-6 flex justify-end">
-                  <button type="submit" class="btn btn-primary rounded-full">
-                    <i class="far fa-save"></i> {{ translations.save }}
-                  </button>
-                </div>
-              </form>
-            </div>
-            <div v-if="activeTabUsers === 'user2'" class="p-4">
-              <div role="alert" class="alert shadow">
-                <i class="fas fa-exclamation-circle"></i>
-                <div>
-                  <h2 class="text-xl text-center my-4">
-                    {{ translations.coming_soon }}
-                  </h2>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div v-if="selectedTab === 13">
-            <h2 class="text-xl font-semibold mb-4">
-              {{ translations.stripe_settings }}
-            </h2>
-            <form @submit.prevent="handleSubmit">
-              <div class="grid grid-cols-1 gap-4">
-                <!-- Mode Selector -->
-                <div class="ecwp-group form-control">
-                  <label class="ecwp-label label" for="stripe-mode">
-                    {{ translations.stripe_mode }}
-                  </label>
-                  <select
-                    id="stripe-mode"
-                    v-model="form.stripe_mode"
-                    class="ecwp-input input input-bordered"
-                    required
-                  >
-                    <option value="test">{{ translations.test_mode }}</option>
-                    <option value="live">{{ translations.live_mode }}</option>
-                  </select>
-                </div>
-
-                <!-- Stripe Keys for Test Mode -->
-                <div v-if="form.stripe_mode === 'test'">
-                  <div class="ecwp-group form-control">
-                    <label
-                      class="ecwp-label label"
-                      for="stripe-public-key-test"
-                    >
-                      {{ translations.stripe_public_key_test }}
-                    </label>
-                    <input
-                      type="text"
-                      id="stripe-public-key-test"
-                      v-model="form.stripe_public_key_test"
-                      class="ecwp-input input input-bordered"
-                      required
-                    />
-                  </div>
-                  <div class="ecwp-group form-control">
-                    <label
-                      class="ecwp-label label"
-                      for="stripe-secret-key-test"
-                    >
-                      {{ translations.stripe_secret_key_test }}
-                    </label>
-                    <input
-                      type="text"
-                      id="stripe-secret-key-test"
-                      v-model="form.stripe_secret_key_test"
-                      class="ecwp-input input input-bordered"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <!-- Stripe Keys for Live Mode -->
-                <div v-if="form.stripe_mode === 'live'">
-                  <div class="ecwp-group form-control">
-                    <label
-                      class="ecwp-label label"
-                      for="stripe-public-key-live"
-                    >
-                      {{ translations.stripe_public_key_live }}
-                    </label>
-                    <input
-                      type="text"
-                      id="stripe-public-key-live"
-                      v-model="form.stripe_public_key_live"
-                      class="ecwp-input input input-bordered"
-                      required
-                    />
-                  </div>
-                  <div class="ecwp-group form-control">
-                    <label
-                      class="ecwp-label label"
-                      for="stripe-secret-key-live"
-                    >
-                      {{ translations.stripe_secret_key_live }}
-                    </label>
-                    <input
-                      type="text"
-                      id="stripe-secret-key-live"
-                      v-model="form.stripe_secret_key_live"
-                      class="ecwp-input input input-bordered"
-                      required
-                    />
-                  </div>
-                </div>
-              </div>
-              <div class="mt-6 flex justify-end">
-                <button type="submit" class="btn btn-primary rounded-full">
-                  <i class="far fa-save"></i> {{ translations.save }}
-                </button>
-              </div>
-            </form>
-          </div>
-          <div v-if="selectedTab === 14">
-            <h2 class="text-xl font-semibold mb-4">
-              {{ translations.stats_settings }}
-            </h2>
-            <form @submit.prevent="handleSubmit">
-              <div class="grid grid-cols-1 gap-4">
-                <div class="ecwp-group form-control mt-2">
-                  <label class="ecwp-label label" for="limit-declaration">{{
-                    translations.limit_declaration
-                  }}</label>
-                  <input
-                    type="number"
-                    id="limit-declaration"
-                    v-model="form.limit_declaration"
-                    class="ecwp-input input input-bordered"
-                    required
-                  />
-                </div>
-
-                <div class="ecwp-group form-control mt-2">
-                  <label class="ecwp-label label" for="limit-tva">{{
-                    translations.limit_tva
-                  }}</label>
-                  <input
-                    type="number"
-                    id="limit-tva"
-                    v-model="form.limit_tva"
-                    class="ecwp-input input input-bordered"
-                    required
-                  />
-                </div>
-              </div>
-              <div class="mt-6 flex justify-end">
-                <button type="submit" class="btn btn-primary rounded-full">
-                  <i class="far fa-save"></i> {{ translations.save }}
-                </button>
-              </div>
-            </form>
-          </div>
-          <div v-if="selectedTab === 15">
-            <h2 class="text-xl font-semibold mb-4">
-              {{ translations.qrcode_settings }}
-            </h2>
-            <form @submit.prevent="handleSubmit">
-              <div class="grid grid-cols-1 gap-4">
-                <div class="ecwp-group form-control mt-2">
-                  <label class="ecwp-label label" for="stripe-api">{{
-                    translations.stripe_api
-                  }}</label>
-                  <input
-                    type="text"
-                    id="stripe-api"
-                    v-model="form.easy_compta_stripe_secret_api"
-                    class="ecwp-input input input-bordered"
-                    required
-                  />
-                </div>
-              </div>
-              <div class="mt-6 flex justify-end">
-                <button type="submit" class="btn btn-primary rounded-full">
-                  <i class="far fa-save"></i> {{ translations.save }}
-                </button>
-              </div>
-            </form>
-          </div>
-          <div v-if="selectedTab === 16">
-            <h2 class="text-xl font-semibold mb-4">
-              {{ translations.validation_license }}
-            </h2>
-            
-            <!-- Formulaire de validation compact -->
-            <div v-if="!licenseData || !licenseData.valid" class="mb-4">
-              <div class="form-control">
-                <label class="label py-1">
-                  <span class="label-text text-sm font-medium">{{
-                    translations.license_key
-                  }}</span>
-                </label>
-                <div class="input-group">
-                  <input
-                    type="text"
-                    id="license-code"
-                    v-model="license_key"
-                    class="input input-bordered input-sm flex-1"
-                    :disabled="licenseData && licenseData.valid"
-                    :placeholder="translations.enter_license_key || 'XXXX-XXXX-XXXX-XXXX'"
-                    required
-                  />
-                  <button
-                    @click="checkLicense"
-                    class="btn btn-primary btn-sm"
-                    :disabled="loadingLicense || (licenseData && licenseData.valid)"
-                  >
-                    <span
-                      v-if="loadingLicense"
-                      class="loading loading-spinner loading-xs"
-                    ></span>
-                    <i v-else class="fas fa-check mr-1"></i>
-                    <span v-if="!loadingLicense">
-                      {{ translations.validate }}
-                    </span>
-                  </button>
-                </div>
-              </div>
-            </div>
-            
-            <div v-if="errorMessage" class="alert alert-error shadow-lg mb-4 py-3 animate-fade-in">
-              <i class="fas fa-exclamation-circle animate-pulse"></i>
-              <span class="text-sm font-medium">{{ errorMessage }}</span>
-            </div>
-              <div v-if="licenseData" class="my-4 animate-fade-in">
-                <div class="card bg-gradient-to-br from-base-200 to-base-300 shadow-xl border border-base-300 hover:shadow-2xl transition-all duration-300">
-                  <div class="card-body p-4">
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                      <div class="p-3 rounded-lg bg-base-100/50 hover:bg-base-100 transition-colors duration-200">
-                        <div class="text-xs text-base-content/60 mb-2 font-medium flex items-center gap-1">
-                          <i class="fas fa-globe text-primary text-xs"></i>
-                          {{ translations.domain || "Domaine" }}
+                 <div class="space-y-2">
+                     <label class="kloxy-label">{{ translations.company_logo || 'Logo de l\'entreprise' }}</label>
+                     <div class="flex items-center gap-4">
+                        <div v-if="logoPreviewUrl || form.logo_url" class="w-24 h-24 rounded-2xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center border border-slate-200 dark:border-slate-700 p-2">
+                           <img :src="logoPreviewUrl || form.logo_url" class="max-w-full max-h-full object-contain" />
                         </div>
-                        <div class="font-bold text-base text-primary">{{ licenseData.domain || licenseData.current_domain }}</div>
-                      </div>
-                      <div class="p-3 rounded-lg bg-base-100/50 hover:bg-base-100 transition-colors duration-200">
-                        <div class="text-xs text-base-content/60 mb-2 font-medium flex items-center gap-1">
-                          <i class="fas fa-calendar-check text-info text-xs"></i>
-                          {{ translations.activation_date || "Date d'activation" }}
+                        <label class="cursor-pointer kloxy-btn-secondary">
+                           <Upload class="w-4 h-4 mr-2" /> {{ translations.select || 'Sélectionner' }}
+                           <input type="file" @change="handleLogoUpload" accept="image/*" class="hidden" />
+                        </label>
+                     </div>
+                     <input v-if="logoPreviewUrl || form.logo_url" type="range" min="50" max="400" v-model="form.logo_width" class="w-full mt-4 accent-purple-600 cursor-pointer" />
+                 </div>
+
+                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-2">
+                       <label class="kloxy-label">{{ translations.default_currency || 'Devise par défaut' }}</label>
+                       <select v-model="form.default_currency" class="kloxy-input appearance-none">
+                          <option v-for="c in currencies" :key="c.id" :value="c.id">{{ c.name }} ({{ c.symbol }})</option>
+                       </select>
+                    </div>
+                    <div class="space-y-2">
+                       <label class="kloxy-label">{{ translations.currency_position || 'Position de la devise' }}</label>
+                       <select v-model="form.currency_position" class="kloxy-input appearance-none">
+                          <option value="before">{{ translations.before_amount || 'Avant' }}</option>
+                          <option value="after">{{ translations.after_amount || 'Après' }}</option>
+                       </select>
+                    </div>
+                     <div class="space-y-2">
+                       <label class="kloxy-label">{{ translations.format_date || 'Format Date' }}</label>
+                       <select v-model="form.date_format" class="kloxy-input appearance-none">
+                          <option value="DD-MM-YYYY">DD-MM-YYYY</option>
+                          <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+                          <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+                       </select>
+                    </div>
+                 </div>
+            </div>
+
+            <!-- Tab 4: Invoices Settings -->
+            <div v-if="selectedTab === 4" class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <!-- Format du numéro de facture -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+                    <div class="space-y-2">
+                        <label class="kloxy-label">Format de numérotation</label>
+                        <select v-model="form.invoice_number_format" class="kloxy-input cursor-pointer">
+                            <option v-for="opt in numberFormatOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+                        </select>
+                        <p v-if="numberFormatOptions.find(o => o.value === form.invoice_number_format)?.note" class="text-[11px] text-amber-600 dark:text-amber-400">
+                            {{ numberFormatOptions.find(o => o.value === form.invoice_number_format).note }}
+                        </p>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="kloxy-label">Aperçu</label>
+                        <div class="kloxy-input bg-slate-50 dark:bg-slate-800 font-mono font-bold text-purple-600 dark:text-purple-400 select-all">{{ invoiceNumberPreview }}</div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-2">
+                        <label class="kloxy-label">{{ translations.invoice_prefix || 'Préfixe' }}</label>
+                        <input type="text" v-model="form.invoice_prefix" class="kloxy-input" />
+                    </div>
+                    <div class="space-y-2">
+                        <label class="kloxy-label">{{ translations.invoice_next_number || 'Prochain numéro' }}</label>
+                        <input type="number" v-model="form.invoice_first" class="kloxy-input" />
+                    </div>
+                    <div class="space-y-2">
+                        <label class="kloxy-label">{{ translations.invoice_color || 'Couleur principale' }}</label>
+                        <div class="flex gap-2">
+                            <input type="text" v-model="form.invoice_color" class="kloxy-input" />
+                            <input type="color" v-model="form.invoice_color" class="h-12 w-12 rounded-xl border-none cursor-pointer bg-transparent" />
                         </div>
-                        <div class="font-bold text-base text-info">{{ licenseData.start_date }}</div>
-                      </div>
-                      <div class="p-3 rounded-lg bg-base-100/50 hover:bg-base-100 transition-colors duration-200">
-                        <div class="text-xs text-base-content/60 mb-2 font-medium flex items-center gap-1">
-                          <i class="fas fa-calendar-times text-warning text-xs"></i>
-                          {{ translations.expiry_date || "Date d'expiration" }}
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6 border-b border-slate-100 dark:border-slate-800">
+                    <div class="space-y-2">
+                        <label class="kloxy-label">Modèle de PDF</label>
+                        <select v-model="form.invoice_pdf_template" class="kloxy-input cursor-pointer">
+                            <option value="modern">Moderne</option>
+                            <option value="classic">Classique</option>
+                            <option value="minimal">Minimaliste</option>
+                        </select>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="kloxy-label">Police d'écriture</label>
+                        <select v-model="form.invoice_pdf_font" class="kloxy-input cursor-pointer">
+                            <option value="dejavusanscondensed">DejaVu Sans</option>
+                            <option value="helvetica">Helvetica</option>
+                            <option value="courier">Courier</option>
+                            <option value="times">Times New Roman</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <label class="kloxy-label">{{ translations.invoice_footer || 'Pied de page' }}</label>
+                    <VueEditor v-model="form.invoice_footer" />
+                </div>
+                <div class="space-y-2">
+                    <label class="kloxy-label">{{ translations.invoice_terms || 'Conditions' }}</label>
+                    <VueEditor v-model="form.invoice_terms" />
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-2">
+                        <label class="kloxy-label">IBAN</label>
+                        <input type="text" v-model="form.invoice_iban" class="kloxy-input" />
+                    </div>
+                    <div class="space-y-2">
+                        <label class="kloxy-label">BIC</label>
+                        <input type="text" v-model="form.invoice_bic" class="kloxy-input" />
+                    </div>
+                </div>
+
+                <!-- Preview area for Invoices -->
+                <div class="mt-8 p-6 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-100 dark:border-slate-800">
+                    <h3 class="font-bold text-slate-900 dark:text-white mb-4">Aperçu du style (Facture)</h3>
+                    <div class="border rounded-lg shadow-sm bg-white p-8 max-w-2xl mx-auto dark:text-slate-900" :style="{ fontFamily: form.invoice_pdf_font }">
+                        <!-- Mock Header -->
+                        <div class="flex justify-between items-start border-b pb-4 mb-4" :style="{ borderColor: form.invoice_color }">
+                                <div class="font-bold text-xl uppercase" :style="{ color: form.invoice_color }">FACTURE</div>
+                                <div class="text-right text-xs text-slate-500">
+                                    <div>#INV-2024-001</div>
+                                    <div>Date: {{ new Date().toLocaleDateString() }}</div>
+                                </div>
                         </div>
-                        <div class="font-bold text-base text-warning">{{ licenseData.end_date }}</div>
-                      </div>
-                      <div class="p-3 rounded-lg bg-base-100/50 hover:bg-base-100 transition-colors duration-200">
-                        <div class="text-xs text-base-content/60 mb-2 font-medium flex items-center gap-1">
-                          <i class="fas fa-shield-alt text-success text-xs"></i>
-                          {{ translations.status || "Statut" }}
+                        <!-- Mock Table -->
+                            <table class="w-full text-xs">
+                                <thead :style="{ backgroundColor: form.invoice_color, color: '#fff' }">
+                                    <tr>
+                                        <th class="p-2 text-left">Description</th>
+                                        <th class="p-2 text-right">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="border-b">
+                                        <td class="p-2">Développement Site Web</td>
+                                        <td class="p-2 text-right">1500.00 €</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <div class="mt-4 text-right font-bold text-lg" :style="{ color: form.invoice_color }">
+                                Total: 1500.00 €
+                            </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 5: Credits Settings -->
+            <div v-if="selectedTab === 5" class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <!-- Format du numéro d'avoir -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+                    <div class="space-y-2">
+                        <label class="kloxy-label">Format de numérotation</label>
+                        <select v-model="form.credit_number_format" class="kloxy-input cursor-pointer">
+                            <option v-for="opt in numberFormatOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+                        </select>
+                        <p v-if="numberFormatOptions.find(o => o.value === form.credit_number_format)?.note" class="text-[11px] text-amber-600 dark:text-amber-400">
+                            {{ numberFormatOptions.find(o => o.value === form.credit_number_format).note }}
+                        </p>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="kloxy-label">Aperçu</label>
+                        <div class="kloxy-input bg-slate-50 dark:bg-slate-800 font-mono font-bold text-amber-600 dark:text-amber-400 select-all">{{ creditNumberPreview }}</div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-2">
+                        <label class="kloxy-label">{{ translations.credit_prefix || 'Préfixe' }}</label>
+                        <input type="text" v-model="form.credit_prefix" class="kloxy-input" />
+                    </div>
+                    <div class="space-y-2">
+                        <label class="kloxy-label">{{ translations.credit_color || 'Couleur principale' }}</label>
+                        <div class="flex gap-2">
+                            <input type="text" v-model="form.credit_color" class="kloxy-input" />
+                            <input type="color" v-model="form.credit_color" class="h-12 w-12 rounded-xl border-none cursor-pointer bg-transparent" />
+                        </div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6 border-b border-slate-100 dark:border-slate-800">
+                    <div class="space-y-2">
+                        <label class="kloxy-label">Modèle de PDF</label>
+                        <select v-model="form.credit_pdf_template" class="kloxy-input cursor-pointer">
+                            <option value="modern">Moderne</option>
+                            <option value="classic">Classique</option>
+                            <option value="minimal">Minimaliste</option>
+                        </select>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="kloxy-label">Police d'écriture</label>
+                        <select v-model="form.credit_pdf_font" class="kloxy-input cursor-pointer">
+                            <option value="dejavusanscondensed">DejaVu Sans</option>
+                            <option value="helvetica">Helvetica</option>
+                            <option value="courier">Courier</option>
+                            <option value="times">Times New Roman</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <label class="kloxy-label">{{ translations.credit_footer || 'Pied de page' }}</label>
+                    <VueEditor v-model="form.credit_footer" />
+                </div>
+                <div class="space-y-2">
+                    <label class="kloxy-label">{{ translations.credit_terms || 'Conditions' }}</label>
+                    <VueEditor v-model="form.credit_terms" />
+                </div>
+
+                <!-- Preview area for Credits -->
+                <div class="mt-8 p-6 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-100 dark:border-slate-800">
+                    <h3 class="font-bold text-slate-900 dark:text-white mb-4">Aperçu du style (Avoir)</h3>
+                    <div class="border rounded-lg shadow-sm bg-white p-8 max-w-2xl mx-auto dark:text-slate-900" :style="{ fontFamily: form.credit_pdf_font }">
+                        <!-- Mock Header -->
+                        <div class="flex justify-between items-start border-b pb-4 mb-4" :style="{ borderColor: form.credit_color }">
+                                <div class="font-bold text-xl uppercase" :style="{ color: form.credit_color }">AVOIR</div>
+                                <div class="text-right text-xs text-slate-500">
+                                    <div>#AV-2024-001</div>
+                                    <div>Date: {{ new Date().toLocaleDateString() }}</div>
+                                </div>
+                        </div>
+                        <!-- Mock Table -->
+                            <table class="w-full text-xs">
+                                <thead :style="{ backgroundColor: form.credit_color, color: '#fff' }">
+                                    <tr>
+                                        <th class="p-2 text-left">Description</th>
+                                        <th class="p-2 text-right">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="border-b">
+                                        <td class="p-2">Remboursement Service</td>
+                                        <td class="p-2 text-right">-100.00 €</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <div class="mt-4 text-right font-bold text-lg" :style="{ color: form.credit_color }">
+                                Total: -100.00 €
+                            </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 6: Quotes Settings -->
+            <div v-if="selectedTab === 6" class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <!-- Format du numéro de devis -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+                    <div class="space-y-2">
+                        <label class="kloxy-label">Format de numérotation</label>
+                        <select v-model="form.quote_number_format" class="kloxy-input cursor-pointer">
+                            <option v-for="opt in numberFormatOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+                        </select>
+                        <p v-if="numberFormatOptions.find(o => o.value === form.quote_number_format)?.note" class="text-[11px] text-amber-600 dark:text-amber-400">
+                            {{ numberFormatOptions.find(o => o.value === form.quote_number_format).note }}
+                        </p>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="kloxy-label">Aperçu</label>
+                        <div class="kloxy-input bg-slate-50 dark:bg-slate-800 font-mono font-bold text-emerald-600 dark:text-emerald-400 select-all">{{ quoteNumberPreview }}</div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-2">
+                        <label class="kloxy-label">{{ translations.quote_prefix || 'Préfixe' }}</label>
+                        <input type="text" v-model="form.quote_prefix" class="kloxy-input" />
+                    </div>
+                    <div class="space-y-2">
+                        <label class="kloxy-label">{{ translations.quote_next_number || 'Prochain numéro' }}</label>
+                        <input type="number" v-model="form.quote_first" class="kloxy-input" />
+                    </div>
+                    <div class="space-y-2">
+                        <label class="kloxy-label">{{ translations.quote_color || 'Couleur principale' }}</label>
+                        <div class="flex gap-2">
+                            <input type="text" v-model="form.quote_color" class="kloxy-input" />
+                            <input type="color" v-model="form.quote_color" class="h-12 w-12 rounded-xl border-none cursor-pointer bg-transparent" />
+                        </div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6 border-b border-slate-100 dark:border-slate-800">
+                    <div class="space-y-2">
+                        <label class="kloxy-label">Modèle de PDF</label>
+                        <select v-model="form.quote_pdf_template" class="kloxy-input cursor-pointer">
+                            <option value="modern">Moderne</option>
+                            <option value="classic">Classique</option>
+                            <option value="minimal">Minimaliste</option>
+                        </select>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="kloxy-label">Police d'écriture</label>
+                        <select v-model="form.quote_pdf_font" class="kloxy-input cursor-pointer">
+                            <option value="dejavusanscondensed">DejaVu Sans</option>
+                            <option value="helvetica">Helvetica</option>
+                            <option value="courier">Courier</option>
+                            <option value="times">Times New Roman</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <label class="kloxy-label">{{ translations.quote_footer || 'Pied de page' }}</label>
+                    <VueEditor v-model="form.quote_footer" />
+                </div>
+                <div class="space-y-2">
+                    <label class="kloxy-label">{{ translations.quote_terms || 'Conditions' }}</label>
+                    <VueEditor v-model="form.quote_terms" />
+                </div>
+
+                <!-- Preview area for Quotes -->
+                <div class="mt-8 p-6 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-100 dark:border-slate-800">
+                    <h3 class="font-bold text-slate-900 dark:text-white mb-4">Aperçu du style (Devis)</h3>
+                    <div class="border rounded-lg shadow-sm bg-white p-8 max-w-2xl mx-auto dark:text-slate-900" :style="{ fontFamily: form.quote_pdf_font }">
+                        <!-- Mock Header -->
+                        <div class="flex justify-between items-start border-b pb-4 mb-4" :style="{ borderColor: form.quote_color }">
+                                <div class="font-bold text-xl uppercase" :style="{ color: form.quote_color }">DEVIS</div>
+                                <div class="text-right text-xs text-slate-500">
+                                    <div>#DEV-2024-001</div>
+                                    <div>Date: {{ new Date().toLocaleDateString() }}</div>
+                                </div>
+                        </div>
+                        <!-- Mock Table -->
+                            <table class="w-full text-xs">
+                                <thead :style="{ backgroundColor: form.quote_color, color: '#fff' }">
+                                    <tr>
+                                        <th class="p-2 text-left">Description</th>
+                                        <th class="p-2 text-right">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="border-b">
+                                        <td class="p-2">Prestation de conseil</td>
+                                        <td class="p-2 text-right">800.00 €</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <div class="mt-4 text-right font-bold text-lg" :style="{ color: form.quote_color }">
+                                Total: 800.00 €
+                            </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Tab 10: Planning Addon -->
+            <div v-if="selectedTab === 10" class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div class="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-[2rem] border border-blue-100 dark:border-blue-800">
+                    <div class="flex items-center gap-4 mb-4">
+                        <Calendar class="w-8 h-8 text-blue-600" />
+                        <h3 class="text-xl font-black text-blue-900 dark:text-blue-100">Add-on Planning</h3>
+                    </div>
+                    <p class="text-slate-600 dark:text-slate-400 font-medium">L'add-on Planning permet de gérer vos rendez-vous et votre emploi du temps.</p>
+                </div>
+                <div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
+                    <span class="font-bold text-slate-700 dark:text-slate-300">Activer l'add-on Planning</span>
+                    <button 
+                        type="button"
+                        class="kloxy-toggle"
+                        :aria-checked="(form.easy_compta_planning_addon_active == 1).toString()"
+                        @click="toggleAddon('myeasycompta-planning', 'easy_compta_planning_addon_active')"
+                    >
+                        <span class="kloxy-toggle-thumb"></span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tab 11: Email Addon -->
+            <div v-if="selectedTab === 11" class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+
+                <!-- Header card -->
+                <div class="flex items-center justify-between p-5 bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl border border-indigo-100 dark:border-indigo-800">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                            <Mail class="w-5 h-5 text-white" />
                         </div>
                         <div>
-                          <span class="badge badge-lg shadow-md animate-pulse" :class="licenseData.valid ? 'badge-success' : 'badge-error'">
-                            <i :class="licenseData.valid ? 'fas fa-check-circle' : 'fas fa-times-circle'"></i>
-                            {{ licenseData.valid ? (translations.valid || "Valide") : (translations.invalid || "Invalide") }}
-                          </span>
+                            <h3 class="font-black text-slate-900 dark:text-white">Add-on Emailing</h3>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Envoyez vos factures et devis directement depuis myEasyCompta</p>
                         </div>
-                      </div>
                     </div>
-                    <div class="flex gap-3 mt-4 pt-4 border-t border-base-300">
-                      <button
-                        @click="refresh_licence()"
-                        class="btn btn-sm btn-primary shadow-md hover:shadow-lg hover:scale-105 transition-all duration-200"
-                      >
-                        <i class="fas fa-sync mr-2"></i>
-                        {{ translations.refresh || "Rafraîchir" }}
-                      </button>
-                      <button
-                        @click="delete_item('licence', '')"
-                        class="btn btn-sm btn-error btn-outline shadow-md hover:shadow-lg hover:scale-105 transition-all duration-200"
-                      >
-                        <i class="fas fa-trash mr-2"></i>
-                        {{ translations.delete || "Supprimer" }}
-                      </button>
-                    </div>
-                  </div>
+                    <button
+                        type="button"
+                        class="kloxy-toggle flex-shrink-0"
+                        :aria-checked="(form.easy_compta_email_addon_active == 1).toString()"
+                        @click="toggleAddon('myeasycompta-e-mail', 'easy_compta_email_addon_active')"
+                    ><span class="kloxy-toggle-thumb"></span></button>
                 </div>
-              </div>
 
-              <!-- Section de gestion des domaines autorisés -->
-              <div v-if="licenseData" class="mt-6 animate-fade-in">
-                <div class="card bg-gradient-to-br from-base-100 via-base-100 to-base-200 shadow-2xl border-2 border-primary/20 hover:border-primary/40 transition-all duration-300">
-                  <div class="card-body px-0">
-                    <div class="flex items-center justify-between mb-6">
-                      <h3 class="text-2xl font-extrabold flex items-center gap-3 bg-gradient-to-r from-primary to-info bg-clip-text text-transparent">
-                        <div class="avatar placeholder">
-                          <div class="bg-gradient-to-br from-primary to-info text-primary-content rounded-full w-12 shadow-lg">
-                            <i class="fas fa-globe text-xl"></i>
-                          </div>
+                <!-- Email Notification Settings — always visible -->
+                <div class="rounded-[2rem] border border-slate-200 dark:border-slate-700 overflow-hidden">
+                    <div class="flex items-center gap-3 px-5 py-3.5 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-700">
+                        <div class="w-7 h-7 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                            <Bell class="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
                         </div>
-                        <span>{{ translations.authorized_domains || "Domaines autorisés" }}</span>
-                      </h3>
+                        <span class="font-black text-xs uppercase tracking-widest text-slate-600 dark:text-slate-300">Notifications automatiques</span>
                     </div>
-                  
-                  <!-- Statistiques compactes -->
-                  <div v-if="licenseData" class="mb-6">
-                    <div class="stats stats-vertical lg:stats-horizontal shadow-2xl w-full bg-gradient-to-br from-base-200 via-base-300 to-base-200 border-2 border-base-300">
-                      <div class="stat py-4 px-6 hover:bg-base-100/50 transition-all duration-300 rounded-lg group">
-                        <div class="stat-figure text-primary opacity-90 group-hover:opacity-100 group-hover:scale-110 transition-all duration-300">
-                          <div class="avatar placeholder">
-                            <div class="bg-gradient-to-br from-primary to-primary-focus text-primary-content rounded-full w-16 shadow-lg">
-                              <i class="fas fa-server text-2xl"></i>
+                    <div class="p-5 space-y-5 bg-white dark:bg-slate-900">
+
+                        <!-- Theme picker -->
+                        <div class="space-y-2">
+                            <label class="kloxy-label">Thème des emails</label>
+                            <div class="flex gap-3">
+                                <button type="button" @click="form.ecwp_email_theme = 'dark'"
+                                    :class="['flex-1 flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all text-left',
+                                             form.ecwp_email_theme === 'dark' ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20' : 'border-slate-200 dark:border-slate-700 hover:border-purple-300']">
+                                    <div class="w-8 h-8 rounded-lg bg-slate-900 flex-shrink-0 flex items-center justify-center">
+                                        <div class="w-3 h-3 rounded-full bg-purple-500"></div>
+                                    </div>
+                                    <div>
+                                        <p class="font-black text-xs text-slate-800 dark:text-white">Dark</p>
+                                        <p class="text-[10px] text-slate-400">Fond sombre</p>
+                                    </div>
+                                    <div v-if="form.ecwp_email_theme === 'dark'" class="ml-auto w-4 h-4 rounded-full bg-purple-500 flex items-center justify-center flex-shrink-0">
+                                        <svg viewBox="0 0 12 12" class="w-2.5 h-2.5 text-white" fill="currentColor"><path d="M2 6l3 3 5-5"/></svg>
+                                    </div>
+                                </button>
+                                <button type="button" @click="form.ecwp_email_theme = 'light'"
+                                    :class="['flex-1 flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all text-left',
+                                             form.ecwp_email_theme === 'light' ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20' : 'border-slate-200 dark:border-slate-700 hover:border-purple-300']">
+                                    <div class="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200 flex-shrink-0 flex items-center justify-center">
+                                        <div class="w-3 h-3 rounded-full bg-purple-500"></div>
+                                    </div>
+                                    <div>
+                                        <p class="font-black text-xs text-slate-800 dark:text-white">Light</p>
+                                        <p class="text-[10px] text-slate-400">Fond clair</p>
+                                    </div>
+                                    <div v-if="form.ecwp_email_theme === 'light'" class="ml-auto w-4 h-4 rounded-full bg-purple-500 flex items-center justify-center flex-shrink-0">
+                                        <svg viewBox="0 0 12 12" class="w-2.5 h-2.5 text-white" fill="currentColor"><path d="M2 6l3 3 5-5"/></svg>
+                                    </div>
+                                </button>
                             </div>
-                          </div>
                         </div>
-                        <div class="stat-title text-sm text-base-content/70 font-semibold mb-1">
-                          {{ translations.used_domains || "Utilisés" }}
+
+                        <!-- Preview button -->
+                        <div class="flex flex-wrap gap-2">
+                            <button type="button" @click="previewEmail('quote_accepted')"
+                                class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-600 dark:text-slate-300 hover:border-purple-400 hover:text-purple-600 transition-all">
+                                <Eye class="w-3.5 h-3.5" /> Aperçu — Devis accepté
+                            </button>
+                            <button type="button" @click="previewEmail('quote_rejected')"
+                                class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-600 dark:text-slate-300 hover:border-rose-400 hover:text-rose-600 transition-all">
+                                <Eye class="w-3.5 h-3.5" /> Aperçu — Devis refusé
+                            </button>
+                            <button type="button" @click="sendTestEmail" :disabled="testEmailLoading"
+                                class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-amber-200 dark:border-amber-800 text-xs font-bold text-amber-600 dark:text-amber-400 hover:border-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40 transition-all disabled:opacity-50 disabled:cursor-wait">
+                                <span v-if="testEmailLoading" class="w-3.5 h-3.5 border-2 border-amber-400 border-t-transparent rounded-full animate-spin"></span>
+                                <span v-else>🧪</span>
+                                Envoyer un email test
+                            </button>
                         </div>
-                        <div class="stat-value text-primary text-4xl font-extrabold drop-shadow-sm">{{ usedDomainsCount }}</div>
-                        <div class="stat-desc text-xs text-base-content/60 mt-1">
-                          <i class="fas fa-circle text-xs mr-1"></i>
-                          {{ translations.currently_used || "Actuellement utilisés" }}
+                        <!-- Test email result -->
+                        <div v-if="testEmailMsg" :class="['text-xs font-medium px-3 py-2 rounded-xl', testEmailMsg.ok ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400' : 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400']">
+                            {{ testEmailMsg.text }}
                         </div>
-                      </div>
-                      <div class="stat py-4 px-6 hover:bg-base-100/50 transition-all duration-300 rounded-lg group">
-                        <div class="stat-figure text-info opacity-90 group-hover:opacity-100 group-hover:scale-110 transition-all duration-300">
-                          <div class="avatar placeholder">
-                            <div class="bg-gradient-to-br from-info to-info-focus text-info-content rounded-full w-16 shadow-lg">
-                              <i class="fas fa-chart-line text-2xl"></i>
-                            </div>
-                          </div>
-                        </div>
-                        <div class="stat-title text-sm text-base-content/70 font-semibold mb-1">
-                          {{ translations.max_domains || "Maximum" }}
-                        </div>
-                        <div class="stat-value text-info text-4xl font-extrabold drop-shadow-sm">{{ maxDomainsText }}</div>
-                        <div class="stat-desc text-xs text-base-content/60 mt-1">
-                          <i class="fas fa-circle text-xs mr-1"></i>
-                          {{ translations.limit || "Limite de la licence" }}
-                        </div>
-                      </div>
-                      <div class="stat py-4 px-6 hover:bg-base-100/50 transition-all duration-300 rounded-lg group">
-                        <div class="stat-figure opacity-90 group-hover:opacity-100 group-hover:scale-110 transition-all duration-300" :class="remainingDomainsClass">
-                          <div class="avatar placeholder">
-                            <div class="rounded-full w-16 shadow-lg" :class="remainingDomainsClass === 'text-success' ? 'bg-gradient-to-br from-success to-success-focus text-success-content' : remainingDomainsClass === 'text-warning' ? 'bg-gradient-to-br from-warning to-warning-focus text-warning-content' : 'bg-gradient-to-br from-error to-error-focus text-error-content'">
-                              <i class="fas fa-check-circle text-2xl"></i>
-                            </div>
-                          </div>
-                        </div>
-                        <div class="stat-title text-sm text-base-content/70 font-semibold mb-1">
-                          {{ translations.remaining_domains || "Restants" }}
-                        </div>
-                        <div class="stat-value text-4xl font-extrabold drop-shadow-sm" :class="remainingDomainsClass">{{ remainingDomainsText }}</div>
-                        <div class="stat-desc text-xs mt-1" :class="remainingDomainsClass">
-                          <i class="fas fa-circle text-xs mr-1"></i>
-                          {{ translations.available || "Disponibles" }}
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <!-- Barre de progression compacte -->
-                    <div v-if="maxDomains !== null && maxDomains > 0" class="mt-6 card bg-gradient-to-r from-base-200 to-base-300 shadow-lg border border-base-300">
-                      <div class="card-body p-4">
-                        <div class="flex justify-between items-center mb-3">
-                          <span class="font-bold text-base flex items-center gap-2">
-                            <i class="fas fa-tachometer-alt text-primary"></i>
-                            {{ translations.usage || "Utilisation" }}
-                          </span>
-                          <span class="badge badge-lg shadow-md font-bold" :class="progressBarClass === 'progress-success' ? 'badge-success' : progressBarClass === 'progress-warning' ? 'badge-warning' : 'badge-error'">
-                            <i class="fas fa-percent mr-1"></i>
-                            {{ usagePercentage }}%
-                          </span>
-                        </div>
-                        <progress
-                          class="progress h-4 shadow-inner transition-all duration-1000 ease-out"
-                          :class="progressBarClass"
-                          :value="usedDomainsCount"
-                          :max="maxDomains"
-                        ></progress>
-                        <div class="flex justify-between text-sm font-semibold mt-3">
-                          <span class="badge badge-outline badge-md shadow-sm">
-                            <i class="fas fa-globe mr-1"></i>
-                            {{ usedDomainsCount }} / {{ maxDomains }}
-                          </span>
-                          <span class="badge badge-outline badge-md shadow-sm" :class="remainingDomainsClass === 'text-success' ? 'badge-success' : remainingDomainsClass === 'text-warning' ? 'badge-warning' : 'badge-error'">
-                            <i class="fas fa-hourglass-half mr-1"></i>
-                            {{ remainingDomainsText }} {{ translations.remaining || "restants" }}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <!-- Messages d'avertissement compacts -->
-                    <div
-                      v-if="remainingDomains === 0 && maxDomains !== null"
-                      class="alert alert-warning shadow-xl mt-4 py-4 border-2 border-warning/50 animate-pulse"
-                    >
-                      <i class="fas fa-exclamation-triangle text-2xl"></i>
-                      <span class="font-bold text-base">
-                        {{ translations.limit_reached || "Limite de domaines atteinte." }}
-                      </span>
-                    </div>
-                    <div
-                      v-if="remainingDomains > 0 && remainingDomains <= 2 && maxDomains !== null"
-                      class="alert alert-info shadow-xl mt-4 py-4 border-2 border-info/50"
-                    >
-                      <i class="fas fa-info-circle text-2xl"></i>
-                      <span class="font-semibold text-base">
-                        {{ translations.limit_warning || "Il ne reste que " + remainingDomains + " domaine(s)." }}
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <!-- Formulaire compact -->
-                  <div v-if="licenseData" class="mb-6">
-                    <div class="form-control">
-                      <label class="label pb-2">
-                        <span class="label-text font-bold text-base flex items-center gap-2">
-                          <i class="fas fa-plus-circle text-primary"></i>
-                          {{ translations.add_domain || "Ajouter un domaine" }}
-                        </span>
-                      </label>
-                      <div class="input-group">
-                        <input
-                          type="text"
-                          v-model="newDomain"
-                          :placeholder="translations.enter_domain || 'exemple.com'"
-                          class="input input-bordered flex-1 focus:input-primary focus:ring-2 focus:ring-primary transition-all duration-200"
-                          :class="{
-                            'input-error focus:ring-error': domainErrorMessage,
-                            'input-disabled opacity-50': maxDomains !== null && maxDomains !== -1 && remainingDomains === 0
-                          }"
-                          @keyup.enter="addDomain"
-                          :disabled="maxDomains !== null && maxDomains !== -1 && remainingDomains === 0"
-                        />
-                        <button
-                          @click="addDomain"
-                          class="btn btn-primary shadow-md hover:shadow-xl hover:scale-105 transition-all duration-200"
-                          :disabled="loadingDomain || !newDomain || (maxDomains !== null && maxDomains !== -1 && remainingDomains === 0)"
-                        >
-                          <span v-if="loadingDomain" class="loading loading-spinner loading-sm"></span>
-                          <i v-else class="fas fa-plus text-lg"></i>
-                          <span v-if="!loadingDomain" class="font-semibold">{{ translations.add_domain || "Ajouter" }}</span>
-                        </button>
-                      </div>
-                      <label v-if="domainErrorMessage" class="label py-2 animate-fade-in">
-                        <span class="label-text-alt text-error text-sm font-semibold flex items-center gap-2">
-                          <i class="fas fa-exclamation-circle animate-pulse"></i>
-                          {{ domainErrorMessage }}
-                        </span>
-                      </label>
-                    </div>
-                  </div>
-                  
-                  <!-- Liste des domaines compacte -->
-                  <div v-if="licenseData && licenseData.domains && licenseData.domains.length > 0" class="mt-6">
-                    <div class="overflow-x-auto shadow-xl rounded-lg border-2 border-base-300">
-                      <table class="table table-zebra">
-                        <thead class="bg-gradient-to-r from-base-200 to-base-300">
-                          <tr>
-                            <th class="text-sm font-bold">
-                              <i class="fas fa-globe mr-2 text-primary"></i>
-                              {{ translations.domain || "Domaine" }}
-                            </th>
-                            <th class="text-sm font-bold">
-                              <i class="fas fa-info-circle mr-2 text-info"></i>
-                              {{ translations.status || "Statut" }}
-                            </th>
-                            <th class="text-sm font-bold text-right">
-                              <i class="fas fa-cog mr-2 text-warning"></i>
-                              {{ translations.actions || "Actions" }}
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr
-                            v-for="(domain, index) in licenseData.domains"
-                            :key="index"
-                            class="hover:bg-base-200 transition-all duration-200"
-                            :class="{
-                              'bg-gradient-to-r from-success/20 to-success/10 border-l-4 border-success': domain === licenseData.current_domain,
-                            }"
-                          >
-                            <td>
-                              <div class="flex items-center gap-3">
-                                <div class="avatar placeholder">
-                                  <div class="bg-primary text-primary-content rounded-full w-8">
-                                    <i class="fas fa-server text-xs"></i>
-                                  </div>
+
+                        <div class="h-px bg-slate-100 dark:bg-slate-800"></div>
+
+                        <!-- Section 1 : Notifications gratuites -->
+                        <div class="space-y-1">
+                            <p class="text-[10px] font-black uppercase tracking-widest text-slate-400 pb-1">Incluses gratuitement</p>
+                            <template v-for="notif in [
+                                { key: 'ecwp_notify_invoice_paid',    label: 'Facture payée intégralement',   desc: 'Email quand une facture passe au statut « Payée ».', preview: 'invoice_paid' },
+                                { key: 'ecwp_notify_new_client',      label: 'Nouveau client créé',            desc: 'Email quand un client est ajouté à la base.', preview: 'new_client' },
+                                { key: 'ecwp_notify_quote_converted', label: 'Devis converti en facture',      desc: 'Email quand un devis est transformé en facture.', preview: 'quote_converted' },
+                                { key: 'ecwp_notify_quote_action',    label: 'Devis accepté / refusé en ligne', desc: 'Email quand un client répond à un devis partagé (addon Devis en ligne).', preview: 'quote_accepted' },
+                            ]" :key="notif.key">
+                                <div class="flex items-center justify-between gap-4 py-2">
+                                    <div class="min-w-0">
+                                        <p class="font-semibold text-sm text-slate-900 dark:text-white">{{ notif.label }}</p>
+                                        <p class="text-xs text-slate-400 mt-0.5">{{ notif.desc }}</p>
+                                    </div>
+                                    <div class="flex items-center gap-2 flex-shrink-0">
+                                        <button type="button" @click="previewEmail(notif.preview)" class="text-purple-400 hover:text-purple-600 transition-colors"><Eye class="w-3.5 h-3.5" /></button>
+                                        <button type="button" @click="form[notif.key] = form[notif.key] == '1' ? '0' : '1'"
+                                            :class="['relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer', form[notif.key] == '1' ? 'bg-purple-600' : 'bg-slate-200 dark:bg-slate-700']">
+                                            <span :class="['inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow', form[notif.key] == '1' ? 'translate-x-6' : 'translate-x-1']"></span>
+                                        </button>
+                                    </div>
                                 </div>
-                                <span class="font-mono text-base font-semibold">{{ domain }}</span>
-                                <span
-                                  v-if="domain === licenseData.current_domain"
-                                  class="badge badge-success badge-sm text-xs shadow-md font-medium animate-pulse"
-                                >
-                                  <i class="fas fa-check-circle mr-1 text-xs"></i>
-                                  {{ translations.current_domain || "Actuel" }}
-                                </span>
-                              </div>
-                            </td>
-                            <td>
-                              <span
-                                class="badge badge-sm text-xs shadow-sm font-medium"
-                                :class="
-                                  domain === licenseData.current_domain
-                                    ? 'badge-success'
-                                    : 'badge-info'
-                                "
-                              >
-                                <i :class="domain === licenseData.current_domain ? 'fas fa-check-circle mr-1 text-xs' : 'fas fa-circle mr-1 text-xs'"></i>
-                                {{
-                                  domain === licenseData.current_domain
-                                    ? translations.active || "Actif"
-                                    : translations.authorized || "Autorisé"
-                                }}
-                              </span>
-                            </td>
-                            <td class="text-right">
-                              <button
-                                v-if="domain !== licenseData.current_domain"
-                                @click="confirmRemoveDomain(domain)"
-                                class="btn btn-sm btn-error btn-outline shadow-md hover:shadow-xl hover:scale-110 transition-all duration-200"
-                                :disabled="loadingDomain"
-                              >
-                                <i class="fas fa-trash"></i>
-                              </button>
-                              <span v-else class="badge badge-ghost badge-sm shadow-sm">
-                                <i class="fas fa-lock"></i>
-                              </span>
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                  <div v-else-if="licenseData" class="alert shadow-xl mt-6 py-6 border-2 border-base-300">
-                    <i class="fas fa-inbox text-3xl text-base-content/40"></i>
-                    <span class="text-base font-semibold">{{ translations.no_domains || "Aucun domaine autorisé" }}</span>
-                  </div>
-                  </div>
-                </div>
-              </div>
+                            </template>
+                        </div>
 
-              <!-- Liste des plugins avec collapse -->
-              <div v-if="licenseData && licenseData.plugins" class="mt-6 animate-fade-in">
-                <div class="card bg-gradient-to-br from-base-100 via-base-100 to-base-200 shadow-2xl border-2 border-primary/20 hover:border-primary/40 transition-all duration-300">
-                  <div class="card-body p-0">
-                    <!-- En-tête avec collapse -->
-                    <div class="collapse collapse-arrow bg-transparent" :class="{ 'collapse-open': pluginsListOpen }">
-                      <input type="checkbox" v-model="pluginsListOpen" class="hidden" />
-                      <div 
-                        class="collapse-title text-lg font-extrabold px-6 py-4 bg-gradient-to-r from-base-200 to-base-300 border-b-2 border-base-300 hover:bg-gradient-to-r hover:from-base-300 hover:to-base-200 transition-all duration-200 cursor-pointer"
-                        @click="pluginsListOpen = !pluginsListOpen"
-                      >
-                        <div class="flex items-center justify-between w-full">
-                          <div class="flex items-center gap-3">
-                            <div class="avatar placeholder">
-                              <div class="bg-gradient-to-br from-primary to-info text-primary-content rounded-full w-10 shadow-lg">
-                                <i class="fas fa-plug text-lg"></i>
-                              </div>
-                            </div>
-                            <span class="bg-gradient-to-r from-primary to-info bg-clip-text text-transparent">
-                              {{ translations.plugins_list || "Plugins de la licence" }}
-                            </span>
-                            <span class="badge badge-primary badge-sm text-xs shadow-md font-semibold">
-                              {{ Object.keys(licenseData.plugins).length }}
-                            </span>
-                          </div>
-                          
-                        </div>
-                      </div>
-                      <div class="collapse-content px-0 bg-transparent">
-                        <div class="p-6">
-                          <div class="overflow-x-auto shadow-xl rounded-lg border-2 border-base-300">
-                            <table class="table table-zebra">
-                              <thead class="bg-gradient-to-r from-base-200 to-base-300">
-                                <tr>
-                                  <th class="text-sm font-bold">
-                                    <i class="fas fa-cube mr-2 text-primary"></i>
-                                    {{ translations.addon_name || "Nom du module" }}
-                                  </th>
-                                  <th class="text-sm font-bold">
-                                    <i class="fas fa-check-circle mr-2 text-success"></i>
-                                    {{ translations.installed || "Installé" }}
-                                  </th>
-                                  <th class="text-sm font-bold">
-                                    <i class="fas fa-tag mr-2 text-info"></i>
-                                    {{ translations.version || "Version" }}
-                                  </th>
-                                  <th class="text-sm font-bold text-right">
-                                    <i class="fas fa-cog mr-2 text-warning"></i>
-                                    {{ translations.actions || "Actions" }}
-                                  </th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                <tr 
-                                  v-for="plugin in licenseData.plugins" 
-                                  :key="plugin.product_slug"
-                                  class="hover:bg-base-200 transition-all duration-200"
-                                  :class="{
-                                    'bg-success/5': installed_versions[plugin.product_slug]
-                                  }"
-                                >
-                                  <td>
-                                    <div class="flex items-center gap-3">
-                                      <div class="avatar placeholder">
-                                        <div class="bg-gradient-to-br from-primary to-info text-primary-content rounded-full w-10 shadow-md">
-                                          <i class="fas fa-puzzle-piece text-sm"></i>
+                        <!-- Section 2 : Notifications avec addons payants -->
+                        <div class="space-y-1 pt-3 border-t border-slate-100 dark:border-slate-800">
+                            <p class="text-[10px] font-black uppercase tracking-widest text-slate-400 pb-1">Avec addons</p>
+                            <template v-for="notif in [
+                                { key: 'ecwp_notify_partial_payment', label: 'Acompte / paiement partiel reçu', desc: 'Email quand un acompte est enregistré.',                              preview: 'partial_payment', addonSlug: 'advance',  addonLabel: 'Advance'    },
+                                { key: 'ecwp_notify_backup_done',     label: 'Sauvegarde effectuée',             desc: 'Email quand une sauvegarde est créée avec succès.',                   preview: 'backup_done',     addonSlug: 'backup',   addonLabel: 'Sauvegarde' },
+                                { key: 'ecwp_notify_backup_deleted',  label: 'Sauvegarde supprimée',             desc: 'Email quand une sauvegarde est supprimée manuellement.',              preview: 'backup_deleted',  addonSlug: 'backup',   addonLabel: 'Sauvegarde' },
+                                { key: 'ecwp_notify_planning_event',  label: 'Événement ajouté au planning',     desc: 'Email quand un nouvel événement est créé dans le planning.',          preview: 'planning_event',  addonSlug: 'planning', addonLabel: 'Planning'   },
+                            ]" :key="notif.key">
+                                <div :class="['flex items-center justify-between gap-4 py-2 transition-opacity', !addonActive(notif.addonSlug) ? 'opacity-50' : '']">
+                                    <div class="min-w-0">
+                                        <div class="flex items-center gap-2 flex-wrap">
+                                            <p class="font-semibold text-sm text-slate-900 dark:text-white">{{ notif.label }}</p>
+                                            <span v-if="!addonActive(notif.addonSlug)" class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 text-[10px] font-black uppercase tracking-wide whitespace-nowrap">
+                                                <svg class="w-2.5 h-2.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path stroke-linecap="round" stroke-linejoin="round" d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                                                {{ notif.addonLabel }}
+                                            </span>
                                         </div>
-                                      </div>
-                                      <div>
-                                        <div class="font-bold text-base text-primary">{{ plugin.product_name }}</div>
-                                        <div class="text-xs text-base-content/60 font-mono mt-1">{{ plugin.product_slug }}</div>
-                                      </div>
+                                        <p class="text-xs text-slate-400 mt-0.5">{{ notif.desc }}</p>
                                     </div>
-                                  </td>
-                                  <td>
-                                    <span 
-                                      class="badge badge-sm text-xs shadow-sm font-medium" 
-                                      :class="installed_versions[plugin.product_slug] ? 'badge-success' : 'badge-ghost'"
-                                    >
-                                      <i :class="installed_versions[plugin.product_slug] ? 'fas fa-check-circle mr-1 text-xs' : 'fas fa-times-circle mr-1 text-xs'"></i>
-                                      {{ installed_versions[plugin.product_slug] ? (translations.installed || "Installé") : (translations.not_installed || "Non installé") }}
-                                    </span>
-                                  </td>
-                                  <td>
-                                    <div class="flex items-center gap-2">
-                                      <span class="font-mono text-sm font-semibold" :class="installed_versions[plugin.product_slug] ? 'text-base-content' : 'text-base-content/40'">
-                                        {{ installed_versions[plugin.product_slug] || '-' }}
-                                      </span>
-                                      <span 
-                                        v-if="updatesAvailable[plugin.product_slug]" 
-                                        class="badge badge-warning badge-sm text-xs shadow-sm font-medium animate-pulse"
-                                      >
-                                        <i class="fas fa-exclamation-triangle mr-1 text-xs"></i>
-                                        Mise à jour
-                                      </span>
+                                    <div class="flex items-center gap-2 flex-shrink-0">
+                                        <button type="button" @click="previewEmail(notif.preview)" class="text-purple-400 hover:text-purple-600 transition-colors"><Eye class="w-3.5 h-3.5" /></button>
+                                        <button type="button"
+                                            :disabled="!addonActive(notif.addonSlug)"
+                                            @click="addonActive(notif.addonSlug) && (form[notif.key] = form[notif.key] == '1' ? '0' : '1')"
+                                            :class="['relative inline-flex h-6 w-11 items-center rounded-full transition-colors', !addonActive(notif.addonSlug) ? 'cursor-not-allowed' : 'cursor-pointer', form[notif.key] == '1' && addonActive(notif.addonSlug) ? 'bg-purple-600' : 'bg-slate-200 dark:bg-slate-700']">
+                                            <span :class="['inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow', form[notif.key] == '1' && addonActive(notif.addonSlug) ? 'translate-x-6' : 'translate-x-1']"></span>
+                                        </button>
                                     </div>
-                                  </td>
-                                  <td class="text-right">
-                                    <div class="flex justify-end gap-2">
-                                      <button
-                                        v-if="installed_versions[plugin.product_slug]"
-                                        @click="checkUpdatePlugin(plugin.product_slug, installed_versions[plugin.product_slug])"
-                                        class="btn btn-sm btn-info btn-outline shadow-md hover:shadow-xl hover:scale-110 transition-all duration-200"
-                                        :title="translations.check_update || 'Vérifier les mises à jour'"
-                                      >
-                                        <i class="fas fa-sync"></i>
-                                      </button>
-                                      <button
-                                        v-if="updatesAvailable[plugin.product_slug] || !installed_versions[plugin.product_slug]"
-                                        @click="installUpdatePlugin(plugin.product_slug, updatesAvailable[plugin.product_slug])"
-                                        class="btn btn-sm btn-primary shadow-md hover:shadow-xl hover:scale-110 transition-all duration-200"
-                                        :title="updatesAvailable[plugin.product_slug] ? (translations.update || 'Mettre à jour') : (translations.install || 'Installer')"
-                                      >
-                                        <i :class="updatesAvailable[plugin.product_slug] ? 'fas fa-arrow-up' : 'fas fa-download'"></i>
-                                        <span class="ml-1">{{ updatesAvailable[plugin.product_slug] ? (translations.update || "Mettre à jour") : (translations.install || "Installer") }}</span>
-                                      </button>
-                                    </div>
-                                  </td>
-                                </tr>
-                              </tbody>
-                            </table>
-                          </div>
+                                </div>
+                            </template>
                         </div>
-                      </div>
+
                     </div>
-                  </div>
                 </div>
-              </div>
-              </div>
+
+                <!-- Templates — only when active -->
+                <div v-if="form.easy_compta_email_addon_active == 1" class="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+
+                    <!-- Variables pill bar -->
+                    <div class="flex flex-wrap items-center gap-2 px-4 py-3 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700">
+                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-1">Variables :</span>
+                        <code class="px-2 py-0.5 bg-white dark:bg-slate-900 rounded-lg text-[11px] font-bold text-indigo-600 dark:text-indigo-400 border border-slate-200 dark:border-slate-700 cursor-pointer select-all">{nom_client}</code>
+                        <code class="px-2 py-0.5 bg-white dark:bg-slate-900 rounded-lg text-[11px] font-bold text-indigo-600 dark:text-indigo-400 border border-slate-200 dark:border-slate-700 cursor-pointer select-all">{numero_document}</code>
+                        <code class="px-2 py-0.5 bg-white dark:bg-slate-900 rounded-lg text-[11px] font-bold text-indigo-600 dark:text-indigo-400 border border-slate-200 dark:border-slate-700 cursor-pointer select-all">{montant_total}</code>
+                    </div>
+
+                    <!-- 3 template cards -->
+                    <!-- Factures -->
+                    <div class="rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+                        <div class="flex items-center gap-3 px-5 py-3 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-700">
+                            <div class="w-7 h-7 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                                <FileText class="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+                            </div>
+                            <span class="font-black text-xs uppercase tracking-widest text-slate-600 dark:text-slate-300">Factures</span>
+                        </div>
+                        <div class="p-5 space-y-4 bg-white dark:bg-slate-900">
+                            <div class="space-y-1.5">
+                                <label class="kloxy-label">Sujet</label>
+                                <input type="text" v-model="form.invoice_email_subject" class="kloxy-input" placeholder="Ex: Votre facture {numero_document}" />
+                            </div>
+                            <div class="space-y-1.5">
+                                <label class="kloxy-label">Message</label>
+                                <VueEditor v-model="form.invoice_email_content" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Relance -->
+                    <div class="rounded-2xl border border-amber-200 dark:border-amber-700/50 overflow-hidden">
+                        <div class="flex items-center gap-3 px-5 py-3 bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-700/50">
+                            <div class="w-7 h-7 rounded-lg bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center">
+                                <Bell class="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                            </div>
+                            <span class="font-black text-xs uppercase tracking-widest text-amber-700 dark:text-amber-400">Relance facture</span>
+                        </div>
+                        <div class="p-5 space-y-4 bg-white dark:bg-slate-900">
+                            <div class="space-y-1.5">
+                                <label class="kloxy-label">Sujet</label>
+                                <input type="text" v-model="form.invoice_email_remind_subject" class="kloxy-input" placeholder="Ex: Relance — {numero_document}" />
+                            </div>
+                            <div class="space-y-1.5">
+                                <label class="kloxy-label">Message</label>
+                                <VueEditor v-model="form.invoice_email_remind_content" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Devis -->
+                    <div class="rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+                        <div class="flex items-center gap-3 px-5 py-3 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-700">
+                            <div class="w-7 h-7 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                                <FileText class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                            </div>
+                            <span class="font-black text-xs uppercase tracking-widest text-slate-600 dark:text-slate-300">Devis</span>
+                        </div>
+                        <div class="p-5 space-y-4 bg-white dark:bg-slate-900">
+                            <div class="space-y-1.5">
+                                <label class="kloxy-label">Sujet</label>
+                                <input type="text" v-model="form.quote_email_subject" class="kloxy-input" placeholder="Ex: Votre devis {numero_document}" />
+                            </div>
+                            <div class="space-y-1.5">
+                                <label class="kloxy-label">Message</label>
+                                <VueEditor v-model="form.quote_email_content" />
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- ── Relances impayées ────────────────────────────────────── -->
+                <div v-if="form.easy_compta_email_addon_active == 1" class="space-y-6">
+                    <div class="bg-gradient-to-br from-amber-500 to-orange-500 p-6 rounded-[2rem] text-white shadow-xl relative overflow-hidden">
+                        <div class="absolute -right-10 -top-10 w-48 h-48 bg-white/5 rounded-full blur-3xl"></div>
+                        <div class="relative z-10 flex items-start gap-4">
+                            <div class="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
+                                <Bell class="w-6 h-6 text-white" />
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-black tracking-tight mb-1">Relances impayées automatiques</h3>
+                                <p class="text-amber-100 text-sm leading-relaxed">Envoyez des emails de rappel automatiques à vos clients pour les factures impayées après l'échéance.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2rem] p-6 space-y-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h4 class="text-base font-black text-slate-900 dark:text-white">Activer les relances automatiques</h4>
+                                <p class="text-slate-500 text-xs mt-0.5">Un email est envoyé au client pour chaque délai configuré après la date d'échéance.</p>
+                            </div>
+                            <button type="button" @click="reminders.enabled = !reminders.enabled"
+                                    :class="['relative inline-flex h-6 w-11 items-center rounded-full transition-colors', reminders.enabled ? 'bg-purple-600' : 'bg-slate-200 dark:bg-slate-700']">
+                                <span :class="['inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow', reminders.enabled ? 'translate-x-6' : 'translate-x-1']"></span>
+                            </button>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="kloxy-label">Délais de relance (jours après l'échéance)</label>
+                            <input v-model="reminders.delays" type="text" class="kloxy-input" placeholder="Ex: 7,15,30" :disabled="!reminders.enabled" />
+                            <p class="text-xs text-slate-400">Entrez les délais séparés par des virgules (ex: 7,15,30 pour J+7, J+15, J+30).</p>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="kloxy-label">Message de relance</label>
+                            <p class="text-xs text-slate-400 -mt-1">Variables : <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded text-xs">{INVOICE_NUMBER}</code> <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded text-xs">{DUE_DATE}</code> <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded text-xs">{AMOUNT}</code> <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded text-xs">{CLIENT_NAME}</code> <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded text-xs">{COMPANY_NAME}</code></p>
+                            <textarea v-model="reminders.message" rows="6" class="kloxy-input resize-none" :disabled="!reminders.enabled"></textarea>
+                        </div>
+                        <div v-if="remindersMsg" :class="['p-4 rounded-xl text-sm font-semibold', remindersMsgType === 'success' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300' : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300']">{{ remindersMsg }}</div>
+                        <div class="flex justify-end">
+                            <button @click="saveReminders" :disabled="remindersLoading" class="kloxy-btn-primary">
+                                <Loader2 v-if="remindersLoading" class="w-4 h-4 mr-2 animate-spin" />
+                                <Save v-else class="w-4 h-4 mr-2" />
+                                {{ translations.save || 'Enregistrer' }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Email Preview Modal -->
+                <div v-if="emailPreviewHtml" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" @click.self="emailPreviewHtml = null">
+                    <div class="w-full max-w-2xl bg-white dark:bg-slate-900 rounded-[2rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                        <div class="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-800">
+                            <p class="font-black text-sm text-slate-800 dark:text-white">Aperçu email</p>
+                            <button @click="emailPreviewHtml = null" class="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                                <X class="w-4 h-4 text-slate-500" />
+                            </button>
+                        </div>
+                        <div class="flex-1 overflow-auto p-4">
+                            <iframe :srcdoc="emailPreviewHtml" class="w-full rounded-xl" style="height:600px;border:none;"></iframe>
+                        </div>
+                    </div>
+                </div>
+
             </div>
+
+            <!-- Tab 12: Users Addon (Pro) -->
+            <div v-if="selectedTab === 12" class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div class="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-[2rem] border border-blue-100 dark:border-blue-800">
+                    <div class="flex items-center gap-4 mb-4">
+                        <User class="w-8 h-8 text-blue-600" />
+                        <h3 class="text-xl font-black text-blue-900 dark:text-blue-100">Add-on Multi-utilisateurs</h3>
+                    </div>
+                    <p class="text-slate-600 dark:text-slate-400 font-medium mb-4">Gérez plusieurs accès pour votre comptabilité avec des rôles et permissions personnalisés.</p>
+                    
+                    <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm">
+                        <h4 class="font-bold text-lg mb-2">Gestion des utilisateurs</h4>
+                        <p class="text-sm text-slate-500 mb-4">Ajoutez et gérez vos utilisateurs directement via l'interface WordPress.</p>
+                        <a href="/wp-admin/users.php" target="_blank" class="inline-flex items-center gap-2 kloxy-btn-primary">
+                            <User class="w-4 h-4" /> Gérer les utilisateurs WordPress
+                        </a>
+                    </div>
+                </div>
+
+                     <div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
+                        <span class="font-bold text-slate-700 dark:text-slate-300">Activer l'add-on Utilisateurs</span>
+                        <button 
+                            type="button"
+                            class="kloxy-toggle"
+                            :aria-checked="(form.easy_compta_user_addon_active == 1).toString()"
+                            @click="toggleAddon('myeasycompta-compte-client', 'easy_compta_user_addon_active')"
+                        >
+                            <span class="kloxy-toggle-thumb"></span>
+                        </button>
+                     </div>
             </div>
-        </Card>
+
+            <!-- Tab 13: Stripe Addon (Pro) -->
+            <div v-if="selectedTab === 13" class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                 <div class="bg-slate-900 p-8 rounded-[2.5rem] text-white shadow-2xl relative overflow-hidden mb-6">
+                    <div class="absolute -right-10 -top-10 w-40 h-40 bg-indigo-600/30 rounded-full blur-3xl"></div>
+                    <div class="relative z-10 flex items-center gap-6">
+                        <CreditCard class="w-12 h-12 text-indigo-400" />
+                        <div>
+                            <h3 class="text-2xl font-black">Paiement Stripe</h3>
+                            <p class="text-slate-400 font-medium mt-1">Acceptez les paiements par carte bancaire sur vos factures.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-6">
+                     <div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700">
+                        <span class="font-bold text-slate-700 dark:text-slate-300">Activer le Paiement Stripe</span>
+                        <button 
+                            type="button"
+                            class="kloxy-toggle"
+                            :aria-checked="(form.easy_compta_payment_addon_active == 1).toString()"
+                            @click="toggleAddon('myeasycompta-payment', 'easy_compta_payment_addon_active')"
+                        >
+                            <span class="kloxy-toggle-thumb"></span>
+                        </button>
+                     </div>
+
+                     <div v-if="form.easy_compta_payment_addon_active == 1" class="space-y-6 animate-in fade-in slide-in-from-top-4 duration-500">
+                        <div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700">
+                            <span class="font-bold text-slate-700 dark:text-slate-300">Mode Test (Sandbox)</span>
+                        <button 
+                            type="button"
+                            class="kloxy-toggle"
+                            :aria-checked="(form.stripe_test_mode == 1).toString()"
+                            @click="form.stripe_test_mode = (form.stripe_test_mode == 1 ? 0 : 1)"
+                        >
+                            <span class="kloxy-toggle-thumb"></span>
+                        </button>
+                    </div>
+
+                    <div v-if="form.stripe_test_mode == 1" class="space-y-4 p-6 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700 animate-in fade-in slide-in-from-top-2">
+                        <h4 class="font-bold text-indigo-600 dark:text-indigo-400 flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-indigo-500"></div> Clés API de Test</h4>
+                        <div class="space-y-2">
+                            <label class="kloxy-label">Clé Publique (Test)</label>
+                            <input type="text" v-model="form.stripe_test_publishable_key" class="kloxy-input font-mono text-sm" placeholder="pk_test_..." />
+                        </div>
+                        <div class="space-y-2">
+                            <label class="kloxy-label">Clé Secrète (Test)</label>
+                            <input type="password" v-model="form.stripe_test_secret_key" class="kloxy-input font-mono text-sm" placeholder="sk_test_..." />
+                        </div>
+                    </div>
+
+                    <div v-else class="space-y-4 p-6 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700 animate-in fade-in slide-in-from-top-2">
+                        <h4 class="font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-emerald-500"></div> Clés API Live</h4>
+                        <div class="space-y-2">
+                            <label class="kloxy-label">Clé Publique (Live)</label>
+                            <input type="text" v-model="form.stripe_live_publishable_key" class="kloxy-input font-mono text-sm" placeholder="pk_live_..." />
+                        </div>
+                        <div class="space-y-2">
+                            <label class="kloxy-label">Clé Secrète (Live)</label>
+                            <input type="password" v-model="form.stripe_live_secret_key" class="kloxy-input font-mono text-sm" placeholder="sk_live_..." />
+                        </div>
+                    </div>
+
+                    <div class="space-y-2 pt-4 border-t border-slate-200 dark:border-slate-700">
+                        <label class="kloxy-label">Secret Webhook (Optionnel)</label>
+                        <input type="password" v-model="form.stripe_webhook_secret" class="kloxy-input font-mono text-sm" placeholder="whsec_..." />
+                    </div>
+                 </div>
+                </div>
+            </div>
+
+            <!-- Tab 14: Stats Addon (Pro) -->
+            <div v-if="selectedTab === 14" class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+
+                <!-- Objectif de CA annuel -->
+                <div class="rounded-2xl border border-amber-200 dark:border-amber-700/50 overflow-hidden">
+                    <div class="flex items-center gap-3 px-5 py-3 bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-700/50">
+                        <div class="w-7 h-7 rounded-lg bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center">
+                            <BarChart class="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                        </div>
+                        <span class="font-black text-xs uppercase tracking-widest text-amber-700 dark:text-amber-400">Objectif de chiffre d'affaires</span>
+                    </div>
+                    <div class="p-5 space-y-4 bg-white dark:bg-slate-900">
+                        <div class="space-y-1.5">
+                            <label class="kloxy-label">Objectif annuel ({{ currencySymbol }})</label>
+                            <input type="number" min="0" step="100" v-model="form.stats_annual_target" class="kloxy-input" placeholder="Ex: 50000" />
+                            <p class="text-[11px] text-slate-400 ml-1">Affiche une barre de progression dans les statistiques pour suivre votre avancement.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Seuils réglementaires -->
+                <div class="rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+                    <div class="flex items-center gap-3 px-5 py-3 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-700">
+                        <div class="w-7 h-7 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                            <Receipt class="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                        </div>
+                        <span class="font-black text-xs uppercase tracking-widest text-slate-600 dark:text-slate-300">Seuils réglementaires</span>
+                    </div>
+                    <div class="p-5 grid grid-cols-1 md:grid-cols-2 gap-5 bg-white dark:bg-slate-900">
+                        <div class="space-y-1.5">
+                            <label class="kloxy-label">Seuil de déclaration ({{ currencySymbol }})</label>
+                            <input type="number" min="0" step="100" v-model="form.limit_declaration" class="kloxy-input" placeholder="Ex: 77700" />
+                            <p class="text-[11px] text-slate-400 ml-1">Plafond de CA à ne pas dépasser selon votre régime (micro-entreprise, auto-entrepreneur…).</p>
+                        </div>
+                        <div class="space-y-1.5">
+                            <label class="kloxy-label">Seuil franchise TVA ({{ currencySymbol }})</label>
+                            <input type="number" min="0" step="100" v-model="form.limit_tva" class="kloxy-input" placeholder="Ex: 36800" />
+                            <p class="text-[11px] text-slate-400 ml-1">Au-delà de ce seuil, la TVA devient obligatoire. Affiché sous forme d'alerte dans les stats.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Exercice fiscal -->
+                <div class="rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+                    <div class="flex items-center gap-3 px-5 py-3 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-700">
+                        <div class="w-7 h-7 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
+                            <Calendar class="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                        </div>
+                        <span class="font-black text-xs uppercase tracking-widest text-slate-600 dark:text-slate-300">Exercice fiscal</span>
+                    </div>
+                    <div class="p-5 bg-white dark:bg-slate-900">
+                        <div class="space-y-1.5">
+                            <label class="kloxy-label">Mois de début d'exercice</label>
+                            <select v-model="form.stats_fiscal_year_start" class="kloxy-input cursor-pointer">
+                                <option value="1">Janvier</option>
+                                <option value="2">Février</option>
+                                <option value="3">Mars</option>
+                                <option value="4">Avril</option>
+                                <option value="5">Mai</option>
+                                <option value="6">Juin</option>
+                                <option value="7">Juillet</option>
+                                <option value="8">Août</option>
+                                <option value="9">Septembre</option>
+                                <option value="10">Octobre</option>
+                                <option value="11">Novembre</option>
+                                <option value="12">Décembre</option>
+                            </select>
+                            <p class="text-[11px] text-slate-400 ml-1">Définit la période de référence pour les graphiques annuels et les comparaisons N-1.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Tab 15: QR Code Addon -->
+            <div v-if="selectedTab === 15" class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div class="bg-purple-50 dark:bg-purple-900/20 p-6 rounded-[2rem] border border-purple-100 dark:border-purple-800">
+                    <div class="flex items-center gap-4 mb-4">
+                        <QrCode class="w-8 h-8 text-purple-600" />
+                        <h3 class="text-xl font-black text-purple-900 dark:text-purple-100">Add-on QR Code</h3>
+                    </div>
+                    <p class="text-slate-600 dark:text-slate-400 font-medium">Générez des QR codes de paiement Stripe pour vos factures.</p>
+                </div>
+                <div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700">
+                    <span class="font-bold text-slate-700 dark:text-slate-300">Activer l'add-on QR Code</span>
+                    <button 
+                        type="button"
+                        class="kloxy-toggle"
+                        :aria-checked="(form.easy_compta_qrcode_addon_active == 1).toString()"
+                        @click="toggleAddon('myeasycompta-qrcode-stripe', 'easy_compta_qrcode_addon_active')"
+                    >
+                        <span class="kloxy-toggle-thumb"></span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tab 22: Contracts template -->
+            <div v-if="selectedTab === 22" class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div class="bg-purple-50 dark:bg-purple-900/20 p-6 rounded-[2rem] border border-purple-100 dark:border-purple-800">
+                    <div class="flex items-center gap-4 mb-2">
+                        <ScrollText class="w-8 h-8 text-purple-600" />
+                        <h3 class="text-xl font-black text-purple-900 dark:text-purple-100">Modèle de contrat par défaut</h3>
+                    </div>
+                    <p class="text-slate-600 dark:text-slate-400 font-medium text-sm">Ce modèle sera proposé au chargement d'un nouveau contrat. Utilisez les variables entre accolades pour personnaliser automatiquement le contenu.</p>
+                </div>
+
+                <!-- Variables reference -->
+                <div class="p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl border border-indigo-100 dark:border-indigo-800">
+                    <p class="text-[10px] font-black uppercase tracking-widest text-indigo-500 mb-3">Variables disponibles</p>
+                    <div class="flex flex-wrap gap-2">
+                        <span v-for="v in contractVariables" :key="v" class="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-800 border border-indigo-200 dark:border-indigo-700 text-[11px] font-black text-indigo-600 dark:text-indigo-400 cursor-default">{{ v }}</span>
+                    </div>
+                </div>
+
+                <!-- Default title -->
+                <div class="space-y-2">
+                    <label class="kloxy-label">Titre par défaut</label>
+                    <input type="text" v-model="form.contract_default_title" class="kloxy-input" placeholder="Ex: Contrat de prestation de services — {CLIENT_NAME}" />
+                </div>
+
+                <!-- Default body -->
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                        <label class="kloxy-label">Corps du contrat par défaut</label>
+                        <button type="button" @click="loadContractExample" class="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-700 text-indigo-600 dark:text-indigo-400 text-xs font-bold hover:bg-indigo-100 dark:hover:bg-indigo-800/40 transition-colors">
+                            <FileText class="w-3.5 h-3.5" />
+                            Importer un exemple
+                        </button>
+                    </div>
+                    <div class="rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700">
+                        <VueEditor v-model="form.contract_default_body" :editor-toolbar="contractEditorToolbar" placeholder="Rédigez ici le corps de votre modèle de contrat..." />
+                    </div>
+                    <p class="text-[11px] text-slate-400">Ce contenu sera pré-rempli à chaque fois que vous cliquez sur « Charger le modèle » lors de la création d'un contrat.</p>
+                </div>
+            </div>
+
+            <!-- Tab 23: TimeTracking -->
+            <div v-if="selectedTab === 23" class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div class="bg-purple-50 dark:bg-purple-900/20 p-6 rounded-[2rem] border border-purple-100 dark:border-purple-800 flex items-center gap-4">
+                    <Clock class="w-8 h-8 text-purple-600 flex-shrink-0" />
+                    <div>
+                        <h3 class="text-xl font-black text-purple-900 dark:text-purple-100">Temps & Facturation</h3>
+                        <p class="text-slate-600 dark:text-slate-400 font-medium text-sm">Chronomètre, entrées manuelles et génération de factures depuis les heures saisies.</p>
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <label class="kloxy-label">Taux horaire par défaut (€/h)</label>
+                    <input type="number" v-model="form.timetracking_default_rate" min="0" step="0.5" class="kloxy-input w-48" placeholder="0" />
+                    <p class="text-[11px] text-slate-400">Pré-rempli lors de la création d'une nouvelle entrée de temps.</p>
+                </div>
+            </div>
+
+            <!-- Tab 24: Delivery -->
+            <div v-if="selectedTab === 24" class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div class="bg-purple-50 dark:bg-purple-900/20 p-6 rounded-[2rem] border border-purple-100 dark:border-purple-800 flex items-center gap-4">
+                    <Truck class="w-8 h-8 text-purple-600 flex-shrink-0" />
+                    <div>
+                        <h3 class="text-xl font-black text-purple-900 dark:text-purple-100">Bons de livraison</h3>
+                        <p class="text-slate-600 dark:text-slate-400 font-medium text-sm">Numérotation automatique et personnalisation du PDF.</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-2">
+                        <label class="kloxy-label">Préfixe du numéro de BL</label>
+                        <input type="text" v-model="form.delivery_prefix" class="kloxy-input" placeholder="BL" />
+                        <p class="text-[11px] text-slate-400">Exemple : BL → <strong>BL-0001</strong></p>
+                    </div>
+                    <div class="space-y-2 md:col-span-2">
+                        <label class="kloxy-label">Pied de page du bon de livraison</label>
+                        <textarea v-model="form.delivery_footer" rows="3" class="kloxy-input resize-none" placeholder="Texte affiché en bas de chaque bon de livraison..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 25: OnlineQuote -->
+            <div v-if="selectedTab === 25" class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div class="bg-purple-50 dark:bg-purple-900/20 p-6 rounded-[2rem] border border-purple-100 dark:border-purple-800 flex items-center gap-4">
+                    <Globe class="w-8 h-8 text-purple-600 flex-shrink-0" />
+                    <div>
+                        <h3 class="text-xl font-black text-purple-900 dark:text-purple-100">Devis interactif en ligne</h3>
+                        <p class="text-slate-600 dark:text-slate-400 font-medium text-sm">Partagez vos devis via un lien sécurisé — vos clients peuvent accepter ou refuser sans compte.</p>
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <label class="kloxy-label">Durée de validité du lien (jours)</label>
+                    <input type="number" v-model="form.online_quote_expiry_days" min="1" max="365" class="kloxy-input w-48" placeholder="30" />
+                    <p class="text-[11px] text-slate-400">0 = sans expiration.</p>
+                </div>
+                <div class="space-y-2">
+                    <label class="kloxy-label">Message affiché après acceptation</label>
+                    <textarea v-model="form.online_quote_accept_message" rows="3" class="kloxy-input resize-none"></textarea>
+                </div>
+                <div class="space-y-2">
+                    <label class="kloxy-label">Message affiché après refus</label>
+                    <textarea v-model="form.online_quote_reject_message" rows="3" class="kloxy-input resize-none"></textarea>
+                </div>
+            </div>
+
+            <div v-if="selectedTab !== 10" class="flex justify-end pt-6 border-t border-slate-100 dark:border-slate-800">
+                <button type="submit" class="kloxy-btn-primary">
+                    <Save class="w-4 h-4 mr-2" /> {{ translations.save || 'Enregistrer' }}
+                </button>
+            </div>
+         </form>
+
+         <!-- Tab 26: SMS Notifications -->
+         <div v-if="selectedTab === 26" class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+             <div class="bg-purple-50 dark:bg-purple-900/20 p-6 rounded-[2rem] border border-purple-100 dark:border-purple-800 flex items-center justify-between gap-4">
+                 <div class="flex items-center gap-4">
+                     <MessageSquare class="w-8 h-8 text-purple-600 flex-shrink-0" />
+                     <div>
+                         <h3 class="text-xl font-black text-purple-900 dark:text-purple-100">Notifications SMS</h3>
+                         <p class="text-slate-600 dark:text-slate-400 font-medium text-sm">Envoyez des SMS automatiques à vos clients ou à l'administrateur lors d'événements clés.</p>
+                     </div>
+                 </div>
+                 <div class="flex items-center gap-3 flex-shrink-0">
+                     <span :class="['px-3 py-1 rounded-full text-xs font-black uppercase', smsSettings.enabled ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400']">
+                         {{ smsSettings.enabled ? 'Actif' : 'Inactif' }}
+                     </span>
+                     <button @click="saveSmsSettings" :disabled="smsSaving" class="kloxy-btn-primary">
+                         <Loader2 v-if="smsSaving" class="w-4 h-4 mr-2 animate-spin" />
+                         <Save v-else class="w-4 h-4 mr-2" /> Enregistrer
+                     </button>
+                 </div>
+             </div>
+
+             <div v-if="smsLoading" class="flex justify-center py-8"><Loader2 class="w-8 h-8 text-purple-600 animate-spin" /></div>
+
+             <template v-else>
+                 <!-- Global toggle -->
+                 <div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700">
+                     <div>
+                         <span class="font-bold text-slate-700 dark:text-slate-300">Activer les notifications SMS</span>
+                         <p class="text-xs text-slate-400 mt-0.5">Les SMS ne seront envoyés que si cette option est activée.</p>
+                     </div>
+                     <button type="button" class="kloxy-toggle" :aria-checked="(!!smsSettings.enabled).toString()" @click="smsSettings.enabled = !smsSettings.enabled">
+                         <span class="kloxy-toggle-thumb"></span>
+                     </button>
+                 </div>
+
+                 <!-- Mode: auto / manual -->
+                 <div class="p-6 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 space-y-4">
+                     <div>
+                         <h4 class="font-black text-slate-900 dark:text-white">Mode d'envoi</h4>
+                         <p class="text-xs text-slate-400 mt-0.5">Choisissez si les SMS sont envoyés automatiquement lors des événements ou uniquement à la demande depuis la fiche facture/devis.</p>
+                     </div>
+                     <div class="flex gap-3">
+                         <button type="button" @click="smsSettings.mode = 'auto'"
+                             :class="['flex-1 py-3 rounded-2xl border text-sm font-bold transition-all', (smsSettings.mode ?? 'auto') === 'auto' ? 'bg-purple-600 text-white border-purple-600 shadow-lg shadow-purple-500/30' : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-purple-300']">
+                             ⚡ Automatique
+                         </button>
+                         <button type="button" @click="smsSettings.mode = 'manual'"
+                             :class="['flex-1 py-3 rounded-2xl border text-sm font-bold transition-all', smsSettings.mode === 'manual' ? 'bg-purple-600 text-white border-purple-600 shadow-lg shadow-purple-500/30' : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-purple-300']">
+                             ✋ Manuel
+                         </button>
+                     </div>
+                     <!-- Auto mode warning -->
+                     <div v-if="(smsSettings.mode ?? 'auto') === 'auto'" class="flex items-start gap-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-2xl px-4 py-3">
+                         <span class="text-amber-500 text-lg leading-none mt-0.5">⚠️</span>
+                         <p class="text-xs text-amber-700 dark:text-amber-300 font-medium">En mode automatique, un SMS/WhatsApp sera envoyé à chaque événement configuré ci-dessous sans confirmation préalable.</p>
+                     </div>
+                 </div>
+
+                <!-- Provider -->
+                 <div class="p-6 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 space-y-5">
+                     <h4 class="font-black text-slate-900 dark:text-white">Fournisseur SMS</h4>
+                     <div class="flex gap-3">
+                         <button v-for="p in [{ value: 'twilio', label: 'Twilio' }, { value: 'ovh', label: 'OVH SMS' }]" :key="p.value"
+                             type="button" @click="smsSettings.provider = p.value"
+                             :class="['px-5 py-2.5 rounded-2xl border text-sm font-bold transition-all', smsSettings.provider === p.value ? 'bg-purple-600 text-white border-purple-600 shadow-lg shadow-purple-500/30' : 'border-slate-200 dark:border-slate-700 text-slate-600 hover:border-purple-300']">
+                             {{ p.label }}
+                         </button>
+                     </div>
+
+                     <!-- Twilio -->
+                     <div v-if="smsSettings.provider === 'twilio'" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                         <div class="space-y-2">
+                             <label class="kloxy-label">Account SID</label>
+                             <input v-model="smsSettings.twilio_sid" class="kloxy-input" placeholder="ACxxxxxxxxxxxxxxxx" />
+                         </div>
+                         <div class="space-y-2">
+                             <label class="kloxy-label">Auth Token</label>
+                             <input v-model="smsSettings.twilio_token" type="password" class="kloxy-input" placeholder="••••••••" />
+                         </div>
+                         <div class="space-y-2">
+                             <label class="kloxy-label">Numéro expéditeur</label>
+                             <input v-model="smsSettings.twilio_from" class="kloxy-input" placeholder="+33600000000" />
+                         </div>
+                     </div>
+
+                     <!-- OVH -->
+                     <div v-if="smsSettings.provider === 'ovh'" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                         <div class="space-y-2"><label class="kloxy-label">Application Key</label><input v-model="smsSettings.ovh_app_key" class="kloxy-input" /></div>
+                         <div class="space-y-2"><label class="kloxy-label">Application Secret</label><input v-model="smsSettings.ovh_app_secret" type="password" class="kloxy-input" /></div>
+                         <div class="space-y-2"><label class="kloxy-label">Consumer Key</label><input v-model="smsSettings.ovh_consumer_key" class="kloxy-input" /></div>
+                         <div class="space-y-2"><label class="kloxy-label">Service Name</label><input v-model="smsSettings.ovh_service_name" class="kloxy-input" placeholder="sms-xxxxx" /></div>
+                         <div class="space-y-2"><label class="kloxy-label">Expéditeur (optionnel)</label><input v-model="smsSettings.ovh_sender" class="kloxy-input" /></div>
+                     </div>
+
+                     <!-- Admin phone -->
+                     <div class="space-y-2">
+                         <label class="kloxy-label">Téléphone administrateur</label>
+                         <input v-model="smsSettings.admin_phone" class="kloxy-input w-64" placeholder="+33600000000" />
+                         <p class="text-[11px] text-slate-400">Utilisé pour les notifications destinées à l'administrateur.</p>
+                     </div>
+                 </div>
+
+                 <!-- WhatsApp -->
+                 <div class="p-6 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 space-y-5">
+                     <div class="flex items-center gap-3">
+                         <div class="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center">
+                             <MessageSquare class="w-4 h-4 text-emerald-600" />
+                         </div>
+                         <h4 class="font-black text-slate-900 dark:text-white">WhatsApp</h4>
+                     </div>
+                     <p class="text-xs text-slate-400">Choisissez le fournisseur WhatsApp. Configurez-le pour pouvoir envoyer via WhatsApp sur chaque événement.</p>
+
+                     <!-- WA provider selector -->
+                     <div class="flex gap-3">
+                         <button v-for="wp in [{ value: 'twilio_wa', label: 'Twilio WhatsApp' }, { value: 'meta', label: 'Meta Business API' }]" :key="wp.value"
+                             type="button" @click="smsSettings.wa_provider = wp.value"
+                             :class="['px-5 py-2.5 rounded-2xl border text-sm font-bold transition-all', smsSettings.wa_provider === wp.value ? 'bg-emerald-600 text-white border-emerald-600 shadow-lg shadow-emerald-500/30' : 'border-slate-200 dark:border-slate-700 text-slate-600 hover:border-emerald-300']">
+                             {{ wp.label }}
+                         </button>
+                     </div>
+
+                     <!-- Twilio WhatsApp -->
+                     <div v-if="smsSettings.wa_provider === 'twilio_wa'" class="space-y-3">
+                         <p class="text-[11px] text-slate-400">Utilise les mêmes identifiants Twilio (SID + Token). Renseignez uniquement le numéro WhatsApp expéditeur.</p>
+                         <div class="space-y-2">
+                             <label class="kloxy-label">Numéro WhatsApp expéditeur</label>
+                             <input v-model="smsSettings.twilio_whatsapp_from" class="kloxy-input w-64" placeholder="+14155238886" />
+                             <p class="text-[11px] text-slate-400">Numéro approuvé dans la console Twilio (sandbox : +1 415 523 8886).</p>
+                         </div>
+                     </div>
+
+                     <!-- Meta Business API -->
+                     <div v-if="smsSettings.wa_provider === 'meta'" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                         <div class="space-y-2">
+                             <label class="kloxy-label">Access Token permanent</label>
+                             <input v-model="smsSettings.meta_wa_token" type="password" class="kloxy-input" placeholder="EAAxxxxxxxx..." />
+                         </div>
+                         <div class="space-y-2">
+                             <label class="kloxy-label">Phone Number ID</label>
+                             <input v-model="smsSettings.meta_wa_phone_id" class="kloxy-input" placeholder="1234567890" />
+                             <p class="text-[11px] text-slate-400">Trouvable dans Meta for Developers → WhatsApp → Getting Started.</p>
+                         </div>
+                     </div>
+                 </div>
+
+                 <!-- Test -->
+                 <div class="p-6 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 space-y-3">
+                     <h5 class="text-sm font-black text-slate-500">Envoyer un message de test</h5>
+                     <div class="flex items-center gap-3">
+                         <input v-model="smsTestPhone" class="kloxy-input w-64" placeholder="+33600000000" />
+                         <button type="button" @click="sendSmsTest" :disabled="smsTesting || !smsTestPhone"
+                             class="inline-flex items-center gap-2 px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl text-sm font-bold disabled:opacity-50 transition-colors">
+                             <Loader2 v-if="smsTesting" class="w-4 h-4 animate-spin" />
+                             <Send v-else class="w-4 h-4" />
+                             {{ smsTesting ? 'Envoi...' : 'Tester' }}
+                         </button>
+                     </div>
+                     <p v-if="smsTestResult" :class="['text-sm font-bold', smsTestResult.startsWith('✓') ? 'text-emerald-600' : 'text-rose-600']">{{ smsTestResult }}</p>
+                 </div>
+
+                 <!-- Events -->
+                 <div class="p-6 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 space-y-4">
+                     <h4 class="font-black text-slate-900 dark:text-white">Événements</h4>
+                     <div v-for="event in smsEvents" :key="event.key" class="space-y-3 pb-4 border-b border-slate-100 dark:border-slate-800 last:border-0 last:pb-0">
+                         <div class="flex items-center justify-between">
+                             <div>
+                                 <p class="font-bold text-sm text-slate-800 dark:text-white">{{ event.label }}</p>
+                                 <p class="text-xs text-slate-400">{{ event.desc }}</p>
+                             </div>
+                             <button type="button" class="kloxy-toggle"
+                                 :aria-checked="(!!(smsSettings.events?.[event.key]?.enabled)).toString()"
+                                 @click="toggleSmsEvent(event.key)">
+                                 <span class="kloxy-toggle-thumb"></span>
+                             </button>
+                         </div>
+                         <div v-if="smsSettings.events?.[event.key]?.enabled" class="space-y-3 pl-4 border-l-2 border-purple-200 dark:border-purple-800">
+                             <!-- Recipient -->
+                             <div class="flex gap-3">
+                                 <label v-for="r in ['client','admin','both']" :key="r" class="flex items-center gap-1.5 cursor-pointer">
+                                     <input type="radio" :name="'recipient_'+event.key" :value="r" v-model="smsSettings.events[event.key].recipient" class="accent-purple-600" />
+                                     <span class="text-xs font-bold text-slate-600 dark:text-slate-300">{{ { client: 'Client', admin: 'Admin', both: 'Les deux' }[r] }}</span>
+                                 </label>
+                             </div>
+                             <!-- Channel -->
+                             <div class="flex items-center gap-2">
+                                 <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Canal :</span>
+                                 <div class="flex gap-2">
+                                     <button v-for="ch in [{ value: 'sms', label: '💬 SMS' }, { value: 'whatsapp', label: '📱 WhatsApp' }, { value: 'both', label: '🔀 Les deux' }]" :key="ch.value"
+                                         type="button" @click="smsSettings.events[event.key].channel = ch.value"
+                                         :class="['px-3 py-1 rounded-xl border text-xs font-bold transition-all', smsSettings.events[event.key].channel === ch.value ? 'bg-emerald-600 text-white border-emerald-600' : 'border-slate-200 dark:border-slate-700 text-slate-500 hover:border-emerald-300']">
+                                         {{ ch.label }}
+                                     </button>
+                                 </div>
+                             </div>
+                             <textarea v-model="smsSettings.events[event.key].template" rows="2"
+                                 class="kloxy-input resize-none font-mono text-xs"
+                                 :placeholder="event.defaultTemplate"></textarea>
+                             <p class="text-[10px] text-slate-400">Variables: {CLIENT_NAME}, {INVOICE_NUMBER}, {AMOUNT}, {COMPANY_NAME}</p>
+                         </div>
+                     </div>
+                 </div>
+             </template>
+         </div>
+
+         <!-- Tab 16: License Management -->
+         <div v-if="selectedTab === 16" class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+
+           <!-- ── Hero licence card ─────────────────────────────────────────── -->
+           <div class="relative overflow-hidden rounded-[2.5rem] bg-slate-950 dark:bg-[#08061a] shadow-2xl">
+             <!-- Ambient blobs -->
+             <div class="pointer-events-none absolute -top-16 -right-16 w-64 h-64 rounded-full bg-purple-600/20 blur-3xl"></div>
+             <div class="pointer-events-none absolute -bottom-12 -left-12 w-48 h-48 rounded-full bg-indigo-600/15 blur-3xl"></div>
+             <!-- Dot grid -->
+             <div class="pointer-events-none absolute inset-0 opacity-[0.04]" style="background-image:radial-gradient(circle,#fff 1px,transparent 1px);background-size:24px 24px"></div>
+
+             <div class="relative z-10 p-8 md:p-10">
+               <!-- Top row: status + actions -->
+               <div class="flex items-start justify-between gap-6 mb-8">
+                 <div class="space-y-3">
+                   <p class="text-[10px] font-black uppercase tracking-[0.2em] text-white/30">Activation de la licence</p>
+                   <div class="flex flex-wrap items-center gap-2">
+                     <!-- Active/Inactive pill -->
+                     <span :class="[
+                       'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-widest',
+                       licenseData?.valid
+                         ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                         : 'bg-slate-700/60 text-slate-400 border border-slate-600/40'
+                     ]">
+                       <span :class="['w-1.5 h-1.5 rounded-full', licenseData?.valid ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500']"></span>
+                       {{ licenseData?.valid ? 'Active' : 'Inactive' }}
+                     </span>
+                     <!-- Bundle pill -->
+                     <span v-if="licenseData?.is_bundle" class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-widest bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                       <Star class="w-3 h-3" /> Pack complet
+                     </span>
+                     <!-- Custom plan pill -->
+                     <span v-else-if="licenseData?.valid" class="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-widest bg-purple-500/15 text-purple-400 border border-purple-500/30">
+                       À la carte
+                     </span>
+                   </div>
+                 </div>
+                 <!-- Actions -->
+                 <div class="flex gap-2 shrink-0">
+                   <button @click="refreshLicense" :title="translations.refresh || 'Rafraîchir'"
+                     class="flex items-center justify-center w-10 h-10 rounded-xl bg-white/8 hover:bg-white/14 border border-white/10 text-white/60 hover:text-white transition-all">
+                     <RefreshCcw :class="{'animate-spin': licenseLoading}" class="w-4 h-4" />
+                   </button>
+                   <button v-if="licenseData?.valid" @click="deleteLicense" title="Désactiver la licence"
+                     class="flex items-center justify-center w-10 h-10 rounded-xl bg-rose-500/12 hover:bg-rose-500/22 border border-rose-500/25 text-rose-400 hover:text-rose-300 transition-all">
+                     <Trash2 class="w-4 h-4" />
+                   </button>
+                 </div>
+               </div>
+
+               <!-- License key row -->
+               <div class="space-y-2 mb-8">
+                 <p class="text-[10px] font-black uppercase tracking-[0.18em] text-white/30">Clé de licence</p>
+                 <div class="flex flex-col md:flex-row gap-3">
+                   <div class="relative flex-1">
+                     <input
+                       v-model="licenseKey"
+                       type="text"
+                       class="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3.5 font-mono text-base font-bold tracking-[0.12em] uppercase text-white placeholder-white/20 focus:outline-none focus:border-purple-500/60 focus:bg-white/8 transition-all"
+                       placeholder="MEC-XXXX-XXXX-XXXX-XXXX"
+                       :disabled="licenseData?.valid"
+                     />
+                     <!-- Copy btn when active -->
+                     <button v-if="licenseData?.valid" @click="copyLicenseKey"
+                       class="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-lg bg-white/8 hover:bg-white/15 text-white/40 hover:text-white/80 transition-all" title="Copier">
+                       <Copy class="w-3.5 h-3.5" />
+                     </button>
+                   </div>
+                   <button
+                     v-if="!licenseData?.valid"
+                     @click="handleActivateLicense"
+                     :disabled="licenseLoading || !licenseKey"
+                     class="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-black text-sm tracking-wide shadow-lg shadow-purple-900/40 transition-all disabled:opacity-50 disabled:pointer-events-none whitespace-nowrap"
+                   >
+                     <Loader2 v-if="licenseLoading" class="w-4 h-4 animate-spin" />
+                     <Zap v-else class="w-4 h-4" />
+                     {{ translations.activate || 'Activer la licence' }}
+                   </button>
+                 </div>
+               </div>
+
+               <!-- Meta row (visible when valid) -->
+               <div v-if="licenseData?.valid" class="grid grid-cols-2 md:grid-cols-4 gap-px bg-white/5 rounded-2xl overflow-hidden border border-white/8">
+                 <div v-if="licenseData.client_name" class="bg-white/3 hover:bg-white/5 transition-colors px-5 py-4">
+                   <p class="text-[9px] font-black uppercase tracking-[0.18em] text-white/30 mb-1">Client</p>
+                   <p class="text-sm font-bold text-white truncate">{{ licenseData.client_name }}</p>
+                 </div>
+                 <div v-if="licenseData.email" class="bg-white/3 hover:bg-white/5 transition-colors px-5 py-4">
+                   <p class="text-[9px] font-black uppercase tracking-[0.18em] text-white/30 mb-1">Email</p>
+                   <p class="text-sm font-bold text-white truncate">{{ licenseData.email }}</p>
+                 </div>
+                 <div v-if="licenseData.domain" class="bg-white/3 hover:bg-white/5 transition-colors px-5 py-4">
+                   <p class="text-[9px] font-black uppercase tracking-[0.18em] text-white/30 mb-1">Domaine</p>
+                   <p class="text-sm font-bold text-white truncate">{{ licenseData.domain }}</p>
+                 </div>
+                 <div class="bg-white/3 hover:bg-white/5 transition-colors px-5 py-4">
+                   <p class="text-[9px] font-black uppercase tracking-[0.18em] text-white/30 mb-1">Sites</p>
+                   <div class="flex items-center gap-2 mt-0.5">
+                     <p class="text-sm font-black text-white">{{ licenseData.sites_used ?? 1 }}<span class="text-white/30">/{{ licenseData.max_sites ?? 1 }}</span></p>
+                     <!-- Sites progress bar -->
+                     <div class="flex-1 h-1 bg-white/10 rounded-full overflow-hidden">
+                       <div class="h-full bg-gradient-to-r from-purple-500 to-indigo-400 rounded-full transition-all"
+                         :style="{ width: `${Math.min(100, ((licenseData.sites_used ?? 1) / (licenseData.max_sites ?? 1)) * 100)}%` }">
+                       </div>
+                     </div>
+                   </div>
+                 </div>
+               </div>
+
+               <!-- Unauthenticated state hint -->
+               <div v-if="!licenseData?.valid" class="flex items-center gap-3 p-4 rounded-2xl bg-white/4 border border-white/8">
+                 <ShieldCheck class="w-5 h-5 text-purple-400 shrink-0" />
+                 <p class="text-sm text-white/50 font-medium">Entrez votre clé de licence pour accéder à vos modules et les installer en un clic.</p>
+               </div>
+             </div>
+           </div>
+
+           <!-- ── Addons grid ──────────────────────────────────────────────── -->
+           <template v-if="licenseData?.plugins && Object.keys(licenseData.plugins).length > 0">
+             <div class="flex items-center justify-between px-1">
+               <p class="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Modules inclus — {{ Object.keys(licenseData.plugins).length }} addon{{ Object.keys(licenseData.plugins).length > 1 ? 's' : '' }}</p>
+               <p class="text-[10px] font-bold text-slate-400">{{ Object.values(licenseData.plugins).filter(p => installedVersions[Object.keys(licenseData.plugins).find(k => licenseData.plugins[k] === p)]).length }} installé(s)</p>
+             </div>
+
+             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+               <div
+                 v-for="(plugin, slug) in licenseData.plugins"
+                 :key="slug"
+                 class="group relative bg-white dark:bg-slate-900 rounded-[1.75rem] border border-slate-100 dark:border-slate-800 overflow-hidden hover:border-purple-400/40 dark:hover:border-purple-500/30 hover:shadow-lg hover:shadow-purple-500/5 transition-all duration-200"
+               >
+                 <!-- Status accent line -->
+                 <div :class="['absolute top-0 left-0 right-0 h-0.5', installedVersions[slug] ? (isUpdateAvailable(slug, plugin.version) ? 'bg-amber-400' : 'bg-emerald-400') : 'bg-transparent group-hover:bg-purple-500/40']"></div>
+
+                 <div class="p-5">
+                   <div class="flex items-start gap-3 mb-5">
+                     <!-- Icon -->
+                     <div :class="['w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition-all', installedVersions[slug] ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400' : 'bg-slate-50 dark:bg-slate-800 text-slate-400']">
+                       <BadgeCheck v-if="installedVersions[slug] && !isUpdateAvailable(slug, plugin.version)" class="w-5 h-5" />
+                       <RefreshCcw v-else-if="isUpdateAvailable(slug, plugin.version)" class="w-5 h-5 text-amber-500" />
+                       <ShoppingBag v-else class="w-5 h-5" />
+                     </div>
+                     <!-- Name + slug -->
+                     <div class="flex-1 min-w-0">
+                       <h4 class="font-black text-slate-800 dark:text-slate-100 text-sm leading-tight truncate">{{ plugin.product_name }}</h4>
+                       <p class="text-[10px] font-mono text-slate-400 mt-0.5 truncate">{{ slug }}</p>
+                     </div>
+                   </div>
+
+                   <!-- Bottom row: status + action -->
+                   <div class="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800">
+                     <div>
+                       <!-- Installed & up to date -->
+                       <template v-if="installedVersions[slug] && !isUpdateAvailable(slug, plugin.version)">
+                         <span class="flex items-center gap-1 text-[10px] font-black text-emerald-500 uppercase tracking-widest">
+                           <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Installé
+                         </span>
+                         <p class="text-[10px] text-slate-400 mt-0.5">v{{ installedVersions[slug] }} · À jour</p>
+                       </template>
+                       <!-- Update available -->
+                       <template v-else-if="isUpdateAvailable(slug, plugin.version)">
+                         <span class="flex items-center gap-1 text-[10px] font-black text-amber-500 uppercase tracking-widest">
+                           <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span> Mise à jour
+                         </span>
+                         <p class="text-[10px] text-slate-400 mt-0.5">v{{ installedVersions[slug] }} → v{{ plugin.version }}</p>
+                       </template>
+                       <!-- Not installed -->
+                       <template v-else>
+                         <span class="flex items-center gap-1 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                           <span class="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-600"></span> Disponible
+                         </span>
+                         <p class="text-[10px] text-slate-400 mt-0.5">v{{ plugin.version }}</p>
+                       </template>
+                     </div>
+
+                     <!-- CTA button -->
+                     <button
+                       v-if="!installedVersions[slug] || isUpdateAvailable(slug, plugin.version)"
+                       @click="handleInstallAddon(slug)"
+                       :disabled="processingAddon === slug"
+                       :class="[
+                         'inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[11px] font-black tracking-wide transition-all disabled:opacity-60',
+                         isUpdateAvailable(slug, plugin.version)
+                           ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-700/40 hover:bg-amber-100 dark:hover:bg-amber-900/30'
+                           : 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-700/40 hover:bg-purple-100 dark:hover:bg-purple-900/30'
+                       ]"
+                     >
+                       <Loader2 v-if="processingAddon === slug" class="w-3 h-3 animate-spin" />
+                       <Download v-else-if="!installedVersions[slug]" class="w-3 h-3" />
+                       <RefreshCcw v-else class="w-3 h-3" />
+                       {{ processingAddon === slug ? '…' : (installedVersions[slug] ? 'Mettre à jour' : 'Installer') }}
+                     </button>
+                     <span v-else class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-[10px] font-bold text-slate-400 bg-slate-50 dark:bg-slate-800 italic">
+                       ✓ À jour
+                     </span>
+                   </div>
+                 </div>
+               </div>
+             </div>
+           </template>
+
+           <!-- No addons placeholder -->
+           <div v-if="licenseData?.valid && (!licenseData.plugins || Object.keys(licenseData.plugins).length === 0)"
+             class="flex flex-col items-center justify-center py-16 bg-slate-50 dark:bg-slate-900/30 rounded-[2rem] border border-dashed border-slate-200 dark:border-slate-800 text-center">
+             <div class="w-14 h-14 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center mb-4">
+               <HelpCircle class="w-7 h-7 text-slate-300 dark:text-slate-600" />
+             </div>
+             <p class="text-sm font-bold text-slate-400">Aucun module complémentaire n'est lié à cette licence.</p>
+             <p class="text-xs text-slate-400 mt-1">Contactez le support ou vérifiez votre plan.</p>
+           </div>
+         </div>
+
+         <!-- Tab 17: Facturation Électronique / PDP -->
+         <div v-if="selectedTab === 17" class="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+
+            <!-- Hero Banner -->
+            <div class="bg-gradient-to-br from-blue-700 via-indigo-700 to-purple-800 p-8 rounded-[2.5rem] text-white shadow-2xl relative overflow-hidden">
+               <div class="absolute -right-16 -top-16 w-56 h-56 bg-white/5 rounded-full blur-3xl"></div>
+               <div class="absolute -left-8 -bottom-12 w-40 h-40 bg-purple-500/20 rounded-full blur-2xl"></div>
+               <div class="relative z-10 flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
+                  <div class="space-y-2">
+                     <div class="flex items-center gap-3">
+                        <FileInput class="w-8 h-8 text-blue-200" />
+                        <h3 class="text-2xl font-black">Facturation Électronique</h3>
+                     </div>
+                     <p class="text-blue-200 font-medium max-w-xl">Conformité EN 16931 / Factur-X. Connectez un ou plusieurs PDPs agréés DGFiP pour transmettre vos factures B2B directement depuis myEasyCompta.</p>
+                  </div>
+                  <div class="flex items-center gap-3 shrink-0">
+                     <span :class="['px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest flex items-center gap-2', einvoicingForm.e_invoicing_enabled == '1' ? 'bg-emerald-400/20 text-emerald-300 border border-emerald-400/30' : 'bg-white/10 text-white/60 border border-white/20']">
+                        <span :class="['w-2 h-2 rounded-full', einvoicingForm.e_invoicing_enabled == '1' ? 'bg-emerald-400' : 'bg-white/40']"></span>
+                        {{ einvoicingForm.e_invoicing_enabled == '1' ? 'Activée' : 'Désactivée' }}
+                     </span>
+                  </div>
+               </div>
+            </div>
+
+            <!-- Section 1 : Paramètres globaux -->
+            <div class="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-3xl border border-slate-200 dark:border-slate-700 space-y-6">
+               <h4 class="font-black text-xs uppercase tracking-widest text-slate-400">Paramètres globaux</h4>
+
+               <!-- Enable toggle -->
+               <div class="flex items-center justify-between p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800">
+                  <div>
+                     <p class="font-bold text-slate-700 dark:text-slate-300">Activer la facturation électronique</p>
+                     <p class="text-xs text-slate-400 mt-0.5">Active la génération Factur-X et la transmission aux PDPs</p>
+                  </div>
+                  <button type="button" class="kloxy-toggle" :aria-checked="(einvoicingForm.e_invoicing_enabled == '1').toString()" @click="einvoicingForm.e_invoicing_enabled = einvoicingForm.e_invoicing_enabled == '1' ? '0' : '1'">
+                     <span class="kloxy-toggle-thumb"></span>
+                  </button>
+               </div>
+
+               <div v-if="einvoicingForm.e_invoicing_enabled == '1'" class="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <!-- Mode -->
+                  <div class="space-y-2">
+                     <label class="kloxy-label">Mode</label>
+                     <select v-model="einvoicingForm.e_invoicing_mode" class="kloxy-input appearance-none">
+                        <option value="sandbox">Bac à sable (test)</option>
+                        <option value="production">Production</option>
+                     </select>
+                  </div>
+                  <!-- Types de transactions -->
+                  <div class="space-y-2">
+                     <label class="kloxy-label">Types de transactions</label>
+                     <select v-model="einvoicingForm.e_invoicing_transaction_types" class="kloxy-input appearance-none">
+                        <option value="B2B">B2B uniquement</option>
+                        <option value="B2C">B2C uniquement</option>
+                        <option value="B2B_B2C">B2B et B2C</option>
+                        <option value="B2G">B2G (Marchés publics)</option>
+                     </select>
+                  </div>
+                  <!-- Profil Factur-X -->
+                  <div class="space-y-2">
+                     <label class="kloxy-label">Profil Factur-X</label>
+                     <select v-model="einvoicingForm.e_invoicing_facturx_profile" class="kloxy-input appearance-none">
+                        <option value="minimum">Minimum</option>
+                        <option value="basicwl">Basic WL</option>
+                        <option value="en16931">EN 16931 (recommandé)</option>
+                        <option value="extended">Extended</option>
+                     </select>
+                  </div>
+                  <!-- Auto-validation -->
+                  <div class="space-y-2">
+                     <label class="kloxy-label">Validation automatique</label>
+                     <select v-model="einvoicingForm.e_invoicing_auto_validate" class="kloxy-input appearance-none">
+                        <option value="0">Manuelle (recommandé)</option>
+                        <option value="1">Automatique à la création</option>
+                     </select>
+                  </div>
+               </div>
+            </div>
+
+            <!-- Section 2 : Données fiscales entreprise -->
+            <div v-if="einvoicingForm.e_invoicing_enabled == '1'" class="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-3xl border border-slate-200 dark:border-slate-700 space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+               <div class="flex items-center justify-between">
+                  <h4 class="font-black text-xs uppercase tracking-widest text-slate-400">Données fiscales de l'entreprise</h4>
+                  <span class="text-[10px] bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-2 py-1 rounded-full font-bold">Requis pour EN 16931</span>
+               </div>
+
+               <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div class="space-y-2">
+                     <label class="kloxy-label">SIREN / SIRET <span class="text-red-500">*</span></label>
+                     <input type="text" v-model="einvoicingForm.company_siren" class="kloxy-input font-mono" placeholder="123456789" maxlength="14" />
+                  </div>
+                  <div class="space-y-2">
+                     <label class="kloxy-label">Numéro de TVA intracommunautaire</label>
+                     <input type="text" v-model="einvoicingForm.company_vat_number" class="kloxy-input font-mono" placeholder="FR12345678901" />
+                  </div>
+                  <div class="space-y-2">
+                     <label class="kloxy-label">Code pays (ISO 3166-1 alpha-2)</label>
+                     <input type="text" v-model="einvoicingForm.company_country_code" class="kloxy-input font-mono uppercase" placeholder="FR" maxlength="2" />
+                  </div>
+                  <div class="space-y-2">
+                     <label class="kloxy-label">Régime de TVA</label>
+                     <select v-model="einvoicingForm.company_vat_regime" class="kloxy-input appearance-none">
+                        <option value="normal">Régime normal</option>
+                        <option value="simplifie">Régime simplifié</option>
+                        <option value="franchise">Franchise en base (sans TVA)</option>
+                        <option value="micro">Micro-entreprise</option>
+                     </select>
+                  </div>
+                  <div class="space-y-2 md:col-span-2">
+                     <label class="kloxy-label">Adresse légale complète</label>
+                     <input type="text" v-model="einvoicingForm.company_legal_address" class="kloxy-input" placeholder="12 rue de la Paix, 75001 Paris, France" />
+                  </div>
+               </div>
+            </div>
+
+            <!-- Section 3 : Connexions PDP -->
+            <div v-if="einvoicingForm.e_invoicing_enabled == '1'" class="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+               <div class="flex items-center justify-between mb-2">
+                  <div>
+                     <h4 class="font-black text-xs uppercase tracking-widest text-slate-400">Connexions PDP</h4>
+                     <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Activez et configurez un ou plusieurs Plateformes de Dématérialisation Partenaires.</p>
+                  </div>
+                  <div v-if="einvoicingForm.pdp_active" class="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1.5 rounded-xl border border-emerald-100 dark:border-emerald-800">
+                     <Wifi class="w-4 h-4 text-emerald-500" />
+                     <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400">PDP actif : {{ availablePdps.find(p => p.id === einvoicingForm.pdp_active)?.name || einvoicingForm.pdp_active }}</span>
+                  </div>
+               </div>
+
+               <!-- Active PDP selector -->
+               <div v-if="availablePdps.some(p => getPdpConfig(p.id).enabled)" class="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center gap-4">
+                  <div class="flex-1 space-y-1">
+                     <label class="kloxy-label">PDP actif (utilisé pour la transmission)</label>
+                     <select v-model="einvoicingForm.pdp_active" class="kloxy-input appearance-none">
+                        <option value="">— Sélectionner un PDP —</option>
+                        <option v-for="pdp in availablePdps.filter(p => getPdpConfig(p.id).enabled)" :key="pdp.id" :value="pdp.id">{{ pdp.name }}</option>
+                     </select>
+                  </div>
+               </div>
+
+               <!-- PDP Cards -->
+               <div v-for="pdp in availablePdps" :key="pdp.id" class="bg-white dark:bg-slate-900 rounded-3xl border transition-all duration-300"
+                    :class="getPdpConfig(pdp.id).enabled ? 'border-indigo-200 dark:border-indigo-700 shadow-lg shadow-indigo-500/5' : 'border-slate-100 dark:border-slate-800'">
+
+                  <!-- Card Header -->
+                  <div class="flex items-center gap-4 p-5 cursor-pointer" @click="expandedPdp = (expandedPdp === pdp.id ? null : pdp.id)">
+                     <!-- Icon -->
+                     <div :class="['w-12 h-12 rounded-2xl flex items-center justify-center shrink-0', getPdpConfig(pdp.id).enabled ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-400']">
+                        <component :is="getPdpIcon(pdp.id)" class="w-6 h-6" />
+                     </div>
+
+                     <!-- Name & desc -->
+                     <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2 flex-wrap">
+                           <h5 class="font-bold text-slate-900 dark:text-white">{{ pdp.name }}</h5>
+                           <span v-if="pdp.official" class="text-[9px] bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full font-black uppercase tracking-widest">Officiel</span>
+                           <span v-if="pdp.builtin" class="text-[9px] bg-slate-100 dark:bg-slate-800 text-slate-500 px-2 py-0.5 rounded-full font-black uppercase tracking-widest">Built-in</span>
+                           <span v-if="pdp.addon" class="text-[9px] bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 px-2 py-0.5 rounded-full font-black uppercase tracking-widest">Addon</span>
+                        </div>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">{{ pdp.description }}</p>
+                     </div>
+
+                     <!-- Status badges -->
+                     <div class="flex items-center gap-3 shrink-0">
+                        <!-- Test result badge -->
+                        <div v-if="pdpTestResults[pdp.id]" :class="['flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-bold', pdpTestResults[pdp.id].success ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400' : 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400']">
+                           <component :is="pdpTestResults[pdp.id].success ? Wifi : WifiOff" class="w-3.5 h-3.5" />
+                           {{ pdpTestResults[pdp.id].success ? 'Connecté' : 'Échec' }}
+                        </div>
+
+                        <!-- Enable toggle -->
+                        <button type="button" @click.stop="togglePdpEnabled(pdp.id)"
+                           :class="['relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 focus:outline-none', getPdpConfig(pdp.id).enabled ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-slate-600']">
+                           <span :class="['inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-300', getPdpConfig(pdp.id).enabled ? 'translate-x-6' : 'translate-x-1']"></span>
+                        </button>
+
+                        <!-- Expand chevron -->
+                        <component :is="expandedPdp === pdp.id ? ChevronUp : ChevronDown" class="w-4 h-4 text-slate-400" />
+                     </div>
+                  </div>
+
+                  <!-- Card Body (expanded) -->
+                  <div v-if="expandedPdp === pdp.id" class="px-5 pb-6 space-y-6 border-t border-slate-100 dark:border-slate-800 pt-5 animate-in fade-in slide-in-from-top-2 duration-200">
+
+                     <!-- Dynamic fields from catalog -->
+                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div v-for="field in (pdp.fields || [])" :key="field.key"
+                             :class="['space-y-2', (field.type === 'url' || field.key === 'api_endpoint') ? 'md:col-span-2' : '']">
+                           <label class="kloxy-label">{{ field.label }}</label>
+                           <select v-if="field.type === 'select'" v-model="getPdpConfig(pdp.id)[field.key]" class="kloxy-input appearance-none">
+                              <option v-for="opt in field.options" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+                           </select>
+                           <input v-else
+                              :type="field.type || 'text'"
+                              v-model="getPdpConfig(pdp.id)[field.key]"
+                              class="kloxy-input"
+                              :class="field.type === 'password' ? 'font-mono' : ''"
+                              :placeholder="field.placeholder || ''"
+                           />
+                        </div>
+                     </div>
+
+                     <!-- Actions bar -->
+                     <div class="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800">
+                        <a v-if="pdp.docs_url" :href="pdp.docs_url" target="_blank" rel="noopener" class="text-xs font-bold text-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-300 underline underline-offset-2 transition-colors">
+                           Documentation →
+                        </a>
+                        <span v-else class="flex-1"></span>
+
+                        <div class="flex items-center gap-3">
+                           <!-- Test result message -->
+                           <span v-if="pdpTestResults[pdp.id]" :class="['text-xs font-bold', pdpTestResults[pdp.id].success ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500']">
+                              {{ pdpTestResults[pdp.id].message }}
+                           </span>
+
+                           <!-- Test button -->
+                           <button type="button" @click="testPdpConnection(pdp.id)"
+                              :disabled="pdpTesting[pdp.id]"
+                              class="kloxy-btn-secondary py-2 px-4 text-sm shadow-none">
+                              <Loader2 v-if="pdpTesting[pdp.id]" class="w-3.5 h-3.5 mr-2 animate-spin" />
+                              <Wifi v-else class="w-3.5 h-3.5 mr-2" />
+                              Tester la connexion
+                           </button>
+                        </div>
+                     </div>
+                  </div>
+               </div>
+            </div>
+
+            <!-- Save button -->
+            <div class="flex justify-end pt-4 border-t border-slate-100 dark:border-slate-800">
+               <button type="button" @click="saveEInvoicingSettings" :disabled="einvoicingSaving" class="kloxy-btn-primary">
+                  <Loader2 v-if="einvoicingSaving" class="w-4 h-4 mr-2 animate-spin" />
+                  <Save v-else class="w-4 h-4 mr-2" />
+                  Enregistrer les réglages
+               </button>
+            </div>
+         </div>
+
+         <!-- Generic Tables -->
+         <div v-if="isTableTab" class="space-y-12">
+             <!-- Primary Table -->
+             <div class="overflow-x-auto">
+                 <div v-if="selectedTab === 7" class="mb-4 flex items-center justify-between">
+                     <h3 class="text-lg font-bold text-slate-800 dark:text-slate-200">Devises</h3>
+                 </div>
+                 <table class="w-full border-separate border-spacing-y-2">
+                    <thead>
+                       <tr class="text-xs font-black uppercase tracking-widest text-slate-400 text-left">
+                          <th v-for="col in currentTableColumns" :key="col.key" class="px-6 pb-2">{{ col.label }}</th>
+                          <th class="px-6 pb-2 text-right">{{ translations.actions || 'Actions' }}</th>
+                       </tr>
+                    </thead>
+                    <tbody>
+                       <tr v-for="item in currentTableData" :key="item.id" class="bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors group">
+                          <td v-for="(col, idx) in currentTableColumns" :key="col.key" :class="['px-6 py-4 font-medium text-slate-700 dark:text-slate-300', idx===0 ? 'rounded-l-2xl' : '']">
+                             <span v-if="col.type === 'color'" class="inline-flex items-center gap-2">
+                               <span class="w-6 h-6 rounded-md inline-block border border-slate-200 dark:border-slate-600 flex-shrink-0" :style="{ backgroundColor: item[col.key] || 'transparent' }"></span>
+                               <span class="text-xs font-mono text-slate-400">{{ item[col.key] || '—' }}</span>
+                             </span>
+                             <span v-else>{{ item[col.key] }}</span>
+                          </td>
+                          <td class="px-6 py-4 rounded-r-2xl text-right">
+                             <div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button @click="editItem(item)" class="p-2 text-slate-400 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-slate-900 rounded-lg transition-colors"><Pencil class="w-4 h-4" /></button>
+                                <button @click="deleteItem(getCurrentDeleteType, item.id)" class="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-slate-900 rounded-lg transition-colors"><Trash2 class="w-4 h-4" /></button>
+                             </div>
+                          </td>
+                       </tr>
+                    </tbody>
+                 </table>
+             </div>
+
+
+             <!-- Secondary Table for Categories in Tab 3 -->
+             <div v-if="selectedTab === 3" class="overflow-x-auto pt-8 border-t border-slate-100 dark:border-slate-800">
+                 <div class="mb-4 flex items-center justify-between">
+                     <h3 class="text-lg font-bold text-slate-800 dark:text-slate-200">Catégories d'articles</h3>
+                     <button @click="openAddCategoryModal" class="kloxy-btn-secondary py-2 px-4 shadow-none">
+                         <Plus class="w-3 h-3 mr-2" /> {{ translations.add || 'Ajouter' }}
+                     </button>
+                 </div>
+                 <table class="w-full border-separate border-spacing-y-2">
+                    <thead>
+                       <tr class="text-xs font-black uppercase tracking-widest text-slate-400 text-left">
+                          <th class="px-6 pb-2">Nom</th>
+                          <th class="px-6 pb-2 text-right">Actions</th>
+                       </tr>
+                    </thead>
+                    <tbody>
+                       <tr v-for="c in categories" :key="c.id" class="bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors group">
+                          <td class="px-6 py-4 font-bold text-slate-900 dark:text-white rounded-l-2xl">{{ c.name }}</td>
+                          <td class="px-6 py-4 rounded-r-2xl text-right">
+                             <div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button @click="editCategory(c)" class="p-2 text-slate-400 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-slate-900 rounded-lg transition-colors"><Pencil class="w-4 h-4" /></button>
+                                <button @click="deleteItem('article-category', c.id)" class="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-slate-900 rounded-lg transition-colors"><Trash2 class="w-4 h-4" /></button>
+                             </div>
+                          </td>
+                       </tr>
+                    </tbody>
+                 </table>
+             </div>
+
+             <!-- Secondary Table for VATs in Tab 7 -->
+             <div v-if="selectedTab === 7" class="overflow-x-auto pt-8 border-t border-slate-100 dark:border-slate-800">
+                 <div class="mb-4 flex items-center justify-between">
+                     <h3 class="text-lg font-bold text-slate-800 dark:text-slate-200">TVA</h3>
+                     <button @click="openAddVATModal" class="kloxy-btn-secondary py-2 px-4 shadow-none">
+                         <Plus class="w-3 h-3 mr-2" /> {{ translations.add || 'Ajouter' }}
+                     </button>
+                 </div>
+                 <table class="w-full border-separate border-spacing-y-2">
+                    <thead>
+                       <tr class="text-xs font-black uppercase tracking-widest text-slate-400 text-left">
+                          <th class="px-6 pb-2">Taux (%)</th>
+                          <th class="px-6 pb-2">Description</th>
+                          <th class="px-6 pb-2 text-right">Actions</th>
+                       </tr>
+                    </thead>
+                    <tbody>
+                       <tr v-for="v in vats" :key="v.id" class="bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors group">
+                          <td class="px-6 py-4 font-bold text-slate-900 dark:text-white rounded-l-2xl">{{ v.rate }}%</td>
+                          <td class="px-6 py-4 text-slate-600 dark:text-slate-400">{{ v.description }}</td>
+                          <td class="px-6 py-4 rounded-r-2xl text-right">
+                             <div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button @click="editVAT(v)" class="p-2 text-slate-400 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-slate-900 rounded-lg transition-colors"><Pencil class="w-4 h-4" /></button>
+                                <button @click="deleteItem('vat', v.id)" class="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-slate-900 rounded-lg transition-colors"><Trash2 class="w-4 h-4" /></button>
+                             </div>
+                          </td>
+                       </tr>
+                    </tbody>
+                 </table>
+             </div>
+         </div>
+
+         <!-- Save button for Planning tab (tab 10) — shown after the categories table -->
+         <div v-if="selectedTab === 10" class="flex justify-end pt-6 mt-4 border-t border-slate-100 dark:border-slate-800">
+             <button type="button" @click="handleSubmit" class="kloxy-btn-primary">
+                 <Save class="w-4 h-4 mr-2" /> {{ translations.save || 'Enregistrer' }}
+             </button>
+         </div>
+
+         <!-- ══════════════════════════════════════════════════════
+              Tab 18: Support
+         ══════════════════════════════════════════════════════ -->
+         <div v-if="selectedTab === 18" class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+
+             <!-- Hero -->
+             <div class="bg-gradient-to-br from-indigo-600 to-purple-700 p-8 rounded-[2.5rem] text-white shadow-2xl relative overflow-hidden">
+                 <div class="absolute -right-10 -top-10 w-48 h-48 bg-white/5 rounded-full blur-3xl"></div>
+                 <div class="relative z-10 flex items-center gap-6">
+                     <div class="w-16 h-16 rounded-2xl bg-white/10 flex items-center justify-center flex-shrink-0">
+                         <Headphones class="w-8 h-8 text-white" />
+                     </div>
+                     <div>
+                         <h3 class="text-2xl font-black tracking-tight mb-1">Support & Documentation</h3>
+                         <p class="text-indigo-200 text-sm">Notre équipe est disponible pour vous aider avec myEasyCompta.</p>
+                     </div>
+                 </div>
+             </div>
+
+             <!-- Cards grid -->
+             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+
+                 <a href="https://myeasycompta.com/docs" target="_blank" rel="noopener"
+                    class="group bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 hover:border-purple-500/40 rounded-[2rem] p-6 flex flex-col gap-3 transition-all shadow-sm hover:shadow-lg hover:-translate-y-1">
+                     <div class="w-11 h-11 rounded-xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center">
+                         <FileText class="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                     </div>
+                     <div class="flex-1">
+                         <h4 class="font-black text-slate-900 dark:text-white text-sm mb-1">Documentation</h4>
+                         <p class="text-slate-500 text-xs leading-relaxed">Guides complets, tutoriels et références techniques pour tous les modules.</p>
+                     </div>
+                     <span class="text-xs font-bold text-purple-500 flex items-center gap-1 mt-auto">Ouvrir <ExternalLink class="w-3 h-3" /></span>
+                 </a>
+
+                 <a href="https://wordpress.org/support/plugin/my-easy-compta/" target="_blank" rel="noopener"
+                    class="group bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 hover:border-blue-500/40 rounded-[2rem] p-6 flex flex-col gap-3 transition-all shadow-sm hover:shadow-lg hover:-translate-y-1">
+                     <div class="w-11 h-11 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center">
+                         <Users class="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                     </div>
+                     <div class="flex-1">
+                         <h4 class="font-black text-slate-900 dark:text-white text-sm mb-1">Forum communautaire</h4>
+                         <p class="text-slate-500 text-xs leading-relaxed">Posez vos questions et partagez vos expériences avec la communauté WordPress.org.</p>
+                     </div>
+                     <span class="text-xs font-bold text-blue-500 flex items-center gap-1 mt-auto">Accéder <ExternalLink class="w-3 h-3" /></span>
+                 </a>
+
+                 <a href="https://myeasycompta.com/contact" target="_blank" rel="noopener"
+                    class="group bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 hover:border-emerald-500/40 rounded-[2rem] p-6 flex flex-col gap-3 transition-all shadow-sm hover:shadow-lg hover:-translate-y-1">
+                     <div class="w-11 h-11 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center">
+                         <Mail class="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                     </div>
+                     <div class="flex-1">
+                         <h4 class="font-black text-slate-900 dark:text-white text-sm mb-1">Support prioritaire</h4>
+                         <p class="text-slate-500 text-xs leading-relaxed">Assistance directe par email pour les licences actives. Réponse sous 24h ouvrées.</p>
+                     </div>
+                     <span class="text-xs font-bold text-emerald-500 flex items-center gap-1 mt-auto">Contacter <ExternalLink class="w-3 h-3" /></span>
+                 </a>
+
+                 <a href="https://myeasycompta.com/changelog" target="_blank" rel="noopener"
+                    class="group bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 hover:border-amber-500/40 rounded-[2rem] p-6 flex flex-col gap-3 transition-all shadow-sm hover:shadow-lg hover:-translate-y-1">
+                     <div class="w-11 h-11 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center">
+                         <RefreshCcw class="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                     </div>
+                     <div class="flex-1">
+                         <h4 class="font-black text-slate-900 dark:text-white text-sm mb-1">Changelog</h4>
+                         <p class="text-slate-500 text-xs leading-relaxed">Toutes les nouveautés, corrections et améliorations de chaque version.</p>
+                     </div>
+                     <span class="text-xs font-bold text-amber-500 flex items-center gap-1 mt-auto">Voir <ExternalLink class="w-3 h-3" /></span>
+                 </a>
+
+                 <a href="https://wordpress.org/plugins/my-easy-compta/#reviews" target="_blank" rel="noopener"
+                    class="group bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 hover:border-rose-500/40 rounded-[2rem] p-6 flex flex-col gap-3 transition-all shadow-sm hover:shadow-lg hover:-translate-y-1">
+                     <div class="w-11 h-11 rounded-xl bg-rose-50 dark:bg-rose-900/20 flex items-center justify-center">
+                         <Heart class="w-5 h-5 text-rose-500" />
+                     </div>
+                     <div class="flex-1">
+                         <h4 class="font-black text-slate-900 dark:text-white text-sm mb-1">Laisser un avis</h4>
+                         <p class="text-slate-500 text-xs leading-relaxed">Votre retour sur WordPress.org nous aide à améliorer le plugin et à le faire connaître.</p>
+                     </div>
+                     <span class="text-xs font-bold text-rose-500 flex items-center gap-1 mt-auto">Noter ⭐ <ExternalLink class="w-3 h-3" /></span>
+                 </a>
+
+                 <a href="https://github.com/mizou1255/myeasycompta/issues" target="_blank" rel="noopener"
+                    class="group bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 hover:border-slate-500/40 rounded-[2rem] p-6 flex flex-col gap-3 transition-all shadow-sm hover:shadow-lg hover:-translate-y-1">
+                     <div class="w-11 h-11 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center">
+                         <AlertCircle class="w-5 h-5 text-slate-500" />
+                     </div>
+                     <div class="flex-1">
+                         <h4 class="font-black text-slate-900 dark:text-white text-sm mb-1">Signaler un bug</h4>
+                         <p class="text-slate-500 text-xs leading-relaxed">Ouvrez un ticket sur GitHub avec une description détaillée du problème rencontré.</p>
+                     </div>
+                     <span class="text-xs font-bold text-slate-500 flex items-center gap-1 mt-auto">GitHub <ExternalLink class="w-3 h-3" /></span>
+                 </a>
+
+             </div>
+
+             <!-- Info licence -->
+             <div v-if="licenseData?.valid" class="bg-purple-50 dark:bg-purple-900/10 border border-purple-200 dark:border-purple-800/40 rounded-[1.5rem] p-5 flex items-center gap-4">
+                 <BadgeCheck class="w-6 h-6 text-purple-500 flex-shrink-0" />
+                 <p class="text-sm text-purple-700 dark:text-purple-300 font-semibold">
+                     Vous bénéficiez du support prioritaire avec votre licence active. Utilisez l'email <strong>support@myeasycompta.com</strong> en précisant votre clé de licence.
+                 </p>
+             </div>
+             <div v-else class="bg-slate-50 dark:bg-slate-900/30 border border-dashed border-slate-200 dark:border-slate-700 rounded-[1.5rem] p-5 flex items-center gap-4">
+                 <HelpCircle class="w-6 h-6 text-slate-400 flex-shrink-0" />
+                 <p class="text-sm text-slate-500">Activez une licence pro pour accéder au support prioritaire.</p>
+             </div>
+
+         </div>
+
+         <!-- ══════════════════════════════════════════════════════
+              Tab 19: Affiliation
+         ══════════════════════════════════════════════════════ -->
+         <div v-if="selectedTab === 19" class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+
+             <!-- Hero -->
+             <div class="bg-gradient-to-br from-rose-500 to-pink-600 p-8 rounded-[2.5rem] text-white shadow-2xl relative overflow-hidden">
+                 <div class="absolute -right-10 -top-10 w-48 h-48 bg-white/5 rounded-full blur-3xl"></div>
+                 <div class="relative z-10 flex items-start gap-6">
+                     <div class="w-16 h-16 rounded-2xl bg-white/10 flex items-center justify-center flex-shrink-0">
+                         <Heart class="w-8 h-8 text-white" />
+                     </div>
+                     <div>
+                         <h3 class="text-2xl font-black tracking-tight mb-2">Programme d'affiliation</h3>
+                         <p class="text-rose-100 text-sm leading-relaxed">Recommandez myEasyCompta à vos clients et collègues, et gagnez une commission sur chaque vente générée.</p>
+                         <div class="flex flex-wrap gap-4 mt-4">
+                             <div class="bg-white/15 rounded-xl px-4 py-2 text-center">
+                                 <p class="text-xl font-black">20%</p>
+                                 <p class="text-xs text-rose-200">Commission / vente</p>
+                             </div>
+                             <div class="bg-white/15 rounded-xl px-4 py-2 text-center">
+                                 <p class="text-xl font-black">Cookie 30j</p>
+                                 <p class="text-xs text-rose-200">Suivi de référence</p>
+                             </div>
+                             <div class="bg-white/15 rounded-xl px-4 py-2 text-center">
+                                 <p class="text-xl font-black">Mensuel</p>
+                                 <p class="text-xs text-rose-200">Versement</p>
+                             </div>
+                         </div>
+                     </div>
+                 </div>
+             </div>
+
+             <!-- Formulaire -->
+             <div class="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2rem] p-8 space-y-6">
+                 <div>
+                     <h4 class="text-lg font-black text-slate-900 dark:text-white mb-1">Candidater au programme</h4>
+                     <p class="text-slate-500 text-sm">Remplissez ce formulaire et notre équipe reviendra vers vous sous 48h.</p>
+                 </div>
+
+                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                     <div class="space-y-1">
+                         <label class="kloxy-label">Nom complet *</label>
+                         <input v-model="affiliateForm.name" type="text" class="kloxy-input" placeholder="Jean Dupont" />
+                     </div>
+                     <div class="space-y-1">
+                         <label class="kloxy-label">Email *</label>
+                         <input v-model="affiliateForm.email" type="email" class="kloxy-input" placeholder="jean@exemple.fr" />
+                     </div>
+                     <div class="space-y-1">
+                         <label class="kloxy-label">Site web</label>
+                         <input v-model="affiliateForm.website" type="url" class="kloxy-input" placeholder="https://votre-site.fr" />
+                     </div>
+                     <div class="space-y-1">
+                         <label class="kloxy-label">Email de paiement (PayPal / virement)</label>
+                         <input v-model="affiliateForm.payment_email" type="email" class="kloxy-input" placeholder="paiement@exemple.fr" />
+                     </div>
+                     <div class="space-y-1 md:col-span-2">
+                         <label class="kloxy-label">Message (optionnel)</label>
+                         <textarea v-model="affiliateForm.message" class="kloxy-input min-h-[80px] resize-none" placeholder="Décrivez votre audience, votre site, comment vous comptez promouvoir myEasyCompta…"></textarea>
+                     </div>
+                 </div>
+
+                 <div v-if="affiliateMsg" :class="['p-4 rounded-xl text-sm font-semibold', affiliateMsgType === 'success' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300' : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300']">
+                     {{ affiliateMsg }}
+                 </div>
+
+                 <div class="flex justify-end">
+                     <button @click="registerAffiliate" :disabled="affiliateLoading || !affiliateForm.name || !affiliateForm.email"
+                             class="kloxy-btn-primary">
+                         <Loader2 v-if="affiliateLoading" class="w-4 h-4 mr-2 animate-spin" />
+                         <Send v-else class="w-4 h-4 mr-2" />
+                         Envoyer la candidature
+                     </button>
+                 </div>
+             </div>
+
+             <!-- Comment ça marche -->
+             <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                 <div v-for="(step, i) in [{icon: 'link', title:'Obtenez votre lien', desc:'Un lien unique vous est fourni après validation de votre candidature.'}, {icon: 'share', title:'Partagez', desc:'Intégrez votre lien dans vos contenus, emails ou sur votre site.'}, {icon: 'wallet', title:'Touchez vos commissions', desc:'20% sur chaque vente générée. Paiement mensuel via PayPal.'}]" :key="i"
+                      class="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[1.5rem] p-6">
+                     <div class="w-8 h-8 rounded-lg bg-rose-100 dark:bg-rose-900/20 flex items-center justify-center mb-4">
+                         <span class="text-rose-500 font-black text-sm">{{ i + 1 }}</span>
+                     </div>
+                     <h5 class="font-black text-slate-900 dark:text-white text-sm mb-2">{{ step.title }}</h5>
+                     <p class="text-slate-500 text-xs leading-relaxed">{{ step.desc }}</p>
+                 </div>
+             </div>
+
+         </div>
+
+         <!-- Save button for Planning tab (tab 10) — shown after the categories table -->
+         <div v-if="selectedTab === 10" class="flex justify-end pt-6 mt-4 border-t border-slate-100 dark:border-slate-800">
+             <button type="button" @click="handleSubmit" class="kloxy-btn-primary">
+                 <Save class="w-4 h-4 mr-2" /> {{ translations.save || 'Enregistrer' }}
+             </button>
+         </div>
+
+         <!-- ── Entreprises (tab 21) ───────────────────────────────────────── -->
+         <div v-if="selectedTab === 21">
+           <Entities />
+         </div>
+
+         </div><!-- /p-8 content wrapper -->
       </div>
+    </div>
+
+    <!-- Generic Modal -->
+     <dialog id="settings_modal" class="bg-transparent p-0 border-none shadow-none backdrop:bg-slate-900/50 backdrop:backdrop-blur-sm open:animate-in open:fade-in open:zoom-in-95 duration-200" ref="settingsModalRef">
+        <div class="bg-white dark:bg-slate-900 rounded-[2rem] p-8 w-[90vw] max-w-lg shadow-2xl border border-slate-100 dark:border-slate-800 relative">
+             <button @click="closeModal" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"><X class="w-6 h-6" /></button>
+             <h3 class="text-xl font-black text-slate-900 dark:text-white mb-6">
+                {{ isEditing ? (translations.edit || 'Editer') : (translations.add || 'Ajouter') }}
+                {{ isEditing ? (translations.edit || 'Editer') : (translations.add || 'Ajouter') }}
+                {{ isVATModal ? ' TVA' : (isCategoryModal ? ' Catégorie' : '') }}
+             </h3>
+             
+             <form @submit.prevent="isVATModal ? saveVAT() : (isCategoryModal ? saveCategory() : saveItem())" class="space-y-4">
+                <div v-for="field in (isVATModal ? vatFields : (isCategoryModal ? categoryFields : currentModalFields))" :key="field.key" class="space-y-2">
+                    <label class="kloxy-label">{{ field.label }}</label>
+                    <template v-if="field.type === 'textarea'">
+                        <textarea v-model="modalForm[field.key]" class="kloxy-input min-h-[100px]"></textarea>
+                    </template>
+                     <template v-else-if="field.type === 'color'">
+                        <div class="flex gap-2">
+                           <input type="text" v-model="modalForm[field.key]" class="kloxy-input" />
+                           <input type="color" v-model="modalForm[field.key]" class="h-12 w-12 rounded-xl border-none cursor-pointer bg-transparent" />
+                        </div>
+                    </template>
+                    <template v-else>
+                        <input type="text" v-model="modalForm[field.key]" class="kloxy-input" required />
+                    </template>
+                </div>
+                
+                <div class="flex justify-end gap-3 pt-4">
+                   <button type="button" @click="closeModal" class="kloxy-btn-secondary">{{ translations.cancel || 'Annuler' }}</button>
+                   <button type="submit" class="kloxy-btn-primary">{{ translations.save || 'Enregistrer' }}</button>
+                </div>
+             </form>
+        </div>
+        <form method="dialog" class="fixed inset-0 z-[-1] cursor-default bg-transparent w-full h-full outline-none" @click="closeModal"></form>
+     </dialog>
+
+  </MainLayout>
 </template>
 
-<script>
-import Card from "@/components/Card.vue";
+<script setup>
+import { ref, reactive, computed, onMounted, watch } from 'vue';
 import { VueEditor } from "vue3-editor";
+import axios from 'axios';
+import MainLayout from '@/components/layout/MainLayout.vue';
 import RemoveModal from "@/components/RemoveAlert.vue";
+import Entities from "@/components/Entities.vue";
+import { Home, Settings, FileText, Receipt, Undo, HelpCircle, DollarSign, CreditCard, ShoppingBag, Calendar, Mail, Bell, User, BarChart, QrCode, BadgeCheck, Save, Upload, Plus, Pencil, Trash2, X, CheckCircle2, AlertCircle, Zap, RefreshCcw, Loader2, Download, Building2, Globe, Plug, Wifi, WifiOff, ChevronDown, ChevronUp, Shield, FileInput, Headphones, Heart, ExternalLink, Send, Users, ScrollText, Clock, Truck, MessageSquare, Eye, Copy, Star, ShieldCheck } from 'lucide-vue-next';
 
-export default {
-  name: "Settings",
-  components: {
-    Card,
-    VueEditor,
-    RemoveModal,
-  },
-  data() {
-    return {
-      loading: false,
-      selectedTab: 1,
-      pluginsListOpen: false,
-      form: {
-        company_name: "",
-        company_address: "",
-        postal_code: "",
-        city: "",
-        country: "",
-        company_email: "",
-        company_phone: "",
-        mobile_phone: "",
-        fax: "",
-        logo_mentions_active: "",
-        logo_url: "",
-        logo_path: "",
-        default_currency: "",
-        currency_position: "",
-        vat_active: "",
-        default_vat: "",
-        date_format: "",
-        logo_width: "",
-        logo_mentions: "",
-        invoice_color: "",
-        invoice_prefix: "",
-        active_disbursements: "",
-        show_phone: "",
-        show_email: "",
-        show_siren: "",
-        show_tax_number: "",
-        show_watermark: "",
-        show_watermark_only_paid: "",
-        invoice_footer: "",
-        invoice_terms: "",
-        credit_color: "",
-        credit_prefix: "",
-        credit_footer: "",
-        credit_terms: "",
-        quote_color: "",
-        quote_prefix: "",
-        quote_footer: "",
-        quote_terms: "",
-        easy_compta_planning_addon_active: "",
-        easy_compta_email_addon_active: "",
-        easy_compta_payment_addon_active: "",
-        easy_compta_signature_addon_active: "",
-        easy_compta_stats_addon_active: "",
-        easy_compta_qrcode_addon_active: "",
-        easy_compta_stripe_secret_api: "",
-        email_quote_subject: "",
-        email_invoice_subject: "",
-        remind_invoice_subject: "",
-        remind_invoice_content: "",
-        email_quote_content: "",
-        email_invoice_content: "",
-        email_create_account_subject: "",
-        email_create_account_content: "",
-        easycompta_siret_token_api: "",
-      },
-      articles: [],
-      categories: [],
-      currencies: [],
-      vats: [],
-      expenses: [],
-      planning: [],
-      payments: [],
-      logoPreviewUrl: "",
-      previewWidth: "",
-      showArticleModal: false,
-      showCurrencyModal: false,
-      showVATModal: false,
-      showPaymentModal: false,
-      showExpenseModal: false,
-      showPlanningModal: false,
-      currencyForm: {
-        id: null,
-        name: "",
-        symbol: "",
-      },
-      articleForm: {
-        id: null,
-        ref: "",
-        name: "",
-        description: "",
-        unit_price: "",
-      },
-      vatForm: {
-        id: null,
-        description: "",
-        rate: "",
-      },
-      paymentForm: {
-        id: null,
-        method_name: "",
-      },
-      expenseForm: {
-        id: null,
-        name: "",
-      },
-      planningForm: {
-        id: null,
-        name: "",
-        background: "",
-        color: "",
-      },
-      showRemoveModal: false,
-      deleteType: null,
-      selectedId: null,
-      editingArticle: false,
-      editingCurrency: false,
-      editingVAT: false,
-      editingExpense: false,
-      editingPayment: false,
-      editingPlanning: false,
-      activeTabEmail: "tab1",
-      activeTabUsers: "user1",
-      license_key: "",
-      loadingLicense: false,
-      licenseData: null,
-      installed_versions: {},
-      updatesAvailable: {},
-      errorMessage: "",
-      newDomain: "",
-      loadingDomain: false,
-      domainErrorMessage: "",
-      domainToRemove: null,
-      toast: {
-        visible: false,
-        message: "",
-        type: "alert-success",
-        position: "toast-bottom toast-end",
-      },
-      toolbarOptions: [
-        ["bold", "italic", "underline", "strike"],
-        ["link"],
-        [{ list: "ordered" }, { list: "bullet" }],
-        [{ header: [1, 2, 3, 4, 5, 6, false] }],
-        [{ color: [] }, { background: [] }],
-        [{ align: [] }],
-        [{ align: "right" }, { align: "center" }, { align: "justify" }],
-        ["clean"],
-        ["html"],
-      ],
+// State
+const selectedTab = ref(1);
+const loading = ref(false);
+const toast = reactive({ visible: false, message: "", type: "success" });
+const showRemoveModal = ref(false);
+const deleteType = ref(null);
+const selectedId = ref(null);
+const logoPreviewUrl = ref(null);
+const settingsModalRef = ref(null);
+
+// VAT Management
+const isVATModal = ref(false);
+const vats = ref([]);
+const vatFields = [
+    { key: 'rate', label: 'Taux (%)' },
+    { key: 'rate', label: 'Taux (%)' },
+    { key: 'description', label: 'Description' }
+];
+
+// Category Management
+const isCategoryModal = ref(false);
+const categoryFields = [
+    { key: 'name', label: 'Nom de la catégorie' }
+];
+
+// License specific
+const licenseData = ref(null);
+const licenseKey = ref("");
+const licenseLoading = ref(false);
+const installedVersions = ref({});
+const processingAddon = ref(null);
+
+const form = reactive({
+    company_code: '', tax_number: '', company_name: '', company_email: '', company_address: '', postal_code: '', city: '', country: '', company_phone: '', mobile_phone: '', fax: '', date_format: 'DD-MM-YYYY',
+    logo_mentions_active: 0, logo_mentions: '', logo_width: 150,
+    default_currency: '', currency_position: 'after', vat_active: 0, default_vat: 0,
+    invoice_prefix: 'INV', invoice_first: 1, invoice_color: '#7c3aed', invoice_footer: '', invoice_terms: '', invoice_iban: '', invoice_bic: '',
+    credit_prefix: 'AVR', credit_color: '#f59e0b', credit_footer: '', credit_terms: '',
+    quote_prefix: 'EST', quote_first: 1, quote_color: '#10b981', quote_footer: '', quote_terms: '',
+    easy_compta_planning_addon_active: 0, easy_compta_email_addon_active: 0, easy_compta_user_addon_active: 0, easy_compta_payment_addon_active: 0, easy_compta_stats_addon_active: 0, easy_compta_qrcode_addon_active: 0, easy_compta_advance_addon_active: 0, easy_compta_backup_addon_active: 0,
+    stripe_test_mode: 0, stripe_test_publishable_key: '', stripe_test_secret_key: '', stripe_live_publishable_key: '', stripe_live_secret_key: '', stripe_webhook_secret: '',
+    ecwp_email_theme: 'dark',
+    ecwp_notify_quote_action: '1',
+    ecwp_notify_invoice_paid: '1',
+    ecwp_notify_partial_payment: '1',
+    ecwp_notify_new_client: '1',
+    ecwp_notify_quote_converted: '0',
+    ecwp_notify_backup_done: '1',
+    ecwp_notify_backup_deleted: '0',
+    ecwp_notify_planning_event: '1',
+    invoice_email_subject: 'Votre facture {numero_document}',
+    invoice_email_content: '<p>Bonjour {nom_client},</p><p>Veuillez trouver ci-joint votre facture <strong>{numero_document}</strong> d\'un montant de <strong>{montant_total}</strong>.</p><p>Merci de procéder au règlement dans les délais indiqués sur le document.</p><p>N\'hésitez pas à nous contacter pour toute question.</p><p>Cordialement,</p>',
+    invoice_email_remind_subject: 'Relance — Facture {numero_document} en attente de paiement',
+    invoice_email_remind_content: '<p>Bonjour {nom_client},</p><p>Sauf erreur de votre part, nous n\'avons pas encore reçu le règlement de la facture <strong>{numero_document}</strong> d\'un montant de <strong>{montant_total}</strong>.</p><p>Nous vous serions reconnaissants de bien vouloir régulariser cette situation dans les meilleurs délais.</p><p>Si vous avez déjà effectué ce règlement, merci de ne pas tenir compte de ce message.</p><p>Cordialement,</p>',
+    quote_email_subject: 'Votre devis {numero_document}',
+    quote_email_content: '<p>Bonjour {nom_client},</p><p>Veuillez trouver ci-joint votre devis <strong>{numero_document}</strong> d\'un montant de <strong>{montant_total}</strong>.</p><p>Ce devis est valable 30 jours. N\'hésitez pas à nous contacter pour toute question ou modification.</p><p>Cordialement,</p>',
+    pdf_template: 'modern', pdf_primary_color: '#7c3aed', pdf_secondary_color: '#4b5563', pdf_font: 'dejavusanscondensed', pdf_footer_text: '',
+    // Number format settings
+    invoice_number_format: 'prefix',
+    quote_number_format: 'prefix',
+    credit_number_format: 'prefix',
+    // Stats settings
+    stats_annual_target: 0,
+    limit_declaration: 77700,
+    limit_tva: 36800,
+    stats_fiscal_year_start: 1,
+    // Contracts template
+    contract_default_title: '',
+    contract_default_body: '',
+    // TimeTracking settings
+    timetracking_default_rate: 0,
+    // Delivery settings
+    delivery_prefix: 'BL',
+    delivery_footer: '',
+    // OnlineQuote settings
+    online_quote_expiry_days: 30,
+    online_quote_accept_message: 'Merci ! Votre accord a bien été enregistré. Nous vous contacterons très prochainement.',
+    online_quote_reject_message: 'Votre réponse a bien été prise en compte. N\'hésitez pas à nous contacter pour toute question.',
+});
+
+// Contract template variables reference
+const contractVariables = [
+    '{CLIENT_NAME}', '{CLIENT_EMAIL}', '{CLIENT_ADDRESS}', '{CLIENT_PHONE}',
+    '{COMPANY_NAME}', '{COMPANY_SIRET}', '{COMPANY_ADDRESS}',
+    '{START_DATE}', '{TODAY}', '{AMOUNT}', '{INVOICE_NUMBER}', '{QUOTE_NUMBER}', '{CONTRACT_ID}',
+];
+
+const contractEditorToolbar = [
+    [{ header: [1, 2, 3, false] }],
+    ['bold', 'italic', 'underline'],
+    [{ list: 'ordered' }, { list: 'bullet' }],
+    [{ align: [] }],
+    ['clean'],
+];
+
+function loadContractExample() {
+    form.contract_default_title = 'Contrat de prestation de services — {CLIENT_NAME}';
+    form.contract_default_body = `<h2 style="text-align: center;">CONTRAT DE PRESTATION DE SERVICES</h2>
+<p>Entre les soussignés :</p>
+<p><strong>Le Prestataire :</strong><br>{COMPANY_NAME}<br>{COMPANY_ADDRESS}<br>SIRET : {COMPANY_SIRET}</p>
+<p><strong>Le Client :</strong><br>{CLIENT_NAME}<br>{CLIENT_ADDRESS}</p>
+<p>Il a été convenu ce qui suit :</p>
+<h3>Article 1 — Objet de la mission</h3>
+<p>[Décrire ici la nature des prestations à réaliser]</p>
+<h3>Article 2 — Durée</h3>
+<p>La mission débutera le <strong>{START_DATE}</strong>. Le présent contrat est conclu pour la durée nécessaire à la réalisation des prestations décrites à l'article 1.</p>
+<h3>Article 3 — Rémunération</h3>
+<p>En contrepartie des services rendus, le Client versera au Prestataire la somme de <strong>{AMOUNT} €</strong> HT, selon les modalités convenues entre les parties.</p>
+<h3>Article 4 — Obligations du Prestataire</h3>
+<p>Le Prestataire s'engage à réaliser les missions décrites à l'article 1 avec soin et professionnalisme, dans le respect des délais convenus.</p>
+<h3>Article 5 — Confidentialité</h3>
+<p>Le Prestataire s'engage à garder confidentielles toutes les informations relatives au Client dont il pourrait avoir connaissance dans le cadre de la présente mission.</p>
+<h3>Article 6 — Propriété intellectuelle</h3>
+<p>Sauf disposition contraire, les livrables produits dans le cadre de cette mission sont cédés au Client à compter du paiement intégral des sommes dues.</p>
+<h3>Article 7 — Résiliation</h3>
+<p>Chacune des parties pourra résilier le présent contrat avec un préavis de 15 jours par lettre recommandée avec accusé de réception.</p>
+<h3>Article 8 — Loi applicable</h3>
+<p>Le présent contrat est soumis au droit français. Tout litige relèvera de la compétence des tribunaux compétents.</p>
+<p>Fait le {TODAY}</p>
+<table style="width: 100%; margin-top: 40px;">
+  <tr>
+    <td style="width: 50%; vertical-align: top;"><p><strong>Signature du Prestataire</strong></p><br><br><p>_______________________________</p></td>
+    <td style="width: 50%; vertical-align: top;"><p><strong>Signature du Client</strong></p><br><br><p>_______________________________</p></td>
+  </tr>
+</table>`;
+}
+
+// Table data
+const currencies = ref([]);
+const articles = ref([]);
+const categories = ref([]);
+const payments = ref([]);
+const expenses = ref([]);
+const planning = ref([]);
+
+// E-Invoicing / PDP state
+const einvoicingForm = reactive({
+    e_invoicing_enabled: '0',
+    e_invoicing_mode: 'sandbox',
+    e_invoicing_transaction_types: 'B2B',
+    e_invoicing_facturx_profile: 'en16931',
+    e_invoicing_auto_validate: '0',
+    company_siren: '',
+    company_vat_number: '',
+    company_legal_address: '',
+    company_country_code: 'FR',
+    company_vat_regime: 'normal',
+    pdp_active: '',
+});
+const pdpConfigurations = ref({});
+const availablePdps = ref([]);
+const expandedPdp = ref(null);
+const pdpTestResults = ref({});
+const pdpTesting = ref({});
+const einvoicingSaving = ref(false);
+
+// Modal State
+const isEditing = ref(false);
+const modalForm = ref({});
+
+// Computed
+const translations = computed(() => window.myEasyComptaAdmin?.easyComptaTranslations || {});
+
+const checkSlug = (slug) => {
+    if (!licenseData.value || !licenseData.value.plugins) return false;
+    const plugins = Array.isArray(licenseData.value.plugins) ? licenseData.value.plugins : Object.values(licenseData.value.plugins);
+    
+    const findMatch = (s) => {
+        return plugins.some(p => p.product_slug === s);
     };
-  },
-  methods: {
-    setActiveTab(tab) {
-      this.activeTabEmail = tab;
-    },
-    setActiveTabUsers(tab) {
-      this.activeTabUsers = tab;
-    },
-    selectTab(tab) {
-      this.selectedTab = tab;
-      window.location.hash = `tab${tab}`;
-    },
-    checkHash() {
-      const hash = window.location.hash;
-      if (hash) {
-        const tab = parseInt(hash.replace("#tab", ""));
-        if (!isNaN(tab)) {
-          this.selectedTab = tab;
+
+    // 1. Exact match
+    if (findMatch(slug)) return true;
+
+    // 2. Try variations
+    if (slug.startsWith('myeasycompta-')) {
+        if (findMatch(slug.replace('myeasycompta-', 'my-easy-compta-'))) return true;
+    } else if (slug.startsWith('my-easy-compta-')) {
+        if (findMatch(slug.replace('my-easy-compta-', 'myeasycompta-'))) return true;
+    }
+
+    // 3. Handle specific known spelling variations
+    if (slug.includes('e-mail')) {
+        if (findMatch(slug.replace('e-mail', 'email'))) return true;
+        if (findMatch(slug.replace('e-mail', 'email').replace('my-easy-compta-', 'myeasycompta-'))) return true;
+        if (findMatch(slug.replace('e-mail', 'email').replace('myeasycompta-', 'my-easy-compta-'))) return true;
+    }
+    if (slug.includes('email') && !slug.includes('e-mail')) {
+        if (findMatch(slug.replace('email', 'e-mail'))) return true;
+        if (findMatch(slug.replace('email', 'e-mail').replace('my-easy-compta-', 'myeasycompta-'))) return true;
+        if (findMatch(slug.replace('email', 'e-mail').replace('myeasycompta-', 'my-easy-compta-'))) return true;
+    }
+
+    if (slug.includes('user')) {
+        const plural = slug.includes('users') ? slug : slug.replace('user', 'users');
+        const singular = slug.includes('users') ? slug.replace('users', 'user') : slug;
+        if (findMatch(plural)) return true;
+        if (findMatch(singular)) return true;
+    }
+
+    return false;
+};
+
+const visibleTabs = computed(() => {
+    const t = translations.value;
+    const f = form;
+    const tabs = [
+        { id: 1, label: t.general_settings || 'Général', icon: Home },
+        { id: 2, label: t.system_settings || 'Système', icon: Settings },
+        { id: 3, label: t.articles_settings || 'Articles', icon: FileText },
+        { id: 4, label: translations.invoices || 'Factures', icon: FileText },
+        { id: 5, label: translations.credits || 'Avoirs', icon: Undo },
+        { id: 6, label: translations.quotes || 'Devis', icon: HelpCircle },
+        { id: 7, label: translations.vats || 'TVA', icon: Receipt },
+        { id: 8, label: t.payments_settings || 'Paiements', icon: CreditCard },
+        { id: 9, label: t.expenses_settings || 'Dépenses', icon: ShoppingBag },
+    ];
+
+    const hasP = checkSlug('myeasycompta-planning');
+
+    const hasU = checkSlug('myeasycompta-compte-client');
+    const hasS = checkSlug('myeasycompta-payment');
+    const hasSt = checkSlug('myeasycompta-stats');
+    const hasQ = checkSlug('myeasycompta-qrcode-stripe');
+
+    if(hasP || f.easy_compta_planning_addon_active == 1) tabs.push({ id: 10, label: t.planning_settings || 'Planning', icon: Calendar });
+    tabs.push({ id: 11, label: t.email_settings || 'Emails', icon: Mail }); // Always visible — notification settings available without addon
+    if(hasU || f.easy_compta_user_addon_active == 1) tabs.push({ id: 12, label: t.users_settings || 'Utilisateurs', icon: User });
+    if(hasS || f.easy_compta_payment_addon_active == 1) tabs.push({ id: 13, label: t.stripe_settings || 'Stripe', icon: CreditCard });
+    if(hasSt || f.easy_compta_stats_addon_active == 1) tabs.push({ id: 14, label: t.stats_settings || 'Stats', icon: BarChart });
+    if(hasQ || f.easy_compta_qrcode_addon_active == 1) tabs.push({ id: 15, label: 'QR Code', icon: QrCode });
+    if(window.myEasyComptaAdmin?.contractsAddonActive)    tabs.push({ id: 22, label: 'Contrats',     icon: ScrollText });
+    if(window.myEasyComptaAdmin?.timetrackingAddonActive) tabs.push({ id: 23, label: 'Temps & Fact.', icon: Clock });
+    if(window.myEasyComptaAdmin?.deliveryAddonActive)     tabs.push({ id: 24, label: 'Livraisons',    icon: Truck });
+    if(window.myEasyComptaAdmin?.onlineQuoteAddonActive)  tabs.push({ id: 25, label: 'Devis en ligne', icon: Globe });
+    if(window.myEasyComptaAdmin?.smsAddonActive)          tabs.push({ id: 26, label: 'SMS',           icon: MessageSquare });
+
+    tabs.push({ id: 17, label: 'Fact. Électronique', icon: FileInput });
+    tabs.push({ id: 16, label: t.license_settings || 'Licence', icon: BadgeCheck });
+    tabs.push({ id: 18, label: 'Support', icon: Headphones });
+    tabs.push({ id: 19, label: 'Affiliation', icon: Heart });
+    return tabs;
+});
+
+const getCurrentTabTitle = computed(() => visibleTabs.value.find(t => t.id === selectedTab.value)?.label || 'Paramètres');
+
+const tabGroups = computed(() => {
+    const allTabs = visibleTabs.value;
+    const find = (id) => allTabs.find(t => t.id === id);
+    const groups = [
+        { label: 'Général', tabs: [find(1), find(2)].filter(Boolean) },
+        { label: 'Documents', tabs: [find(4), find(5), find(6)].filter(Boolean) },
+        { label: 'Références', tabs: [find(3), find(7), find(8), find(9)].filter(Boolean) },
+    ];
+    const addonIds = [10, 11, 12, 13, 14, 15, 22, 23, 24, 25, 26];
+    const addonTabs = addonIds.map(id => find(id)).filter(Boolean);
+    if (addonTabs.length > 0) groups.push({ label: 'Add-ons', tabs: addonTabs });
+    const advTabs = [find(17), find(16), find(18), find(19), find(20)].filter(Boolean);
+    if (advTabs.length > 0) groups.push({ label: 'Avancé', tabs: advTabs });
+    return groups;
+});
+
+const currentTabIcon = computed(() => visibleTabs.value.find(t => t.id === selectedTab.value)?.icon);
+
+const getCurrentTabDesc = computed(() => {
+    const descs = {
+        1: 'Informations de votre entreprise, coordonnées et logo',
+        2: 'Devise, TVA par défaut et apparence PDF',
+        3: 'Catalogue d\'articles et catégories d\'articles',
+        4: 'Numérotation, couleur et pieds de page des factures',
+        5: 'Numérotation, couleur et pieds de page des avoirs',
+        6: 'Numérotation, couleur et pieds de page des devis',
+        7: 'Devises disponibles et taux de TVA',
+        8: 'Méthodes de paiement acceptées',
+        9: 'Catégories de dépenses',
+        10: 'Catégories de l\'agenda et vue calendrier',
+        11: 'Modèles d\'e-mails pour factures, relances et devis',
+        12: 'Accès et rôles des utilisateurs',
+        13: 'Clés API Stripe et mode test/production',
+        14: 'Paramètres du module statistiques',
+        15: 'Configuration du QR Code et paiement en ligne',
+        16: 'Activation de la licence et gestion des modules',
+        17: 'Conformité EN 16931 / Factur-X et connecteurs PDP',
+        18: 'Documentation, contact et assistance technique',
+        19: 'Rejoindre le programme d\'affiliation myEasyCompta',
+        20: 'Rappels automatiques pour les factures impayées',
+        21: 'Gérez plusieurs entités légales depuis la même interface',
+        22: 'Modèle de contrat pré-rempli proposé à la création',
+        23: 'Taux horaire par défaut et options du suivi de temps',
+        24: 'Préfixe des bons de livraison et texte de pied de page',
+        25: 'Durée d\'expiration des liens et message aux clients',
+        26: 'Fournisseur SMS, clés API et événements à notifier',
+    };
+    return descs[selectedTab.value] || '';
+});
+
+const isTableTab = computed(() => [3, 7, 8, 9, 10].includes(selectedTab.value));
+
+// ── Number format helpers ────────────────────────────────────────────────────
+const numberFormatOptions = [
+    { value: 'prefix',            label: 'Préfixe — Numéro',                   note: null },
+    { value: 'prefix_year',       label: 'Préfixe — Année — Numéro',           note: 'Compteur remis à 0 chaque 1ᵉʳ janvier' },
+    { value: 'prefix_year_month', label: 'Préfixe — Année — Mois — Numéro',   note: 'Compteur remis à 0 chaque 1ᵉʳ du mois' },
+    { value: 'year',              label: 'Année — Numéro (sans préfixe)',       note: 'Compteur remis à 0 chaque 1ᵉʳ janvier' },
+];
+
+function buildNumberPreview(prefix, format, startNum) {
+    const p   = prefix || '???';
+    const num = String(startNum || 1).padStart(4, '0');
+    const y   = new Date().getFullYear();
+    const m   = String(new Date().getMonth() + 1).padStart(2, '0');
+    switch (format) {
+        case 'prefix_year':       return `${p}-${y}-${num}`;
+        case 'prefix_year_month': return `${p}-${y}-${m}-${num}`;
+        case 'year':              return `${y}-${num}`;
+        default:                  return `${p}-${num}`;
+    }
+}
+
+const invoiceNumberPreview = computed(() => buildNumberPreview(form.invoice_prefix, form.invoice_number_format, form.invoice_first));
+const quoteNumberPreview   = computed(() => buildNumberPreview(form.quote_prefix,   form.quote_number_format,   form.quote_first));
+const creditNumberPreview  = computed(() => buildNumberPreview(form.credit_prefix,  form.credit_number_format,  1));
+// ────────────────────────────────────────────────────────────────────────────
+
+const currencySymbol = computed(() => {
+    const match = currencies.value.find(c => c.id == form.default_currency);
+    return match?.symbol || '€';
+});
+
+
+const currentTableColumns = computed(() => {
+    const t = translations.value;
+    if(selectedTab.value === 3) return [{key: 'ref', label: t.item_ref}, {key: 'name', label: t.name}, {key: 'unit_price', label: t.unit_price}];
+    if(selectedTab.value === 7) return [{key: 'name', label: t.name}, {key: 'symbol', label: t.symbol}, {key: 'code', label: t.code}];
+    if(selectedTab.value === 8) return [{key: 'method_name', label: t.name}];
+    if(selectedTab.value === 9) return [{key: 'name', label: t.name}];
+    if(selectedTab.value === 10) return [{key: 'name', label: t.name}, {key: 'background', label: t.background, type: 'color'}, {key: 'color', label: t.color, type: 'color'}];
+    return [];
+});
+
+const currentTableData = computed(() => {
+    if(selectedTab.value === 3) return articles.value;
+    if(selectedTab.value === 7) return currencies.value;
+    if(selectedTab.value === 8) return payments.value;
+    if(selectedTab.value === 9) return expenses.value;
+    if(selectedTab.value === 10) return planning.value;
+    return [];
+});
+
+const currentModalFields = computed(() => {
+    const t = translations.value;
+    if(selectedTab.value === 3) return [{key: 'ref', label: t.item_ref}, {key: 'name', label: t.name}, {key: 'description', label: t.description, type: 'textarea'}, {key: 'unit_price', label: t.unit_price}];
+    if(selectedTab.value === 7) return [{key: 'name', label: t.name}, {key: 'symbol', label: t.symbol}, {key: 'code', label: t.code}];
+    if(selectedTab.value === 8) return [{key: 'method_name', label: t.name}];
+    if(selectedTab.value === 9) return [{key: 'name', label: t.name}];
+    if(selectedTab.value === 10) return [{key: 'name', label: t.name}, {key: 'background', label: t.background, type: 'color'}, {key: 'color', label: t.color, type: 'color'}];
+    return [];
+});
+
+const getCurrentDeleteType = computed(() => {
+    if(selectedTab.value === 3) return 'article';
+    if(selectedTab.value === 7) return 'currency';
+    if(selectedTab.value === 8) return 'payment';
+    if(selectedTab.value === 9) return 'expense';
+    if(selectedTab.value === 10) return 'planning';
+    return '';
+});
+
+// Logic
+const showToast = (msg, type = "success") => {
+    toast.message = msg;
+    toast.type = type;
+    toast.visible = true;
+    setTimeout(() => toast.visible = false, 3000);
+};
+
+const loadData = async () => {
+    loading.value = true;
+    try {
+        const res = await axios.get('/wp-json/my-easy-compta/v1/settings/get', { headers: { "X-WP-Nonce": window.myEasyComptaAdmin.nonce } });
+        if(res.data) {
+            Object.assign(form, res.data);
         }
-      }
-    },
-    tabClass(tab) {
-      return this.selectedTab === tab ? "tab tab-active" : "tab";
-    },
-    async fetchSettings() {
-      try {
-        this.loading = true;
-        const response = await fetch(
-          "/wp-json/my-easy-compta/v1/settings/get",
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              "X-WP-Nonce": myEasyComptaAdmin.nonce,
-            },
-          }
-        );
+        
+        const [articlesData] = await Promise.all([
+             fetchArticles(),
+             fetchGeneric('currencies', currencies),
+             fetchGeneric('vats', vats),
+             fetchGeneric('payments-methods', payments),
+             fetchGeneric('expenses-cat', expenses),
+             form.easy_compta_planning_addon_active ? fetchGeneric('planning-categories', planning) : null
+        ]);
+    } catch(e) { 
+        console.error(e);
+        showToast("Erreur lors du chargement des données", 'error'); 
+    }
+    finally { loading.value = false; }
+};
 
-        this.loading = false;
-        if (response.ok) {
-          const settings = await response.json();
-          this.form = { ...this.form, ...settings };
-          this.logoPreviewUrl = settings.logo_url || "";
-          if (this.form.easy_compta_planning_addon_active == 1) {
-            this.fetchPlanningCat();
-          }
-        } else {
-          const error = await response.json();
-          this.showToast(error.message, "alert-error");
-        }
-      } catch (error) {
-        this.loading = false;
-        this.showToast(error.message, "alert-error");
-      }
-    },
-    async handleSubmit() {
-      try {
-        this.loading = true;
-        const response = await fetch(
-          "/wp-json/my-easy-compta/v1/settings/save",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "X-WP-Nonce": myEasyComptaAdmin.nonce,
-            },
-            body: JSON.stringify(this.form),
-          }
-        );
+const fetchArticles = async () => {
+    try {
+        const res = await fetch('/wp-json/my-easy-compta/v1/settings/articles', { headers: {"X-WP-Nonce": window.myEasyComptaAdmin.nonce}});
+        const data = await res.json();
+        articles.value = data.articles || [];
+        categories.value = data.categories || [];
+    } catch(e) { console.error(e); }
+};
 
-        this.loading = false;
-        if (response.ok) {
-          const result = await response.json();
-          this.showToast(result, "alert-success");
-        } else {
-          const error = await response.json();
-          this.showToast(error.message, "alert-error");
-        }
-      } catch (error) {
-        this.loading = false;
-        this.showToast(error.message, "alert-error");
-      }
-    },
-    async fetchArticles() {
-      try {
-        const response = await fetch(
-          "/wp-json/my-easy-compta/v1/settings/articles",
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              "X-WP-Nonce": myEasyComptaAdmin.nonce,
-            },
-          }
-        );
+const fetchGeneric = async (endpoint, targetRef) => {
+    try {
+        const res = await fetch(`/wp-json/my-easy-compta/v1/settings/${endpoint}`, { headers: {"X-WP-Nonce": window.myEasyComptaAdmin.nonce}});
+        const data = await res.json();
+        targetRef.value = data || [];
+    } catch(e) { console.error(e); }
+};
 
-        if (response.ok) {
-          const data = await response.json();
-          this.articles = data.articles;
-          this.categories = data.categories;
-        } else {
-          const error = await response.json();
-          this.showToast(error.message, "alert-error");
-        }
-      } catch (error) {
-        this.showToast(error.message, "alert-error");
-      }
-    },
-    async fetchCurrencies() {
-      try {
-        const response = await fetch(
-          "/wp-json/my-easy-compta/v1/settings/currencies",
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              "X-WP-Nonce": myEasyComptaAdmin.nonce,
-            },
-          }
-        );
-
-        if (response.ok) {
-          this.currencies = await response.json();
-        } else {
-          const error = await response.json();
-          this.showToast(error.message, "alert-error");
-        }
-      } catch (error) {
-        this.showToast(error.message, "alert-error");
-      }
-    },
-    async fetchVATs() {
-      try {
-        const response = await fetch(
-          "/wp-json/my-easy-compta/v1/settings/vats",
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              "X-WP-Nonce": myEasyComptaAdmin.nonce,
-            },
-          }
-        );
-
-        if (response.ok) {
-          this.vats = await response.json();
-        } else {
-          const error = await response.json();
-          this.showToast(error.message, "alert-error");
-        }
-      } catch (error) {
-        this.showToast(error.message, "alert-error");
-      }
-    },
-    async fetchPaymentsMethods() {
-      try {
-        const response = await fetch(
-          "/wp-json/my-easy-compta/v1/settings/payments-methods",
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              "X-WP-Nonce": myEasyComptaAdmin.nonce,
-            },
-          }
-        );
-
-        if (response.ok) {
-          this.payments = await response.json();
-        } else {
-          const error = await response.json();
-          this.showToast(error.message, "alert-error");
-        }
-      } catch (error) {
-        this.showToast(error.message, "alert-error");
-      }
-    },
-    async fetchExpensesCat() {
-      try {
-        const response = await fetch(
-          "/wp-json/my-easy-compta/v1/settings/expenses-cat",
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              "X-WP-Nonce": myEasyComptaAdmin.nonce,
-            },
-          }
-        );
-
-        if (response.ok) {
-          this.expenses = await response.json();
-        } else {
-          const error = await response.json();
-          this.showToast(error.message, "alert-error");
-        }
-      } catch (error) {
-        this.showToast(error.message, "alert-error");
-      }
-    },
-    async fetchPlanningCat() {
-      try {
-        const response = await fetch(
-          "/wp-json/my-easy-compta/v1/settings/planning-cat",
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              "X-WP-Nonce": myEasyComptaAdmin.nonce,
-            },
-          }
-        );
-
-        if (response.ok) {
-          this.planning = await response.json();
-        } else {
-          const error = await response.json();
-          this.showToast(error.message, "alert-error");
-        }
-      } catch (error) {
-        this.showToast(error.message, "alert-error");
-      }
-    },
-    async handleLogoUpload(event) {
-      const file = event.target.files[0];
-      if (file) {
-        const formData = new FormData();
-        formData.append("logo", file);
-
-        try {
-          const response = await fetch(
-            "/wp-json/my-easy-compta/v1/settings/upload-logo",
-            {
-              method: "POST",
-              headers: {
-                "X-WP-Nonce": myEasyComptaAdmin.nonce,
-              },
-              body: formData,
-            }
-          );
-
-          if (response.ok) {
-            const result = await response.json();
-            this.form.logo_url = result.url;
-            this.form.logo_path = result.path;
-            this.logoPreviewUrl = result.url;
-            this.showToast("Logo uploaded successfully", "alert-success");
-          } else {
-            const error = await response.json();
-            this.showToast(error.message, "alert-error");
-          }
-        } catch (error) {
-          this.showToast(error.message, "alert-error");
-        }
-      }
-    },
-    async addArticle() {
-      this.articleForm = {
-        id: null,
-        ref: "",
-        name: "",
-        description: "",
-        price: "",
-      };
-      this.editingArticle = false;
-      this.showArticleModal = true;
-      this.$nextTick(() => {
-        document.getElementById("modal_article").showModal();
-      });
-    },
-    async addCurrency() {
-      this.currencyForm = {
-        id: null,
-        name: "",
-        symbol: "",
-      };
-      this.editingCurrency = false;
-      this.showCurrencyModal = true;
-      this.$nextTick(() => {
-        document.getElementById("modal_currency").showModal();
-      });
-    },
-    async deleteArticle(id) {
-      try {
-        const response = await fetch(
-          `/wp-json/my-easy-compta/v1/settings/articles/${id}`,
-          {
-            method: "DELETE",
-            headers: {
-              "Content-Type": "application/json",
-              "X-WP-Nonce": myEasyComptaAdmin.nonce,
-            },
-          }
-        );
-
-        if (response.ok) {
-          this.articles = this.articles.filter((article) => article.id !== id);
-          this.showToast(
-            this.translations.deleted_successfully,
-            "alert-success"
-          );
-        } else {
-          const error = await response.json();
-          this.showToast(error.message, "alert-error");
-        }
-      } catch (error) {
-        this.showToast(error.message, "alert-error");
-      }
-    },
-    async deleteCategory(id) {
-      try {
-        const response = await fetch(
-          `/wp-json/my-easy-compta/v1/settings/category/${id}`,
-          {
-            method: "DELETE",
-            headers: {
-              "Content-Type": "application/json",
-              "X-WP-Nonce": myEasyComptaAdmin.nonce,
-            },
-          }
-        );
-
-        if (response.ok) {
-          this.categories = this.categories.filter(
-            (category) => category.id !== id
-          );
-          this.showToast(
-            this.translations.deleted_successfully,
-            "alert-success"
-          );
-        } else {
-          const error = await response.json();
-          this.showToast(error.message, "alert-error");
-        }
-      } catch (error) {
-        this.showToast(error.message, "alert-error");
-      }
-    },
-
-    async editArticle(id) {
-      const article = this.articles.find((art) => art.id === id);
-      this.articleForm = { ...article };
-      this.editingArticle = true;
-      this.showArticleModal = true;
-      this.$nextTick(() => {
-        document.getElementById("modal_article").showModal();
-      });
-    },
-
-    async editCurrency(id) {
-      const currency = this.currencies.find((cur) => cur.id === id);
-      this.currencyForm = { ...currency };
-      this.editingCurrency = true;
-      this.showCurrencyModal = true;
-      this.$nextTick(() => {
-        document.getElementById("modal_currency").showModal();
-      });
-    },
-    async deleteCurrency(id) {
-      try {
-        const response = await fetch(
-          `/wp-json/my-easy-compta/v1/settings/currencies/${id}`,
-          {
-            method: "DELETE",
-            headers: {
-              "Content-Type": "application/json",
-              "X-WP-Nonce": myEasyComptaAdmin.nonce,
-            },
-          }
-        );
-
-        if (response.ok) {
-          this.currencies = this.currencies.filter(
-            (currency) => currency.id !== id
-          );
-          this.showToast("Currency deleted successfully", "alert-success");
-        } else {
-          const error = await response.json();
-          this.showToast(error.message, "alert-error");
-        }
-      } catch (error) {
-        this.showToast(error.message, "alert-error");
-      }
-    },
-    async saveArticle() {
-      const method = this.editingArticle ? "PUT" : "POST";
-      const url = this.editingArticle
-        ? `/wp-json/my-easy-compta/v1/settings/articles/${this.articleForm.id}`
-        : "/wp-json/my-easy-compta/v1/settings/articles";
-
-      try {
-        const response = await fetch(url, {
-          method,
-          headers: {
-            "Content-Type": "application/json",
-            "X-WP-Nonce": myEasyComptaAdmin.nonce,
-          },
-          body: JSON.stringify(this.articleForm),
-        });
-
-        if (response.ok) {
-          const result = await response.json();
-          if (this.editingArticle) {
-            const indexExp = this.articles.findIndex(
-              (article) => article.id === result.id
-            );
-            this.articles[indexExp] = result;
-          } else {
-            this.articles.push(result);
-          }
-          this.showToast(
-            `Article ${this.editingArticle ? "updated" : "added"} successfully`,
-            "alert-success"
-          );
-          this.closeArticleModal();
-          this.fetchArticles();
-        } else {
-          const error = await response.json();
-          this.showToast(error.message, "alert-error");
-        }
-      } catch (error) {
-        this.showToast(error.message, "alert-error");
-      }
-    },
-    async saveCurrency() {
-      const method = this.editingCurrency ? "PUT" : "POST";
-      const url = this.editingCurrency
-        ? `/wp-json/my-easy-compta/v1/settings/currencies/${this.currencyForm.id}`
-        : "/wp-json/my-easy-compta/v1/settings/currencies";
-
-      try {
-        const response = await fetch(url, {
-          method,
-          headers: {
-            "Content-Type": "application/json",
-            "X-WP-Nonce": myEasyComptaAdmin.nonce,
-          },
-          body: JSON.stringify(this.currencyForm),
-        });
-
-        if (response.ok) {
-          const result = await response.json();
-          if (this.editingCurrency) {
-            const index = this.currencies.findIndex(
-              (cur) => cur.id === result.id
-            );
-            this.currencies[index] = result;
-          } else {
-            this.currencies.push(result);
-          }
-          this.showToast(
-            `Currency ${
-              this.editingCurrency ? "updated" : "added"
-            } successfully`,
-            "alert-success"
-          );
-          this.closeCurrencyModal();
-          this.fetchCurrencies();
-        } else {
-          const error = await response.json();
-          this.showToast(error.message, "alert-error");
-        }
-      } catch (error) {
-        this.showToast(error.message, "alert-error");
-      }
-    },
-    async addVAT() {
-      this.vatForm = {
-        id: null,
-        description: "",
-        rate: "",
-      };
-      this.editingVAT = false;
-      this.showVATModal = true;
-      this.$nextTick(() => {
-        document.getElementById("modal_vat").showModal();
-      });
-    },
-    async editVAT(id) {
-      const vat = this.vats.find((vat) => vat.id === id);
-      this.vatForm = { ...vat };
-      this.editingVAT = true;
-      this.showVATModal = true;
-      this.$nextTick(() => {
-        document.getElementById("modal_vat").showModal();
-      });
-    },
-    async deleteVAT(id) {
-      try {
-        const response = await fetch(
-          `/wp-json/my-easy-compta/v1/settings/vats/${id}`,
-          {
-            method: "DELETE",
-            headers: {
-              "Content-Type": "application/json",
-              "X-WP-Nonce": myEasyComptaAdmin.nonce,
-            },
-          }
-        );
-
-        if (response.ok) {
-          this.vats = this.vats.filter((vat) => vat.id !== id);
-          this.showToast("VAT deleted successfully", "alert-success");
-        } else {
-          const error = await response.json();
-          this.showToast(error.message, "alert-error");
-        }
-      } catch (error) {
-        this.showToast(error.message, "alert-error");
-      }
-    },
-    async saveVAT() {
-      const method = this.editingVAT ? "PUT" : "POST";
-      const url = this.editingVAT
-        ? `/wp-json/my-easy-compta/v1/settings/vats/${this.vatForm.id}`
-        : "/wp-json/my-easy-compta/v1/settings/vats";
-
-      try {
-        const response = await fetch(url, {
-          method,
-          headers: {
-            "Content-Type": "application/json",
-            "X-WP-Nonce": myEasyComptaAdmin.nonce,
-          },
-          body: JSON.stringify(this.vatForm),
-        });
-
-        if (response.ok) {
-          const result = await response.json();
-          if (this.editingVAT) {
-            const index = this.vats.findIndex((vat) => vat.id === result.id);
-            this.vats[index] = result;
-          } else {
-            this.vats.push(result);
-          }
-          this.showToast(
-            `VAT ${this.editingVAT ? "updated" : "added"} successfully`,
-            "alert-success"
-          );
-          this.closeVATModal();
-          this.fetchVATs();
-        } else {
-          const error = await response.json();
-          this.showToast(error.message, "alert-error");
-        }
-      } catch (error) {
-        this.showToast(error.message, "alert-error");
-      }
-    },
-    async addPayment() {
-      this.paymentForm = {
-        id: null,
-        method_name: "",
-      };
-      this.editingPayment = false;
-      this.showPaymentModal = true;
-      this.$nextTick(() => {
-        document.getElementById("modal_payments").showModal();
-      });
-    },
-    async editPayment(id) {
-      const payment = this.payments.find((payment) => payment.id === id);
-      this.paymentForm = { ...payment };
-      this.editingPayment = true;
-      this.showPaymentModal = true;
-      this.$nextTick(() => {
-        document.getElementById("modal_payments").showModal();
-      });
-    },
-    async deletePayment(id) {
-      try {
-        const response = await fetch(
-          `/wp-json/my-easy-compta/v1/settings/payments-methods/${id}`,
-          {
-            method: "DELETE",
-            headers: {
-              "Content-Type": "application/json",
-              "X-WP-Nonce": myEasyComptaAdmin.nonce,
-            },
-          }
-        );
-
-        if (response.ok) {
-          this.payments = this.payments.filter((payment) => payment.id !== id);
-          this.showToast(
-            "Payment method deleted successfully",
-            "alert-success"
-          );
-        } else {
-          const error = await response.json();
-          this.showToast(error.message, "alert-error");
-        }
-      } catch (error) {
-        this.showToast(error.message, "alert-error");
-      }
-    },
-
-    async savePayment() {
-      const method = this.editingPayment ? "PUT" : "POST";
-      const url = this.editingPayment
-        ? `/wp-json/my-easy-compta/v1/settings/payments-methods/${this.paymentForm.id}`
-        : "/wp-json/my-easy-compta/v1/settings/payments-methods";
-
-      try {
-        const response = await fetch(url, {
-          method,
-          headers: {
-            "Content-Type": "application/json",
-            "X-WP-Nonce": myEasyComptaAdmin.nonce,
-          },
-          body: JSON.stringify(this.paymentForm),
-        });
-
-        if (response.ok) {
-          const result = await response.json();
-          if (this.editingPayment) {
-            const index = this.payments.findIndex(
-              (payment) => payment.id === result.id
-            );
-            this.payments[index] = result;
-          } else {
-            this.payments.push(result);
-          }
-          this.showToast(
-            `Payment method ${
-              this.editingPayment ? "updated" : "added"
-            } successfully`,
-            "alert-success"
-          );
-          this.closePaymentModal();
-          this.fetchPaymentsMethods();
-        } else {
-          const error = await response.json();
-          this.showToast(error.message, "alert-error");
-        }
-      } catch (error) {
-        this.showToast(error.message, "alert-error");
-      }
-    },
-
-    async addExpCat() {
-      this.expenseForm = {
-        id: null,
-        name: "",
-      };
-      this.editingExpense = false;
-      this.showExpenseModal = true;
-      this.$nextTick(() => {
-        document.getElementById("modal_expenses").showModal();
-      });
-    },
-    async editExpCat(id) {
-      const expense = this.expenses.find((expense) => expense.id === id);
-      this.expenseForm = { ...expense };
-      this.editingExpense = true;
-      this.showExpenseModal = true;
-      this.$nextTick(() => {
-        document.getElementById("modal_expenses").showModal();
-      });
-    },
-    async deleteExpCat(id) {
-      try {
-        const response = await fetch(
-          `/wp-json/my-easy-compta/v1/settings/expenses-categories/${id}`,
-          {
-            method: "DELETE",
-            headers: {
-              "Content-Type": "application/json",
-              "X-WP-Nonce": myEasyComptaAdmin.nonce,
-            },
-          }
-        );
-
-        if (response.ok) {
-          this.expenses = this.expenses.filter((expense) => expense.id !== id);
-          this.showToast(
-            "Expense category deleted successfully",
-            "alert-success"
-          );
-        } else {
-          const error = await response.json();
-          this.showToast(error.message, "alert-error");
-        }
-      } catch (error) {
-        this.showToast(error.message, "alert-error");
-      }
-    },
-    async saveExpCat() {
-      const method = this.editingExpense ? "PUT" : "POST";
-      const url = this.editingExpense
-        ? `/wp-json/my-easy-compta/v1/settings/expenses-categories/${this.expenseForm.id}`
-        : "/wp-json/my-easy-compta/v1/settings/expenses-categories";
-
-      try {
-        const response = await fetch(url, {
-          method,
-          headers: {
-            "Content-Type": "application/json",
-            "X-WP-Nonce": myEasyComptaAdmin.nonce,
-          },
-          body: JSON.stringify(this.expenseForm),
-        });
-
-        if (response.ok) {
-          const result = await response.json();
-          if (this.editingExpense) {
-            const indexExp = this.expenses.findIndex(
-              (expense) => expense.id === result.id
-            );
-            this.expenses[indexExp] = result;
-          } else {
-            this.expenses.push(result);
-          }
-          this.showToast(
-            `Expense category ${
-              this.editingExpense ? "updated" : "added"
-            } successfully`,
-            "alert-success"
-          );
-          this.closeExpenseModal();
-          this.fetchExpensesCat();
-        } else {
-          const error = await response.json();
-          this.showToast(error.message, "alert-error");
-        }
-      } catch (error) {
-        this.showToast(error.message, "alert-error");
-      }
-    },
-    async addPlanningCat() {
-      this.planningForm = {
-        id: null,
-        name: "",
-      };
-      this.editingPlanning = false;
-      this.showPlanningModal = true;
-      this.$nextTick(() => {
-        document.getElementById("modal_planning").showModal();
-      });
-    },
-    async editPlanningCat(id) {
-      const planning = this.planning.find((p) => p.id === id);
-      this.planningForm = { ...planning };
-      this.editingPlanning = true;
-      this.showPlanningModal = true;
-      this.$nextTick(() => {
-        document.getElementById("modal_planning").showModal();
-      });
-    },
-    async deletePlanningCat(id) {
-      try {
-        const response = await fetch(
-          `/wp-json/my-easy-compta/v1/settings/planning-categories/${id}`,
-          {
-            method: "DELETE",
-            headers: {
-              "Content-Type": "application/json",
-              "X-WP-Nonce": myEasyComptaAdmin.nonce,
-            },
-          }
-        );
-
-        if (response.ok) {
-          this.planning = this.planning.filter((p) => p.id !== id);
-          this.showToast(
-            "Planning category deleted successfully",
-            "alert-success"
-          );
-        } else {
-          const error = await response.json();
-          this.showToast(error.message, "alert-error");
-        }
-      } catch (error) {
-        this.showToast(error.message, "alert-error");
-      }
-    },
-    async savePlanningCat() {
-      this.loading = true;
-      const method = this.editingPlanning ? "PUT" : "POST";
-      const url = this.editingPlanning
-        ? `/wp-json/my-easy-compta/v1/settings/planning-categories/${this.planningForm.id}`
-        : "/wp-json/my-easy-compta/v1/settings/planning-categories";
-
-      try {
-        const response = await fetch(url, {
-          method,
-          headers: {
-            "Content-Type": "application/json",
-            "X-WP-Nonce": myEasyComptaAdmin.nonce,
-          },
-          body: JSON.stringify(this.planningForm),
-        });
-
-        if (response.ok) {
-          const result = await response.json();
-          if (this.editingPlanning) {
-            const indexPlanning = this.planning.findIndex(
-              (p) => p.id === result.id
-            );
-            this.planning[indexPlanning] = result;
-            this.loading = false;
-          } else {
-            this.planning.push(result);
-            this.loading = false;
-          }
-          this.showToast(
-            `Planning category ${
-              this.editingPlanning ? "updated" : "added"
-            } successfully`,
-            "alert-success"
-          );
-          this.closePlanningModal();
-          this.fetchPlanningCat();
-        } else {
-          const error = await response.json();
-          this.showToast(error.message, "alert-error");
-        }
-      } catch (error) {
-        this.showToast(error.message, "alert-error");
-      }
-    },
-    closeCurrencyModal() {
-      this.showCurrencyModal = false;
-    },
-    closeArticleModal() {
-      this.showArticleModal = false;
-    },
-    closeVATModal() {
-      this.showVATModal = false;
-    },
-    closePaymentModal() {
-      this.showPaymentModal = false;
-    },
-    closeExpenseModal() {
-      this.showExpenseModal = false;
-    },
-    closePlanningModal() {
-      this.showPlanningModal = false;
-    },
-    updatePreviewWidth() {
-      this.previewWidth = this.form.logo_width + "px";
-    },
-    updateVatActive(event) {
-      this.form.vat_active = event.target.checked ? 1 : 0;
-    },
-    updateLogoMentionsActive(event) {
-      this.form.logo_mentions_active = event.target.checked ? 1 : 0;
-    },
-    updateEmailLogsActive(event) {
-      this.form.email_log_active = event.target.checked ? 1 : 0;
-    },
-    updateFormField(event, fieldName) {
-      this.form[fieldName] = event.target.checked ? 1 : 0;
-    },
-    showToast(message, type) {
-      this.toast.message = message;
-      this.toast.type = type;
-      this.toast.visible = true;
-      setTimeout(() => {
-        this.toast.visible = false;
-      }, 3000);
-    },
-    handleDeletion(type, id) {
-      const deletionFunction = this.getDeletionFunction(type);
-      if (deletionFunction) {
-        deletionFunction(id);
-      } else {
-        this.showToast("error", "alert-error");
-      }
-    },
-    delete_item(type, id) {
-      this.deleteType = type;
-      this.selectedId = id;
-      modal_settings_remove.showModal();
-      this.showRemoveModal = true;
-    },
-    getDeletionFunction(type) {
-      switch (type) {
-        case "licence":
-          return this.confirmLicense;
-        case "vat":
-          return this.deleteVAT;
-        case "currency":
-          return this.deleteCurrency;
-        case "expense":
-          return this.deleteExpCat;
-        case "payment":
-          return this.deletePayment;
-        case "planning":
-          return this.deletePlanningCat;
-        case "article":
-          return this.deleteArticle;
-        case "category_article":
-          return this.deleteCategory;
-        default:
-          return null;
-      }
-    },
-    async checkLicense() {
-      this.loading = true;
-      this.loadingLicense = true;
-      this.errorMessage = "";
-      this.licenseData = null;
-
-      try {
-        const response = await fetch(
-          "/wp-json/my-easy-compta/v1/license/validate-license",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "X-WP-Nonce": myEasyComptaAdmin.nonce,
-            },
-            body: JSON.stringify({
-              license_key: this.license_key,
-            }),
-          }
-        );
-
-        const data = await response.json();
-
-        if (data.valid) {
-          this.licenseData = data;
-          await this.storeLicense(data);
-          location.reload();
-        } else {
-          this.errorMessage = data.message;
-        }
-      } catch (error) {
-        this.errorMessage = "An error occurred while validating the license.";
-      } finally {
-        this.loadingLicense = false;
-      }
-    },
-    async refresh_licence() {
-      this.loading = true;
-      try {
-        const response = await fetch(
-          "/wp-json/my-easy-compta/v1/license/refresh-license",
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              "X-WP-Nonce": myEasyComptaAdmin.nonce,
-            },
-          }
-        );
-
-        const data = await response.json();
-        if (data.valid) {
-          // Mettre à jour les données de licence localement
-          this.licenseData = data.license_data;
-          if (!this.licenseData.domains) {
-            this.licenseData.domains = [];
-          }
-          if (!this.licenseData.current_domain && this.licenseData.domain) {
-            this.licenseData.current_domain = this.licenseData.domain;
-          }
-          this.showToast(
-            this.translations.license_refreshed || "Licence rafraîchie avec succès",
-            "alert-success"
-          );
-          this.loading = false;
-        } else {
-          this.errorMessage = data.message;
-          this.loading = false;
-        }
-      } catch (error) {
-        this.errorMessage = "An error occurred while refreshing the license.";
-        this.loading = false;
-      }
-    },
-    async storeLicense(data) {
-      try {
-        await fetch("/wp-json/my-easy-compta/v1/license/store-license", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-WP-Nonce": myEasyComptaAdmin.nonce,
-          },
-          body: JSON.stringify({
-            license_key: this.license_key,
-            license_data: data,
-          }),
-        });
-      } catch (error) {
-        this.errorMessage = "An error occurred while storing the license.";
-        this.loading = false;
-      }
-    },
-    async loadLicenseDetails() {
-      this.loading = true;
-      try {
-        const response = await fetch(
-          "/wp-json/my-easy-compta/v1/license/check-license",
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              "X-WP-Nonce": myEasyComptaAdmin.nonce,
-            },
-          }
-        );
-        if (response.ok) {
-          const data = await response.json();
-          if (data.valid) {
-            this.licenseData = data.license_data;
-            this.installed_versions = data.installed_versions;
-            // S'assurer que licenseData.domains existe
-            if (!this.licenseData.domains) {
-              this.licenseData.domains = [];
-            }
-            // S'assurer que current_domain existe
-            if (!this.licenseData.current_domain && this.licenseData.domain) {
-              this.licenseData.current_domain = this.licenseData.domain;
-            }
-            this.license_key =
-              "****-****-****-****-****" +
-              this.license_key.substr(this.license_key.length - 4);
-            this.loading = false;
-          }
-        } else {
-          console.error("Failed to load license details");
-          this.loading = false;
-        }
-      } catch (error) {
-        console.error("Error loading license details", error);
-        this.loading = false;
-      }
-    },
-    async confirmLicense() {
-      this.loading = true;
-      try {
-        const response = await fetch(
-          `/wp-json/my-easy-compta/v1/license/delete-license`,
-          {
-            method: "DELETE",
-            headers: {
-              "Content-Type": "application/json",
-              "X-WP-Nonce": myEasyComptaAdmin.nonce,
-            },
-          }
-        );
-
-        if (response.ok) {
-          const data = await response.json();
-          this.showToast(data.message, "alert-success");
-          this.licenseData = "";
-          this.license_key = "";
-          location.reload();
-        } else {
-          const error = await response.json();
-          this.showToast(error.message, "alert-error");
-        }
-      } catch (error) {
-        this.showToast(error.message, "alert-error");
-      }
-    },
-    async addDomain() {
-      if (!this.newDomain || !this.newDomain.trim()) {
-        this.domainErrorMessage = this.translations.domain_required || "Le domaine est requis";
+const toggleAddon = (slug, formKey) => {
+    // Turning OFF is always allowed
+    if (form[formKey] == 1) {
+        form[formKey] = 0;
         return;
-      }
+    }
 
-      this.loadingDomain = true;
-      this.domainErrorMessage = "";
+    const hasLicense = checkSlug(slug);
 
-      try {
-        const response = await fetch(
-          "/wp-json/my-easy-compta/v1/license/add-domain",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "X-WP-Nonce": myEasyComptaAdmin.nonce,
-            },
-            body: JSON.stringify({
-              domain: this.newDomain.trim(),
-            }),
-          }
-        );
+    if (hasLicense) {
+        form[formKey] = 1;
+        showToast("Module activé", "success");
+    } else {
+        const available = licenseData.value?.plugins ? Object.keys(licenseData.value.plugins).join(', ') : 'aucune';
+        showToast(`Licence requise pour activer ce module. (Détectés: ${available})`, "error");
+        console.log(`Mismatch slug: ${slug} not in`, licenseData.value?.plugins);
+        form[formKey] = 0;
+    }
+};
 
-        const data = await response.json();
+const handleLogoUpload = (e) => {
+   const file = e.target.files[0];
+   if(file) {
+      logoPreviewUrl.value = URL.createObjectURL(file);
+      // Upload logic would involve FormData
+   }
+};
 
-        if (response.ok && data.success) {
-          this.showToast(
-            data.message || this.translations.domain_added || "Domaine ajouté avec succès",
-            "alert-success"
-          );
-          this.newDomain = "";
-          // Rafraîchir les données de licence
-          await this.loadLicenseDetails();
+const handleSubmit = async () => {
+    loading.value = true;
+    try {
+        const res = await fetch('/wp-json/my-easy-compta/v1/settings/save', {
+            method: 'POST',
+            headers: { "Content-Type": "application/json", "X-WP-Nonce": window.myEasyComptaAdmin.nonce },
+            body: JSON.stringify(form)
+        });
+        const data = await res.json();
+        if(data.success) showToast(translations.value.saved_successfully || 'Enregistré', 'success');
+        else throw new Error('Error');
+    } catch(e) { showToast("Erreur lors de l'enregistrement", 'error'); }
+    finally { loading.value = false; }
+};
+
+// Modal Logic
+const openAddModal = () => {
+    isEditing.value = false;
+    isVATModal.value = false;
+    isCategoryModal.value = false;
+    modalForm.value = {};
+    if(settingsModalRef.value) settingsModalRef.value.showModal();
+};
+
+const editItem = (item) => {
+    isEditing.value = true;
+    isVATModal.value = false;
+    isCategoryModal.value = false;
+    modalForm.value = {...item};
+    if(settingsModalRef.value) settingsModalRef.value.showModal();
+};
+
+const openAddCategoryModal = () => {
+    isEditing.value = false;
+    isVATModal.value = false;
+    isCategoryModal.value = true;
+    modalForm.value = {};
+    if(settingsModalRef.value) settingsModalRef.value.showModal();
+};
+
+const editCategory = (category) => {
+    isEditing.value = true;
+    isVATModal.value = false;
+    isCategoryModal.value = true;
+    modalForm.value = {...category};
+    if(settingsModalRef.value) settingsModalRef.value.showModal();
+};
+
+const closeModal = () => {
+    if(settingsModalRef.value) settingsModalRef.value.close();
+};
+
+const saveCategory = async () => {
+    const url = `/wp-json/my-easy-compta/v1/settings/categories-articles` + (isEditing.value ? `/${modalForm.value.id}` : '');
+    const method = isEditing.value ? 'PUT' : 'POST';
+    
+    try {
+        loading.value = true;
+        const res = await fetch(url, {
+           method,
+           headers: { "Content-Type": "application/json", "X-WP-Nonce": window.myEasyComptaAdmin.nonce },
+           body: JSON.stringify(modalForm.value)
+        });
+        const data = await res.json();
+
+        if(data.success) {
+            showToast(translations.value.saved_successfully || 'Enregistré avec succès', 'success');
+            closeModal();
+            fetchArticles();
         } else {
-          this.domainErrorMessage =
-            data.message || this.translations.domain_add_failed || "Échec de l'ajout du domaine";
-          this.showToast(
-            data.message || this.translations.domain_add_failed || "Échec de l'ajout du domaine",
-            "alert-error"
-          );
+             throw new Error(data.message || 'Error');
         }
-      } catch (error) {
-        this.domainErrorMessage =
-          this.translations.error_occurred || "Une erreur s'est produite";
-        this.showToast(
-          this.translations.error_occurred || "Une erreur s'est produite",
-          "alert-error"
-        );
-      } finally {
-        this.loadingDomain = false;
-      }
-    },
-    confirmRemoveDomain(domain) {
-      this.domainToRemove = domain;
-      // Utiliser le modal de confirmation existant ou créer une confirmation simple
-      if (
-        confirm(
-          (this.translations.confirm_remove_domain || "Êtes-vous sûr de vouloir supprimer le domaine") +
-            " " +
-            domain +
-            "?"
-        )
-      ) {
-        this.removeDomain(domain);
-      }
-      this.domainToRemove = null;
-    },
-    async removeDomain(domain) {
-      if (!domain) {
-        return;
-      }
+    } catch(e) { showToast('Error', 'error'); }
+    finally { loading.value = false; }
+};
 
-      this.loadingDomain = true;
-      this.domainErrorMessage = "";
-
-      try {
-        const response = await fetch(
-          "/wp-json/my-easy-compta/v1/license/remove-domain",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "X-WP-Nonce": myEasyComptaAdmin.nonce,
-            },
-            body: JSON.stringify({
-              domain: domain,
-            }),
-          }
-        );
-
-        const data = await response.json();
-
-        if (response.ok && data.success) {
-          this.showToast(
-            data.message || this.translations.domain_removed || "Domaine supprimé avec succès",
-            "alert-success"
-          );
-          // Rafraîchir les données de licence
-          await this.loadLicenseDetails();
+const saveItem = async () => {
+    let endpoint = '';
+    if(selectedTab.value === 3) endpoint = 'articles';
+    if(selectedTab.value === 7) endpoint = 'currencies';
+    if(selectedTab.value === 8) endpoint = 'payments-methods';
+    if(selectedTab.value === 9) endpoint = 'expenses-categories';
+    if(selectedTab.value === 10) endpoint = 'planning-categories';
+    
+    const url = `/wp-json/my-easy-compta/v1/settings/${endpoint}` + (isEditing.value ? `/${modalForm.value.id}` : '');
+    const method = isEditing.value ? 'PUT' : 'POST';
+    
+    try {
+        loading.value = true;
+        const res = await fetch(url, {
+           method,
+           headers: { "Content-Type": "application/json", "X-WP-Nonce": window.myEasyComptaAdmin.nonce },
+           body: JSON.stringify(modalForm.value)
+        });
+        if(res.ok) {
+            showToast(translations.value.saved_successfully || 'Enregistré avec succès', 'success');
+            closeModal();
+            // Refresh specifics
+            if(selectedTab.value === 3) fetchArticles();
+            if(selectedTab.value === 7) fetchGeneric('currencies', currencies);
+            if(selectedTab.value === 8) fetchGeneric('payments-methods', payments);
+            if(selectedTab.value === 9) fetchGeneric('expenses-cat', expenses);
+            if(selectedTab.value === 10) fetchGeneric('planning-categories', planning);
         } else {
-          this.domainErrorMessage =
-            data.message || this.translations.domain_remove_failed || "Échec de la suppression du domaine";
-          this.showToast(
-            data.message || this.translations.domain_remove_failed || "Échec de la suppression du domaine",
-            "alert-error"
-          );
+            const err = await res.json().catch(() => ({}));
+            showToast(err.message || 'Erreur lors de l\'enregistrement', 'error');
         }
-      } catch (error) {
-        this.domainErrorMessage =
-          this.translations.error_occurred || "Une erreur s'est produite";
-        this.showToast(
-          this.translations.error_occurred || "Une erreur s'est produite",
-          "alert-error"
-        );
-      } finally {
-        this.loadingDomain = false;
-      }
-    },
+    } catch(e) { showToast('Erreur réseau', 'error'); }
+    finally { loading.value = false; }
+};
 
-    async checkUpdatePlugin(pluginSlug, currentVersion) {
-      try {
-        const response = await fetch(
-          "/wp-json/my-easy-compta/v1/license/check-update",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "X-WP-Nonce": myEasyComptaAdmin.nonce,
-            },
-            body: JSON.stringify({
-              plugin_slug: pluginSlug,
-              current_version: currentVersion,
-            }),
-          }
-        );
+const getRefByType = (type) => {
+    if(type === 'currency') return currencies;
+    if(type === 'payment') return payments;
+    if(type === 'planning') return planning;
+    return null;
+};
 
-        const data = await response.json();
+const deleteItem = (type, id) => {
+    deleteType.value = type;
+    selectedId.value = id;
+    showRemoveModal.value = true;
+};
 
+const handleDeletion = async (type, id) => {
+   showRemoveModal.value = false;
+   const endpoints = {
+       article: 'articles',
+       'article-category': 'categories-articles',
+       currency: 'currencies',
+       payment: 'payments-methods',
+       expense: 'expenses-categories',
+       planning: 'planning-categories'
+   };
+   
+   if(endpoints[type]) {
+       try {
+           await fetch(`/wp-json/my-easy-compta/v1/settings/${endpoints[type]}/${id}`, {
+               method: 'DELETE',
+               headers: { "X-WP-Nonce": window.myEasyComptaAdmin.nonce }
+           });
+           showToast("Supprimé", "success");
+           if(type === 'article' || type === 'article-category') fetchArticles();
+           else if(type === 'currency') fetchGeneric('currencies', currencies);
+           else if(type === 'payment') fetchGeneric('payments-methods', payments);
+           else if(type === 'expense') fetchGeneric('expenses-cat', expenses);
+           else if(type === 'planning') fetchGeneric('planning-categories', planning);
+       } catch(e) { 
+           console.error(e); 
+           showToast('Erreur', 'error');
+       }
+   }
+};
+
+// ── E-Invoicing Methods ────────────────────────────────────────────────────────
+
+const loadEInvoicingSettings = async () => {
+    try {
+        const [settingsRes, pdpsRes] = await Promise.all([
+            fetch('/wp-json/my-easy-compta/v1/e-invoicing/settings', { headers: { 'X-WP-Nonce': window.myEasyComptaAdmin.nonce } }),
+            fetch('/wp-json/my-easy-compta/v1/e-invoicing/pdps', { headers: { 'X-WP-Nonce': window.myEasyComptaAdmin.nonce } }),
+        ]);
+        const settingsData = await settingsRes.json();
+        const pdpsData = await pdpsRes.json();
+
+        // Populate einvoicingForm
+        Object.keys(einvoicingForm).forEach(key => {
+            if (settingsData[key] !== undefined) einvoicingForm[key] = settingsData[key];
+        });
+
+        // Populate pdpConfigurations
+        if (settingsData.pdp_configurations && typeof settingsData.pdp_configurations === 'object') {
+            pdpConfigurations.value = { ...settingsData.pdp_configurations };
+        }
+
+        // Populate available PDPs catalog
+        availablePdps.value = Array.isArray(pdpsData) ? pdpsData : Object.values(pdpsData);
+    } catch (e) {
+        console.error('Erreur chargement e-invoicing:', e);
+    }
+};
+
+const saveEInvoicingSettings = async () => {
+    einvoicingSaving.value = true;
+    try {
+        const payload = {
+            ...einvoicingForm,
+            pdp_configurations: pdpConfigurations.value,
+        };
+        const res = await fetch('/wp-json/my-easy-compta/v1/e-invoicing/settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': window.myEasyComptaAdmin.nonce },
+            body: JSON.stringify(payload),
+        });
+        const data = await res.json();
         if (data.success) {
-          if (data.update_available) {
-            this.showToast(
-              this.translations.update_available + " " + data.new_version,
-              "alert-success"
-            );
-            this.updatesAvailable[pluginSlug] = data.update_available;
-          } else {
-            this.showToast(
-              this.translations.no_update_available,
-              "alert-error"
-            );
-          }
+            showToast('Réglages de facturation électronique enregistrés.', 'success');
         } else {
-          this.showToast(
-            this.translations.failed_update_available,
-            "alert-error"
-          );
+            showToast(data.message || 'Erreur lors de l\'enregistrement.', 'error');
         }
-      } catch (error) {
-        console.error("Error checking for plugin update:", error);
-        this.showToast(
-          this.translations.failed_update_available,
-          "alert-error"
-        );
-      }
-    },
-    async installUpdatePlugin(plugin_slug) {
-      try {
-        // Afficher un message de chargement
-        this.showToast(
-          this.translations.installing || "Installation en cours...",
-          "alert-info"
-        );
+    } catch (e) {
+        showToast('Erreur serveur.', 'error');
+    } finally {
+        einvoicingSaving.value = false;
+    }
+};
 
-        const response = await fetch(
-          "/wp-json/my-easy-compta/v1/license/download-update",
-          {
-            method: "POST",
+const getPdpConfig = (pdpId) => {
+    if (!pdpConfigurations.value[pdpId]) {
+        pdpConfigurations.value[pdpId] = { enabled: false, environment: 'sandbox' };
+    }
+    return pdpConfigurations.value[pdpId];
+};
+
+const togglePdpEnabled = (pdpId) => {
+    const config = getPdpConfig(pdpId);
+    config.enabled = !config.enabled;
+    if (config.enabled) {
+        expandedPdp.value = pdpId;
+    }
+};
+
+const testPdpConnection = async (pdpId) => {
+    pdpTesting.value[pdpId] = true;
+    pdpTestResults.value[pdpId] = null;
+    try {
+        const config = pdpConfigurations.value[pdpId] || {};
+        const res = await fetch('/wp-json/my-easy-compta/v1/e-invoicing/pdp/test-connection', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': window.myEasyComptaAdmin.nonce },
+            body: JSON.stringify({ pdp_id: pdpId, config }),
+        });
+        const data = await res.json();
+        pdpTestResults.value[pdpId] = data;
+    } catch (e) {
+        pdpTestResults.value[pdpId] = { success: false, message: 'Erreur de connexion au serveur.' };
+    } finally {
+        pdpTesting.value[pdpId] = false;
+    }
+};
+
+const getPdpIcon = (pdpId) => {
+    const icons = {
+        chorus_pro: Building2,
+        pennylane: Shield,
+        jefacture: Receipt,
+        generic: Globe,
+    };
+    return icons[pdpId] || Plug;
+};
+
+const getPdpBadgeColor = (pdpId) => {
+    const colors = {
+        chorus_pro: 'bg-blue-900 text-blue-300',
+        pennylane: 'bg-emerald-900 text-emerald-300',
+        jefacture: 'bg-orange-900 text-orange-300',
+        generic: 'bg-indigo-900 text-indigo-300',
+    };
+    return colors[pdpId] || 'bg-slate-700 text-slate-300';
+};
+
+// ──────────────────────────────────────────────────────────────────────────────
+
+import { useRouter, useRoute } from 'vue-router';
+const router = useRouter();
+const route = useRoute();
+
+// ── SMS Settings ──────────────────────────────────────────────────────────────
+const smsSettings  = reactive({ enabled: false, provider: 'twilio', twilio_sid: '', twilio_token: '', twilio_from: '', ovh_app_key: '', ovh_app_secret: '', ovh_consumer_key: '', ovh_service_name: '', ovh_sender: '', admin_phone: '', events: {} });
+const smsLoading   = ref(false);
+const smsSaving    = ref(false);
+const smsTesting   = ref(false);
+const smsTestPhone = ref('');
+const smsTestResult = ref('');
+
+const smsEvents = [
+    { key: 'invoice_sent',      label: 'Facture envoyée',            desc: 'Quand une facture est envoyée au client',           defaultTemplate: 'Bonjour {CLIENT_NAME}, votre facture {INVOICE_NUMBER} de {AMOUNT} vous a été envoyée.' },
+    { key: 'payment_received',  label: 'Paiement reçu',              desc: 'Quand un paiement est enregistré',                  defaultTemplate: 'Bonjour {CLIENT_NAME}, votre paiement de {AMOUNT} a bien été reçu. Merci !' },
+    { key: 'quote_accepted',    label: 'Devis accepté',              desc: 'Quand un client accepte un devis',                  defaultTemplate: 'Bonjour, le devis {INVOICE_NUMBER} a été accepté par {CLIENT_NAME}.' },
+    { key: 'invoice_overdue',   label: 'Facture en retard',          desc: 'Pour les relances de factures impayées',            defaultTemplate: 'Rappel : la facture {INVOICE_NUMBER} de {AMOUNT} est en attente de règlement.' },
+];
+
+function toggleSmsEvent(key) {
+    if (!smsSettings.events[key]) smsSettings.events[key] = { enabled: false, recipient: 'client', channel: 'sms', template: '' };
+    if (!smsSettings.events[key].channel) smsSettings.events[key].channel = 'sms';
+    smsSettings.events[key].enabled = !smsSettings.events[key].enabled;
+}
+
+async function loadSmsSettings() {
+    smsLoading.value = true;
+    try {
+        const res  = await fetch('/wp-json/my-easy-compta/v1/sms/settings', { headers: { 'X-WP-Nonce': window.myEasyComptaAdmin.nonce } });
+        const data = await res.json();
+        Object.assign(smsSettings, data);
+        if (!smsSettings.events) smsSettings.events = {};
+    } catch (_) {}
+    smsLoading.value = false;
+}
+
+async function saveSmsSettings() {
+    smsSaving.value = true;
+    try {
+        const res = await fetch('/wp-json/my-easy-compta/v1/sms/settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': window.myEasyComptaAdmin.nonce },
+            body: JSON.stringify(smsSettings),
+        });
+        const data = await res.json();
+        if (data.success) showToast(translations.value.saved_successfully || 'Enregistré', 'success');
+        else throw new Error('Error');
+    } catch (_) { showToast('Erreur lors de l\'enregistrement', 'error'); }
+    smsSaving.value = false;
+}
+
+async function sendSmsTest() {
+    smsTesting.value  = true;
+    smsTestResult.value = '';
+    try {
+        const res  = await fetch('/wp-json/my-easy-compta/v1/sms/test', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': window.myEasyComptaAdmin.nonce },
+            body: JSON.stringify({ phone: smsTestPhone.value }),
+        });
+        const data = await res.json();
+        smsTestResult.value = data.success ? '✓ SMS envoyé avec succès' : '✗ ' + (data.message || 'Erreur d\'envoi');
+    } catch (_) { smsTestResult.value = '✗ Erreur de connexion'; }
+    smsTesting.value = false;
+}
+
+// Load SMS settings when switching to tab 26
+watch(selectedTab, (val) => { if (val === 26) loadSmsSettings(); });
+
+onMounted(() => {
+    loadData();
+    fetchLicenseStatus();
+    loadEInvoicingSettings();
+
+    // Handle tab selection from query params (SPA style)
+    if (route.query.tab) {
+        const tabId = parseInt(route.query.tab);
+        if (!isNaN(tabId)) {
+            selectedTab.value = tabId;
+        }
+    }
+});
+
+// Persist tab change to URL
+watch(selectedTab, (newTab) => {
+    router.replace({
+        query: { ...route.query, tab: newTab }
+    });
+    if (newTab === 20) loadReminders();
+});
+
+// Update tab if URL changes (e.g. browser back/forward)
+watch(() => route.query.tab, (newTab) => {
+    if (newTab) {
+        const tabId = parseInt(newTab);
+        if (!isNaN(tabId) && selectedTab.value !== tabId) {
+            selectedTab.value = tabId;
+        }
+    }
+});
+
+// License Methods
+const fetchLicenseStatus = async () => {
+    try {
+        const res = await fetch('/wp-json/my-easy-compta/v1/license/check-license', {
+            headers: { "X-WP-Nonce": window.myEasyComptaAdmin.nonce }
+        });
+        const data = await res.json();
+        if(data.success) {
+            licenseData.value = data.license_data;
+            installedVersions.value = data.installed_versions || {};
+        }
+    } catch(e) { console.error(e); }
+};
+
+const refreshLicense = async () => {
+    licenseLoading.value = true;
+    try {
+        const res = await fetch('/wp-json/my-easy-compta/v1/license/refresh-license', {
+            headers: { "X-WP-Nonce": window.myEasyComptaAdmin.nonce }
+        });
+        const data = await res.json();
+        if(data.success) {
+            licenseData.value = data.license_data;
+            installedVersions.value = data.installed_versions || {};
+            showToast('Statut de la licence rafraîchi', 'success');
+        }
+    } catch(e) { showToast('Erreur lors du rafraîchissement', 'error'); }
+    finally { licenseLoading.value = false; }
+};
+
+const handleInstallAddon = async (slug) => {
+    processingAddon.value = slug;
+    try {
+        const res = await fetch('/wp-json/my-easy-compta/v1/license/download-update', {
+            method: 'POST',
+            headers: { "Content-Type": "application/json", "X-WP-Nonce": window.myEasyComptaAdmin.nonce },
+            body: JSON.stringify({ plugin_slug: slug })
+        });
+        const data = await res.json();
+        if(data.success) {
+            showToast('Module opérationnel !', 'success');
+            await fetchLicenseStatus();
+        } else {
+            showToast(data.message || 'Erreur lors de l’opération', 'error');
+        }
+    } catch(e) {
+        showToast('Erreur de connexion serveur', 'error');
+    } finally {
+        processingAddon.value = null;
+    }
+};
+
+const isUpdateAvailable = (slug, latestVersion) => {
+    const current = installedVersions.value[slug];
+    if (!current) return false;
+    
+    // Basic semver compare (split by dots)
+    const v1 = current.split('.');
+    const v2 = latestVersion.split('.');
+    for (let i = 0; i < Math.max(v1.length, v2.length); i++) {
+        const num1 = parseInt(v1[i] || 0);
+        const num2 = parseInt(v2[i] || 0);
+        if (num2 > num1) return true;
+        if (num1 > num2) return false;
+    }
+    return false;
+};
+
+const handleActivateLicense = async () => {
+    licenseLoading.value = true;
+    try {
+        const res = await fetch('/wp-json/my-easy-compta/v1/license/validate-license', {
+            method: 'POST',
+            headers: { "Content-Type": "application/json", "X-WP-Nonce": window.myEasyComptaAdmin.nonce },
+            body: JSON.stringify({ license_key: licenseKey.value })
+        });
+        const data = await res.json();
+        if(data.valid) {
+             // Store it
+             await fetch('/wp-json/my-easy-compta/v1/license/store-license', {
+                method: 'POST',
+                headers: { "Content-Type": "application/json", "X-WP-Nonce": window.myEasyComptaAdmin.nonce },
+                body: JSON.stringify({ license_key: licenseKey.value, license_data: data })
+             });
+             showToast(translations.value.license_activated || 'Licence activée !', 'success');
+             fetchLicenseStatus();
+        } else {
+             showToast(data.message || 'Clé invalide', 'error');
+        }
+    } catch(e) { showToast('Erreur serveur', 'error'); }
+    finally { licenseLoading.value = false; }
+};
+
+
+const copyLicenseKey = () => {
+    if (!licenseKey.value) return;
+    navigator.clipboard?.writeText(licenseKey.value).then(() => showToast('Clé copiée !', 'success'));
+};
+
+const deleteLicense = async () => {
+    try {
+        await fetch('/wp-json/my-easy-compta/v1/license/delete-license', {
+            method: 'DELETE',
+            headers: { "X-WP-Nonce": window.myEasyComptaAdmin.nonce }
+        });
+        licenseData.value = null;
+        licenseKey.value = "";
+        showToast('Licence supprimée', 'success');
+    } catch(e) { showToast('Erreur', 'error'); }
+};
+
+// Affiliate
+const affiliateForm = reactive({ name: '', email: '', website: '', payment_email: '', message: '' });
+const affiliateLoading = ref(false);
+const affiliateMsg = ref('');
+const affiliateMsgType = ref('success');
+
+const registerAffiliate = async () => {
+    affiliateLoading.value = true;
+    affiliateMsg.value = '';
+    try {
+        const res = await fetch('/wp-json/my-easy-compta/v1/license/apply-affiliate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': window.myEasyComptaAdmin.nonce },
+            body: JSON.stringify(affiliateForm)
+        });
+        const data = await res.json();
+        affiliateMsgType.value = data.success ? 'success' : 'error';
+        affiliateMsg.value = data.message || (data.success ? 'Candidature envoyée !' : 'Une erreur est survenue.');
+        if (data.success) Object.assign(affiliateForm, { name: '', email: '', website: '', payment_email: '', message: '' });
+    } catch(e) {
+        affiliateMsgType.value = 'error';
+        affiliateMsg.value = 'Erreur de connexion au serveur.';
+    } finally {
+        affiliateLoading.value = false;
+    }
+};
+
+// Reminders
+const reminders = reactive({ enabled: true, delays: '7,15,30', message: '' });
+const remindersLoading = ref(false);
+const remindersMsg = ref('');
+const remindersMsgType = ref('success');
+
+const emailPreviewHtml = ref(null);
+const _addons = window.myEasyComptaAdmin?.addons || {};
+const addonActive = (slug) => !!_addons[slug];
+
+const testEmailLoading = ref(false);
+const testEmailMsg = ref(null); // { ok: bool, text: string }
+
+const sendTestEmail = async () => {
+    testEmailLoading.value = true;
+    testEmailMsg.value = null;
+    try {
+        const res = await fetch('/wp-json/my-easy-compta/v1/settings/send-test-email', {
+            method: 'POST',
             headers: {
-              "Content-Type": "application/json",
-              "X-WP-Nonce": myEasyComptaAdmin.nonce,
-            },
-            body: JSON.stringify({
-              plugin_slug: plugin_slug,
-            }),
-          }
-        );
+                'Content-Type': 'application/json',
+                'X-WP-Nonce': window.myEasyComptaAdmin.nonce
+            }
+        });
+        const data = await res.json();
+        testEmailMsg.value = { ok: !!data.success, text: data.message || (data.success ? 'Email envoyé !' : 'Échec de l\'envoi') };
+    } catch (e) {
+        testEmailMsg.value = { ok: false, text: 'Erreur réseau : ' + e.message };
+    } finally {
+        testEmailLoading.value = false;
+    }
+};
 
-        const data = await response.json();
+const previewEmail = async (type) => {
+    try {
+        const theme = form.ecwp_email_theme || 'dark';
+        const res = await fetch(`/wp-json/my-easy-compta/v1/settings/email-preview?type=${type}&theme=${theme}`, {
+            headers: { 'X-WP-Nonce': window.myEasyComptaAdmin.nonce }
+        });
+        const data = await res.json();
+        emailPreviewHtml.value = data.html;
+    } catch (e) {
+        console.error(e);
+    }
+};
 
-        if (data.success) {
-          const actionMessage = data.action === 'installed' 
-            ? (this.translations.plugin_installed || "Plugin installé avec succès")
-            : (this.translations.plugin_updated || "Plugin mis à jour avec succès");
-          
-          this.showToast(actionMessage, "alert-success");
-          
-          // Rafraîchir la liste des plugins installés
-          await this.loadLicenseDetails();
-          
-          // Rafraîchir la page après un court délai pour voir le message
-          setTimeout(() => {
-            window.location.reload();
-          }, 1500);
-        } else {
-          const errorMessage = data.message || data.code || this.translations.error || "Une erreur est survenue";
-          this.showToast(errorMessage, "alert-error");
+const loadReminders = async () => {
+    try {
+        const res = await fetch('/wp-json/my-easy-compta/v1/reminders/settings', {
+            headers: { 'X-WP-Nonce': window.myEasyComptaAdmin?.nonce }
+        });
+        const data = await res.json();
+        if (data.enabled !== undefined) reminders.enabled = data.enabled;
+        if (data.delays) reminders.delays = data.delays;
+        if (data.message) reminders.message = data.message;
+    } catch(e) { /* silent */ }
+};
+
+const saveReminders = async () => {
+    remindersLoading.value = true;
+    remindersMsg.value = '';
+    try {
+        const res = await fetch('/wp-json/my-easy-compta/v1/reminders/settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': window.myEasyComptaAdmin?.nonce },
+            body: JSON.stringify({ enabled: reminders.enabled, delays: reminders.delays, message: reminders.message })
+        });
+        const data = await res.json();
+        remindersMsgType.value = data.success ? 'success' : 'error';
+        remindersMsg.value = data.success ? 'Paramètres enregistrés.' : 'Erreur lors de la sauvegarde.';
+    } catch(e) {
+        remindersMsgType.value = 'error';
+        remindersMsg.value = 'Erreur de connexion au serveur.';
+    } finally {
+        remindersLoading.value = false;
+    }
+};
+
+const openAddVATModal = () => {
+    isVATModal.value = true;
+    isEditing.value = false;
+    modalForm.value = { rate: 20, description: '' };
+    settingsModalRef.value.showModal();
+};
+
+const editVAT = (vat) => {
+    isVATModal.value = true;
+    isEditing.value = true;
+    modalForm.value = { ...vat };
+    settingsModalRef.value.showModal();
+};
+
+const saveVAT = async () => {
+    try {
+        const url = isEditing.value ? `/wp-json/my-easy-compta/v1/settings/vats/${modalForm.value.id}` : '/wp-json/my-easy-compta/v1/settings/vats';
+        const method = isEditing.value ? 'PUT' : 'POST';
+        const res = await axios({ method, url, data: modalForm.value, headers: { "X-WP-Nonce": window.myEasyComptaAdmin.nonce } });
+        if(res.data.success) {
+            const msg = isEditing.value ? 
+                (translations.value.updated_successfully || 'Mis à jour avec succès') : 
+                (translations.value.added_successfully || 'Ajouté avec succès');
+            showToast(msg, 'success');
+            closeModal();
+            loadData();
         }
-      } catch (error) {
-        console.error("Error installing plugin:", error);
-        this.showToast(
-          this.translations.error || "Erreur lors de l'installation",
-          "alert-error"
-        );
-      }
-    },
-  },
-
-  computed: {
-    translations() {
-      return window.myEasyComptaAdmin.easyComptaTranslations;
-    },
-    // Nombre de domaines utilisés
-    usedDomainsCount() {
-      if (!this.licenseData || !this.licenseData.domains) {
-        return 0;
-      }
-      return this.licenseData.domains.length;
-    },
-    // Nombre maximum de domaines autorisés
-    maxDomains() {
-      if (!this.licenseData) {
-        return null;
-      }
-      // L'API peut retourner max_domains, max_sites, ou domain_limit
-      return (
-        this.licenseData.max_domains ||
-        this.licenseData.max_sites ||
-        this.licenseData.domain_limit ||
-        null
-      );
-    },
-    // Texte pour afficher le maximum (illimité si null ou -1)
-    maxDomainsText() {
-      if (this.maxDomains === null || this.maxDomains === -1) {
-        return this.translations.unlimited || "Illimité";
-      }
-      return this.maxDomains.toString();
-    },
-    // Nombre de domaines restants
-    remainingDomains() {
-      if (this.maxDomains === null || this.maxDomains === -1) {
-        return -1; // -1 signifie illimité
-      }
-      const remaining = this.maxDomains - this.usedDomainsCount;
-      return Math.max(0, remaining);
-    },
-    // Texte pour afficher les domaines restants
-    remainingDomainsText() {
-      if (this.remainingDomains === -1) {
-        return this.translations.unlimited || "Illimité";
-      }
-      return this.remainingDomains.toString();
-    },
-    // Classe CSS pour le nombre de domaines restants
-    remainingDomainsClass() {
-      if (this.remainingDomains === -1) {
-        return "text-success";
-      }
-      if (this.remainingDomains === 0) {
-        return "text-error";
-      }
-      if (this.remainingDomains <= 2) {
-        return "text-warning";
-      }
-      return "text-success";
-    },
-    // Pourcentage d'utilisation
-    usagePercentage() {
-      if (this.maxDomains === null || this.maxDomains === -1 || this.maxDomains === 0) {
-        return 0;
-      }
-      return Math.round((this.usedDomainsCount / this.maxDomains) * 100);
-    },
-    // Classe CSS pour la barre de progression (DaisyUI)
-    progressBarClass() {
-      const percentage = this.usagePercentage;
-      if (percentage >= 100) {
-        return "progress-error";
-      }
-      if (percentage >= 80) {
-        return "progress-warning";
-      }
-      return "progress-success";
-    },
-  },
-  beforeUnmount() {
-    window.removeEventListener("hashchange", this.checkHash);
-  },
-  mounted() {
-    this.checkHash();
-    window.addEventListener("hashchange", this.checkHash);
-    this.fetchSettings();
-    this.fetchArticles();
-    this.fetchCurrencies();
-    this.fetchVATs();
-    this.fetchPaymentsMethods();
-    this.fetchExpensesCat();
-    this.loadLicenseDetails();
-  },
+    } catch(e) { console.error(e); }
 };
 </script>
+
+<style scoped>
+/* No more @apply needed here as they are in main.css */
+</style>

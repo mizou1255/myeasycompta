@@ -1,17 +1,106 @@
 <template>
-  <div>
-    <div v-if="emailActive == 1">
-      <send-quote-modal
-        :loading="loadingModal"
-        :show-modal="sendQuoteModal"
-        modal-id="modal_send_quote"
-        :client="client_detail"
-        :quote-id="quoteInfo.id"
-        :subject="subject"
-        :content="content"
-        @close="sendQuoteModal = false"
-      />
-    </div>
+  <div class="bg-white dark:bg-slate-900 rounded-3xl p-3 px-6 shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 mb-8 flex flex-col xl:flex-row items-center justify-between gap-4">
+      
+      <!-- Left Actions -->
+      <div class="flex flex-wrap gap-2 justify-center xl:justify-start w-full xl:w-auto">
+           <!-- Edit -->
+          <router-link
+             :to="{ name: 'QuoteEdit', params: { id: quoteInfo.id } }"
+             class="kloxy-btn-primary btn-expandable"
+          ><Pencil class="w-4 h-4 icon-no-margin" /><span class="btn-label">{{ translations.edit_quote || 'Modifier'  }}</span></router-link>
+
+          <!-- Validate -->
+          <button
+             v-if="quoteInfo.status == 'draft' && !noItems"
+             @click="changeQuoteStatus('pending')"
+             class="kloxy-btn-success btn-expandable"
+          ><Check class="w-4 h-4 icon-no-margin" /><span class="btn-label">{{ translations.validate_quote || 'Valider' }}</span></button>
+           <button v-else-if="quoteInfo.status == 'draft' && noItems" disabled class="kloxy-btn-disabled btn-expandable" :title="translations.min_article"><Check class="w-4 h-4 icon-no-margin" /><span class="btn-label">{{ translations.validate_quote || 'Valider' }}</span></button>
+
+          <!-- Accept -->
+          <button
+             v-if="(quoteInfo.status == 'pending' || quoteInfo.status == 'rejected') && !noItems"
+             @click="changeQuoteStatus('approved')"
+             class="kloxy-btn-success btn-expandable"
+          ><CheckCheck class="w-4 h-4 icon-no-margin" /><span class="btn-label">{{ translations.mark_as_accepted || 'Accepter' }}</span></button>
+
+          <!-- Reject -->
+          <button
+             v-if="(quoteInfo.status == 'pending' || quoteInfo.status == 'approved') && !noItems"
+             @click="changeQuoteStatus('rejected')"
+             class="kloxy-btn-warning bg-rose-500 hover:bg-rose-600 shadow-rose-500/20 btn-expandable"
+          ><XCircle class="w-4 h-4 icon-no-margin" /><span class="btn-label">{{ translations.mark_as_rejected || 'Refuser' }}</span></button>
+
+          <!-- Convert -->
+          <div v-if="advanceActive == 1 && quoteInfo.converted != 1 && quoteInfo.status == 'approved' && !noItems" class="relative" v-click-outside="() => showConvertDropdown = false">
+               <button @click="showConvertDropdown = !showConvertDropdown" class="kloxy-btn-primary bg-indigo-600 hover:bg-indigo-700 shadow-indigo-600/20 btn-expandable">
+                   <ArrowRightLeft class="w-4 h-4 icon-no-margin" />
+                   <span class="btn-label flex items-center gap-2">
+                       {{ translations.convertToInvoice || 'Convertir' }}
+                       <ChevronDown class="w-4 h-4" />
+                   </span>
+               </button>
+               <!-- Dropdown -->
+               <div v-if="showConvertDropdown" class="absolute left-0 top-full mt-1 w-56 bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-800 p-2 z-20">
+                    <button v-if="quoteInfo.advance != 1" @click="showConvertDropdown = false; confirmConvertQuote()" class="w-full text-left px-4 py-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-sm font-bold text-slate-700 dark:text-gray-200 transition-colors">
+                        Facture globale
+                    </button>
+                    <button @click="showConvertDropdown = false; ConvertAdvanceQuote('no_sold')" class="w-full text-left px-4 py-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-sm font-bold text-slate-700 dark:text-gray-200 transition-colors">
+                        Facture d'acompte
+                    </button>
+                    <button v-if="quoteInfo.advance != 0" @click="showConvertDropdown = false; ConvertAdvanceQuote('sold')" class="w-full text-left px-4 py-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-sm font-bold text-slate-700 dark:text-gray-200 transition-colors">
+                        Facture du solde
+                    </button>
+               </div>
+          </div>
+          
+           <!-- Convert Simple -->
+          <button
+             v-if="advanceActive != 1 && quoteInfo.converted != 1 && quoteInfo.status == 'approved' && !noItems"
+             @click="confirmConvertQuote"
+             class="kloxy-btn-primary bg-indigo-600 hover:bg-indigo-700 shadow-indigo-600/20 btn-expandable"
+          ><ArrowRightLeft class="w-4 h-4 icon-no-margin" /><span class="btn-label">{{ translations.convertToInvoice || 'Convertir' }}</span></button>
+
+      </div>
+
+      <!-- Right Actions -->
+      <div class="flex flex-wrap gap-2 justify-center xl:justify-end w-full xl:w-auto">
+          <!-- Send -->
+          <div v-if="emailActive == 1">
+               <button
+                  v-if="quoteInfo.status != 'draft'"
+                  @click="sendQuote"
+                  class="kloxy-btn-primary bg-sky-600 hover:bg-sky-700 shadow-sky-600/20 btn-expandable"
+               ><Send class="w-4 h-4 icon-no-margin" /><span class="btn-label">{{ quoteInfo.sent == 1 ? (translations.resend_quote || 'Renvoyer') : (translations.send_quote || 'Envoyer') }}</span></button>
+                <button v-else disabled class="kloxy-btn-disabled btn-expandable" :title="translations.quote_draft_cannot_send"><Send class="w-4 h-4 icon-no-margin" /><span class="btn-label">{{ translations.send_quote || 'Envoyer' }}</span></button>
+          </div>
+          <button v-else disabled class="kloxy-btn-disabled opacity-50 cursor-not-allowed group relative btn-expandable" :title="translations.activate_email_addon || 'Activez le module Email pour envoyer vos documents'"><Send class="w-4 h-4 icon-no-margin" /><span class="btn-label">{{ translations.send_quote || 'Envoyer' }}</span></button>
+
+          <!-- SMS / WhatsApp -->
+          <button
+            v-if="smsActive == 1"
+            @click="showSmsModal = true"
+            class="kloxy-btn-secondary bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 btn-expandable"
+          ><MessageSquare class="w-4 h-4 icon-no-margin" /><span class="btn-label">SMS / WA</span></button>
+          <button v-else disabled class="kloxy-btn-disabled opacity-50 cursor-not-allowed btn-expandable" title="Activez le module SMS pour envoyer des SMS et WhatsApp"><MessageSquare class="w-4 h-4 icon-no-margin" /><span class="btn-label">SMS / WA</span></button>
+
+          <!-- PDF -->
+          <button @click="exportToPDF" :disabled="loadingPdf" class="kloxy-btn-secondary btn-expandable"><span v-if="loadingPdf" class="w-4 h-4 border-2 border-slate-400 border-t-slate-600 rounded-full animate-spin"></span><FileText v-else class="w-4 h-4 icon-no-margin" /><span class="btn-label">{{ translations.exportToPDF || 'PDF' }}</span></button>
+      </div>
+
+  </div>
+    <!-- Modals -->
+    <send-quote-modal
+      v-if="sendQuoteModal"
+      :loading="loadingModal"
+      :show-modal="sendQuoteModal"
+      modal-id="modal_send_quote"
+      :client="client_detail"
+      :quote-id="quoteInfo.id"
+      :subject="processedSubject"
+      :content="processedContent"
+      @close="sendQuoteModal = false"
+    />
 
     <confirm-modal
       :show-modal="showConfirmModal"
@@ -19,12 +108,38 @@
       :message="translations.no_turning_back"
       :confirmText="translations.yes_confirm_it"
       :cancelText="translations.cancel"
-      @confirm="this.convertToInvoice(selectedQuote)"
+      @confirm="changeQuoteStatus(pendingStatusChange)"
       @cancel="showConfirmModal = false"
     />
+    
+    <!-- Separate modal for conversion confirmation if needed, or reuse confirm modal -->
+    <!-- The legacy logic had confirmConvertQuote usage which just set selectedQuote. -->
+    
+    <confirm-modal
+      :show-modal="showConvertModal"
+      :title="translations.are_you_sure"
+      :message="translations.no_turning_back"
+      :confirmText="translations.yes_confirm_it"
+      :cancelText="translations.cancel"
+      @confirm="executeConvert"
+      @cancel="showConvertModal = false"
+    />
+    
+    <!-- SMS Modal -->
+    <SmsModal
+      v-if="showSmsModal"
+      doc-type="quote"
+      :doc-id="quoteInfo.id"
+      :doc-number="quoteInfo.quote_number"
+      :client-phone="client_detail?.phone || ''"
+      :default-message="smsDefaultMessage"
+      @close="showSmsModal = false"
+      @sent="showSmsModal = false"
+    />
+
     <div v-if="advanceActive == 1">
       <advance-modal
-        :show-modal="showConfirmModal"
+        :is-visible="showAdvanceModal"
         :title="translations.are_you_sure"
         :message="translations.no_turning_back"
         :confirmText="translations.yes_confirm_it"
@@ -34,484 +149,216 @@
         :quoteId="quoteInfo.id"
         :advance-sold="advanceSold"
         @confirm="handleAdvanceInvoiceConfirm"
-        @cancel="showConfirmModal = false"
+        @cancel="showAdvanceModal = false"
       />
     </div>
-    <div
-      v-if="toast.visible"
-      :class="['toast', toast.position]"
-      :style="{ zIndex: 9999 }"
-    >
-      <div :class="['alert', toast.type, 'text-white']">
-        <span>{{ toast.message }}</span>
-      </div>
-    </div>
 
-    <div
-      v-if="loading"
-      class="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-gray-900 bg-opacity-50 z-50"
-    >
-      <span class="loading loading-spinner text-primary loading-lg"></span>
-    </div>
-    <div
-      class="navbar bg-base-100 mb-4 shadow-xl rounded-box flex justify-between"
-    >
-      <div>
-        <div class="dropdown">
-          <div tabindex="0" role="button" class="btn btn-ghost lg:hidden">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-5 w-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M4 6h16M4 12h8m-8 6h16"
-              />
-            </svg>
-          </div>
-          <ul
-            tabindex="0"
-            class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52"
-          >
-            <li><a>Item 1</a></li>
-            <li>
-              <a>Parent</a>
-              <ul class="p-2">
-                <li><a>Submenu 1</a></li>
-                <li><a>Submenu 2</a></li>
-              </ul>
-            </li>
-            <li><a>Item 3</a></li>
-          </ul>
-        </div>
-        <div class="hidden lg:flex gap-2">
-          <router-link
-            :to="{
-              name: 'QuoteEdit',
-              params: { id: quoteInfo.id },
-            }"
-          >
-            <button class="btn btn-sm">
-              <i class="far fa-edit"></i>{{ translations.edit_quote }}
-            </button>
-          </router-link>
-
-          <button
-            v-if="quoteInfo.status == 'draft' && !noItems"
-            class="btn btn-outline btn-success btn-sm"
-            @click="changeQuoteStatus('pending')"
-          >
-            <i class="fa fa-check"></i>
-            {{ translations.validate_quote }}
-          </button>
-
-          <div
-            v-if="quoteInfo.status == 'draft' && noItems"
-            class="tooltip tooltip-bottom tooltip-warning"
-            :data-tip="translations.min_article"
-          >
-            <button
-              click="#"
-              class="btn btn-outline btn-primary btn-sm hover:text-white"
-              disabled
-            >
-              <i class="fas fa-check"></i>
-              {{ translations.validate_quote }}
-            </button>
-          </div>
-
-          <button
-            v-if="
-              (quoteInfo.status == 'pending' ||
-                quoteInfo.status == 'rejected') &&
-              !noItems
-            "
-            class="btn btn-outline btn-success btn-sm"
-            @click="changeQuoteStatus('approved')"
-          >
-            <i class="fa fa-check"></i>
-            {{ translations.mark_as_accepted }}
-          </button>
-          <button
-            v-if="
-              (quoteInfo.status == 'pending' ||
-                quoteInfo.status == 'approved') &&
-              !noItems
-            "
-            class="btn btn-outline btn-error btn-sm"
-            @click="changeQuoteStatus('rejected')"
-          >
-            <i class="fa fa-times"></i>
-            {{ translations.mark_as_rejected }}
-          </button>
-          <div
-            v-if="
-              advanceActive == 1 &&
-              quoteInfo.converted != 1 &&
-              quoteInfo.status == 'approved' &&
-              !noItems
-            "
-          >
-            <div class="dropdown">
-              <div tabindex="0" role="button" class="btn btn-sm">
-                <i class="fas fa-exchange-alt"></i>
-                {{ translations.convertToInvoice }}
-              </div>
-              <ul
-                tabindex="0"
-                class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow"
-              >
-                <li v-if="quoteInfo.advance != 1">
-                  <a
-                    href="#"
-                    @click.prevent="confirmConvertQuote(quoteInfo.id)"
-                  >
-                    Facture global
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    @click.prevent="
-                      ConvertAdvanceQuote(quoteInfo.id, 'no_sold')
-                    "
-                  >
-                    Facture d'acompte
-                  </a>
-                  <a
-                    v-if="quoteInfo.advance != 0"
-                    href="#"
-                    @click.prevent="ConvertAdvanceQuote(quoteInfo.id, 'sold')"
-                  >
-                    Facture du solde
-                  </a>
-                </li>
-              </ul>
-            </div>
-          </div>
-          <div
-            v-if="
-              advanceActive != 1 &&
-              quoteInfo.converted != 1 &&
-              quoteInfo.status == 'approved' &&
-              !noItems
-            "
-          >
-            <button
-              @click="confirmConvertQuote(quoteInfo.id)"
-              class="btn btn-sm"
-            >
-              <i class="fas fa-exchange-alt"></i>
-              {{ translations.convertToInvoice }}
-            </button>
-          </div>
-        </div>
-      </div>
-      <div class="flex gap-2">
-        <button
-          @click.prevent="sendQuote(quoteInfo.client_id)"
-          class="btn btn-outline btn-primary btn-sm hover:text-white"
-          v-if="emailActive == 1 && quoteInfo.status != 'draft'"
-        >
-          <i class="fas fa-paper-plane"></i>
-          <span v-if="quoteInfo.sent == 1">{{
-            translations.resend_quote
-          }}</span>
-          <span v-else>{{ translations.send_quote }}</span>
-          <i class="far fa-envelope" v-if="quoteInfo.sent == 1"></i>
-        </button>
-
-        <div
-          v-else-if="emailActive == 1 && quoteInfo.status == 'draft'"
-          class="tooltip tooltip-bottom tooltip-warning"
-          :data-tip="translations.quote_draft_cannot_send"
-        >
-          <button
-            click="#"
-            class="btn btn-outline btn-primary btn-sm hover:text-white"
-            disabled
-          >
-            <i class="fas fa-paper-plane"></i>
-            {{ translations.send_quote }}
-          </button>
-        </div>
-
-        <div
-          v-else
-          class="tooltip tooltip-bottom tooltip-warning"
-          :data-tip="translations.active_email_addon"
-        >
-          <button
-            click="#"
-            class="btn btn-outline btn-primary btn-sm hover:text-white"
-            disabled
-          >
-            <i class="fas fa-paper-plane"></i>
-            {{ translations.send_quote }}
-          </button>
-        </div>
-        <button
-          @click="exportToPDF"
-          class="btn btn-outline btn-success btn-sm"
-          :disabled="loadingPdf"
-        >
-          <i class="far fa-file-pdf"></i>
-          {{ translations.exportToPDF }}
-          <span
-            v-if="loadingPdf"
-            class="loading loading-spinner loading-sm"
-          ></span>
-        </button>
-      </div>
-    </div>
-  </div>
 </template>
 
-<script>
-import SendQuoteModal from "@/components/quotes/Send.vue";
+<script setup>
+import { ref, reactive, computed, toRefs, watch } from 'vue';
+import { useRouter } from 'vue-router';
+import SendQuoteModal from "@/components/quotes/SendModal.vue";
 import ConfirmModal from "@/components/ConfirmAlert.vue";
 import AdvanceModal from "@/components/AdvanceAlert.vue";
-export default {
-  name: "QuoteNavBar",
-  components: {
-    SendQuoteModal,
-    ConfirmModal,
-    AdvanceModal,
-  },
-  props: {
+import SmsModal from "@/components/SmsModal.vue";
+import { Pencil, Check, CheckCheck, XCircle, ArrowRightLeft, ChevronDown, Send, FileText, MessageSquare } from 'lucide-vue-next';
+
+const vClickOutside = {
+    mounted(el, binding) {
+        el._clickOutside = (e) => { if (!el.contains(e.target)) binding.value(e); };
+        document.addEventListener('click', el._clickOutside);
+    },
+    unmounted(el) {
+        document.removeEventListener('click', el._clickOutside);
+    }
+};
+
+const props = defineProps({
     quoteInfo: Object,
     emailActive: Number,
     advanceActive: Number,
+    smsActive: Number,
     currency: String,
     noItems: Boolean,
-  },
-  data() {
-    return {
-      selectedQuote: null,
-      advanceSold: false,
-      sendQuoteModal: false,
-      loadingModal: false,
-      loadingPdf: false,
-      loading: false,
-      client_detail: null,
-      subject: "",
-      content: "",
-      toast: {
-        visible: false,
-        message: "",
-        type: "alert-success",
-        position: "toast-bottom toast-end",
-      },
+    emailSubject: String,
+    emailContent: String,
+});
+
+const emit = defineEmits(['show-toast', 'refresh']);
+const router = useRouter();
+
+const { quoteInfo } = toRefs(props);
+const client_detail = ref({});
+const translations = computed(() => window.myEasyComptaAdmin?.easyComptaTranslations || {});
+const showSmsModal = ref(false);
+const smsDefaultMessage = computed(() => {
+    const client = client_detail.value?.company_name || '';
+    const num    = quoteInfo.value?.quote_number || '';
+    const amount = (quoteInfo.value?.total_amount || '0.00') + ' ' + (props.currency || '€');
+    return `Bonjour ${client}, votre devis ${num} d'un montant de ${amount} est disponible.`;
+});
+
+const sendQuoteModal = ref(false);
+const showConfirmModal = ref(false);
+const showConvertModal = ref(false);
+const showAdvanceModal = ref(false);
+const showConvertDropdown = ref(false);
+const loadingModal = ref(false);
+const loadingPdf = ref(false);
+const pendingStatusChange = ref('');
+const advanceSold = ref('no_sold');
+const processedSubject = ref("");
+const processedContent = ref("");
+
+const processEmailTemplate = (subject, content) => {
+    let sub = subject || "";
+    let cont = content || "";
+    
+    const replacements = {
+        '{nom_client}': client_detail.value?.company_name || "",
+        '{numero_document}': quoteInfo.value?.quote_number || "",
+        '{montant_total}': (quoteInfo.value?.total_amount || "0.00") + " " + (props.currency || "€")
     };
-  },
-  computed: {
-    translations() {
-      return window.myEasyComptaAdmin.easyComptaTranslations;
-    },
-  },
 
-  methods: {
-    async changeQuoteStatus(newStatus) {
-      try {
-        const response = await fetch(
-          "/wp-json/my-easy-compta/v1/quotes/update-status",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "X-WP-Nonce": myEasyComptaAdmin.nonce,
-            },
-            body: JSON.stringify({
-              id: this.quoteInfo.id,
-              status: newStatus,
-            }),
-          }
-        );
-        const data = await response.json();
+    Object.keys(replacements).forEach(key => {
+        sub = sub.split(key).join(replacements[key]);
+        cont = cont.split(key).join(replacements[key]);
+    });
 
-        if (data.success) {
-          this.quoteInfo.status = newStatus;
-          this.quoteInfo.total_amount = data.total_amount;
-          this.showToast(data.message, "alert-success");
-        } else {
-          console.error("Failed to update quote status:", data.message);
-          this.showToast(data.message, "alert-error");
-        }
-      } catch (error) {
-        console.error("An error occurred while updating quote status:", error);
-        this.showToast(error, "alert-error");
-      }
-    },
-    convertToInvoice(quoteId) {
-      fetch(`/wp-json/my-easy-compta/v1/quotes/convert-quote/${quoteId}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-WP-Nonce": myEasyComptaAdmin.nonce,
-        },
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          if (data.success) {
-            this.showToast(data.message, "alert-success");
-            this.$router.push({
-              name: "InvoiceViewDetail",
-              params: { id: data.id },
-            });
-          } else {
-            this.showToast(data.message, "alert-error");
-          }
-        })
-        .catch((error) => {
-          console.error("Error converting quote:", error);
-          this.showToast(error.message, "alert-error");
-        });
-    },
-    handleAdvanceInvoiceConfirm(advanceDetails) {
-      const { type, value, date } = advanceDetails;
-      this.convertAdvanceInvoice(this.selectedQuote, type, value, date);
-    },
-    convertAdvanceInvoice(quoteId, advanceType, advanceValue, advanceDate) {
-      fetch(`/wp-json/my-easy-compta/v1/quotes/convert-advance/${quoteId}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-WP-Nonce": myEasyComptaAdmin.nonce,
-        },
-        body: JSON.stringify({
-          advance_type: advanceType,
-          advance_value: advanceValue,
-          advance_date: advanceDate,
-        }),
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          if (data.success) {
-            this.showToast(data.message, "alert-success");
-            this.$router.push({
-              name: "InvoiceViewDetail",
-              params: { id: data.id },
-            });
-          } else {
-            this.showToast(data.message, "alert-error");
-          }
-        })
-        .catch((error) => {
-          console.error("Error converting quote:", error);
-          this.showToast(error.message, "alert-error");
-        });
-    },
-    confirmConvertQuote(quote_id) {
-      this.selectedQuote = quote_id;
-      modal_confirm.showModal();
-      this.showRemoveModal = true;
-    },
-    ConvertAdvanceQuote(quote_id, solde) {
-      this.selectedQuote = quote_id;
-      this.advanceSold = solde;
-      modal_advance.showModal();
-      this.showRemoveModal = true;
-    },
-    exportToPDF() {
-      this.loadingPdf = true;
-      const quoteId = this.quoteInfo.id;
-      fetch(`/wp-json/my-easy-compta/v1/quotes/pdf/${quoteId}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          "X-WP-Nonce": myEasyComptaAdmin.nonce,
-        },
-      })
-        .then((response) => {
-          if (!response.ok) {
-            this.loadingPdf = false;
-            throw new Error("Network response was not ok");
-          }
-          this.loadingPdf = false;
-          return response.blob();
-        })
-        .then((blob) => {
-          const url = URL.createObjectURL(blob);
-          window.open(url);
-          this.loadingPdf = false;
-        })
-        .catch((error) => {
-          console.error("There was a problem with the fetch operation:", error);
-          this.loadingPdf = false;
-        });
-    },
-    sendQuote(clientId) {
-      this.loadingModal = true;
-      this.sendQuoteModal = true;
-      modal_send_quote.showModal();
-      this.fetchClient(clientId);
-      this.fetchSettings();
-    },
-    fetchClient(clientId) {
-      this.loading = true;
-      fetch(`/wp-json/my-easy-compta/v1/clients/details/${clientId}`, {
-        headers: {
-          "Content-Type": "application/json",
-          "X-WP-Nonce": myEasyComptaAdmin.nonce,
-        },
-      })
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error("Client not found");
-          }
-          return response.json();
-        })
-        .then((data) => {
-          this.client_detail = data;
-          this.loading = false;
-        })
-        .catch((error) => {
-          console.error("Error fetching client info:", error);
-          this.loading = false;
-        });
-    },
-    async fetchSettings() {
-      try {
-        this.loading = true;
-        const response = await fetch(
-          "/wp-json/my-easy-compta/v1/settings/get",
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              "X-WP-Nonce": myEasyComptaAdmin.nonce,
-            },
-          }
-        );
-
-        if (response.ok) {
-          const settings = await response.json();
-          this.subject = settings.email_quote_subject;
-          this.content = settings.email_quote_content;
-          this.loading = false;
-        } else {
-          const error = await response.json();
-          this.showToast(error.message, "alert-error");
-          this.loading = false;
-        }
-      } catch (error) {
-        this.loading = false;
-        this.showToast(error.message, "alert-error");
-      }
-    },
-    showToast(message, type) {
-      this.toast.message = message;
-      this.toast.type = type;
-      this.toast.visible = true;
-      setTimeout(() => {
-        this.toast.visible = false;
-      }, 3000);
-    },
-  },
+    processedSubject.value = sub;
+    processedContent.value = cont;
 };
+
+watch(quoteInfo, (newVal) => {
+    if (newVal?.client_detail) client_detail.value = newVal.client_detail;
+}, { immediate: true, deep: true });
+
+const changeQuoteStatus = async (status) => {
+    // Legacy logic didn't use confirm for status change except maybe rejection?
+    // Actually the legacy code used simple click.
+    // I will keep it simple.
+    try {
+        const res = await fetch("/wp-json/my-easy-compta/v1/quotes/update-status", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "X-WP-Nonce": window.myEasyComptaAdmin.nonce },
+            body: JSON.stringify({ id: quoteInfo.value.id, status }),
+        });
+        const data = await res.json();
+        if(data.success) {
+            emit('show-toast', data.message, "success");
+            // Mutating prop is bad practice? In Vue 3 we better emit refresh.
+             emit('refresh'); // Assuming ViewDetail will re-fetch
+        } else {
+             emit('show-toast', data.message, "error");
+        }
+    } catch(e) { emit('show-toast', "Error", "error"); }
+};
+
+const confirmConvertQuote = () => {
+    showConvertModal.value = true;
+};
+
+const executeConvert = () => {
+    showConvertModal.value = false;
+    convertToInvoice(quoteInfo.value.id);
+};
+
+const convertToInvoice = async (quoteId) => {
+    try {
+        const res = await fetch(`/wp-json/my-easy-compta/v1/quotes/convert-quote/${quoteId}`, {
+             method: "POST",
+             headers: { "Content-Type": "application/json", "X-WP-Nonce": window.myEasyComptaAdmin.nonce }
+        });
+        const data = await res.json();
+        if(data.success) {
+             emit('show-toast', data.message, "success");
+             router.push({ name: "InvoiceViewDetail", params: { id: data.id } });
+        } else {
+             emit('show-toast', data.message, "error");
+        }
+    } catch(e) { emit('show-toast', "Error", "error"); }
+};
+
+const ConvertAdvanceQuote = (solde) => {
+    advanceSold.value = solde; // 'sold' ou 'no_sold'
+    showAdvanceModal.value = true;
+};
+
+const handleAdvanceInvoiceConfirm = (details) => {
+    showAdvanceModal.value = false;
+    const { type, value, date } = details;
+    
+    fetch(`/wp-json/my-easy-compta/v1/quotes/convert-advance/${quoteInfo.value.id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-WP-Nonce": window.myEasyComptaAdmin.nonce },
+        body: JSON.stringify({ advance_type: type, advance_value: value, advance_date: date }),
+    })
+    .then(r => r.json())
+    .then(data => {
+         if(data.success) {
+             emit('show-toast', data.message, "success");
+             router.push({ name: "InvoiceViewDetail", params: { id: data.id } });
+         } else {
+             emit('show-toast', data.message, "error");
+         }
+    });
+};
+
+const exportToPDF = async () => {
+    loadingPdf.value = true;
+    try {
+        // WordPress REST API validation for this route needs _wpnonce in query params
+        const url = `/wp-json/my-easy-compta/v1/quotes/pdf/${quoteInfo.value.id}?_wpnonce=${window.myEasyComptaAdmin.nonce}`;
+        window.open(url, '_blank');
+    } catch(e) { 
+        emit('show-toast', "Erreur lors de la génération du PDF", "error");
+    } finally { loadingPdf.value = false; }
+};
+
+const sendQuote = () => {
+    loadingModal.value = true;
+    if(quoteInfo.value.client_id) {
+         fetch(`/wp-json/my-easy-compta/v1/clients/details/${quoteInfo.value.client_id}`, { headers: { "X-WP-Nonce": window.myEasyComptaAdmin.nonce }})
+         .then(r => r.json())
+         .then(data => {
+              client_detail.value = data;
+              processEmailTemplate(props.emailSubject, props.emailContent);
+              sendQuoteModal.value = true; 
+         })
+         .finally(() => loadingModal.value = false);
+    }
+};
+
 </script>
+
+<style scoped>
+.btn-expandable {
+    @apply flex items-center justify-center h-11 transition-all duration-300 ease-in-out relative overflow-hidden !important;
+    min-width: 44px;
+    max-width: 44px;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    gap: 0 !important;
+}
+
+.btn-expandable:hover {
+    @apply px-5 !important;
+    max-width: 320px;
+    gap: 8px !important;
+}
+
+.btn-label {
+    @apply opacity-0 transition-opacity duration-200 whitespace-nowrap overflow-hidden inline-block;
+    max-width: 0;
+}
+
+.btn-expandable:hover .btn-label {
+    @apply opacity-100;
+    max-width: 250px;
+}
+
+.icon-no-margin {
+    @apply m-0 transition-all duration-300 flex-shrink-0;
+}
+</style>

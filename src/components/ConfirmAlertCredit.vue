@@ -1,29 +1,37 @@
 <template>
   <div>
-    <dialog id="modal_confirm_credit" class="modal" :open="showModal">
-      <div class="modal-box">
-        <h3 class="font-bold text-lg">{{ modalTitle }}</h3>
-        <button
-          class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-          @click="closeModal"
-        >
-          ✕
-        </button>
-        <div class="text-center text-red-400 mb-2">
-          <i class="fas fa-exclamation-triangle text-4xl"></i>
-        </div>
-        <h2 class="text-lg font-semibold text-center">{{ title }}</h2>
-        <p class="my-4 text-center text-xl">{{ message }}</p>
-        <div class="flex justify-between space-x-4">
-          <button @click="onCancel" class="btn btn-secondary rounded-full">
-            {{ cancelText }}
-          </button>
+    <dialog id="modal_confirm_credit" class="ecwp-modal-overlay" :open="showModal">
+      <div class="ecwp-modal-box max-w-md">
+        <!-- Header -->
+        <div class="ecwp-modal-header">
+          <h3 class="ecwp-modal-title">{{ modalTitle }}</h3>
           <button
-            @click="onConfirm"
-            class="btn rounded-full btn-error text-white"
+            class="ecwp-modal-close"
+            @click="closeModal"
           >
-            {{ confirmText }}
+            <i class="fas fa-times"></i>
           </button>
+        </div>
+
+        <!-- Content -->
+        <div class="p-6">
+          <div class="text-center text-red-500 dark:text-red-400 mb-4">
+            <i class="fas fa-exclamation-triangle text-4xl"></i>
+          </div>
+          <h2 class="text-lg font-semibold text-center text-gray-900 dark:text-white mb-2">{{ title }}</h2>
+          <p class="text-center text-lg text-gray-600 dark:text-gray-300 mb-6">{{ message }}</p>
+          
+          <div class="flex justify-center gap-4">
+            <button @click="onCancel" class="ecwp-btn ecwp-btn-secondary">
+              {{ cancelText }}
+            </button>
+            <button
+              @click="onConfirm"
+              class="ecwp-btn ecwp-btn-error"
+            >
+              {{ confirmText }}
+            </button>
+          </div>
         </div>
       </div>
     </dialog>

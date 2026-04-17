@@ -1,7 +1,7 @@
-import { createApp, h } from "vue";
-import Dashboard from "@/components/Dashboard.vue";
+import { createApp } from 'vue';
+import App from '@/components/App.vue';
+import router from '@/router';
 
-const app_dash = createApp({
-  render: () => h(Dashboard),
-});
-app_dash.mount("#my-easy-compta-admin-app");
+const app = createApp(App);
+app.use(router);
+app.mount('#my-easy-compta-admin-app');

@@ -11,36 +11,9 @@ class ECWP_Expenses
     protected $routes;
     public function __construct()
     {
-        add_action('admin_menu', array($this, 'add_submenu_page'));
-        add_action('admin_enqueue_scripts', array($this, 'enqueue_scripts'));
-
+        // Plus de sous-menu WordPress - navigation SPA uniquement
         $this->routes = new Routes();
         $this->register_api_routes();
-    }
-
-    public function add_submenu_page()
-    {
-        add_submenu_page(
-            'my-easy-compta',
-            __('Expenses', 'my-easy-compta'),
-            __('Expenses', 'my-easy-compta'),
-            'manage_options',
-            'my-easy-compta-expenses',
-            array($this, 'render_page'),
-            10
-        );
-    }
-
-    public function enqueue_scripts($hook_suffix)
-    {
-        if ('myeasycompta_page_my-easy-compta-expenses' === $hook_suffix) {
-            wp_enqueue_script('my-easy-compta-expenses', ECWP_URL . '/assets/dist/expenses.min.js', array(), ECWP_VERSION, true);
-        }
-    }
-
-    public function render_page()
-    {
-        echo '<div id="my-easy-compta-expenses-app" class="ecwp-content"></div>';
     }
 
     private function register_api_routes()
@@ -49,6 +22,9 @@ class ECWP_Expenses
             return current_user_can('manage_options');
         });
         $this->routes->add_route('/expenses/categories', 'GET', $this, 'get_expenses_categories', function () {
+            return current_user_can('manage_options');
+        });
+        $this->routes->add_route('/expenses/stats', 'GET', $this, 'get_expenses_stats', function () {
             return current_user_can('manage_options');
         });
         $this->routes->add_route('/expenses/clients', 'GET', $this, 'get_expenses_clients', function () {
@@ -66,11 +42,11 @@ class ECWP_Expenses
         $this->routes->add_route('/expenses/(?P<id>\d+)', 'DELETE', $this, 'delete_expense', function () {
             return current_user_can('manage_options');
         });
-        
+
         $this->routes->add_route('/expenses/find-page/(?P<id>\d+)', 'GET', $this, 'find_expense_page', function () {
             return current_user_can('manage_options');
         });
-        
+
         $this->routes->register_routes();
     }
 
@@ -88,6 +64,10 @@ class ECWP_Expenses
             $where_clauses[] = 'c.company_name LIKE %s';
             $query_params[] = '%' . $wpdb->esc_like($request['client']) . '%';
         }
+        if (!empty($request['label'])) {
+            $where_clauses[] = 'e.notes LIKE %s';
+            $query_params[] = '%' . $wpdb->esc_like($request['label']) . '%';
+        }
         if (!empty($request['category'])) {
             $where_clauses[] = 'cat.name LIKE %s';
             $query_params[] = '%' . $wpdb->esc_like($request['category']) . '%';
@@ -99,6 +79,16 @@ class ECWP_Expenses
         if (!empty($request['total_amount'])) {
             $where_clauses[] = 'e.amount = %s';
             $query_params[] = $request['total_amount'];
+        }
+
+        // Date range filter on expense_date
+        if (!empty($request['date_from']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $request['date_from'])) {
+            $where_clauses[] = 'e.expense_date >= %s';
+            $query_params[]  = sanitize_text_field($request['date_from']) . ' 00:00:00';
+        }
+        if (!empty($request['date_to']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $request['date_to'])) {
+            $where_clauses[] = 'e.expense_date <= %s';
+            $query_params[]  = sanitize_text_field($request['date_to']) . ' 23:59:59';
         }
 
         $where_sql = '';
@@ -125,6 +115,9 @@ class ECWP_Expenses
 
         $results = $wpdb->get_results($wpdb->prepare($query, ...$query_params), OBJECT);
 
+        // Remove per_page and offset for count query
+        $count_params = array_slice($query_params, 0, -2);
+
         $total_count_query = "SELECT COUNT(*)
                               FROM {$expenses_table} e
                               LEFT JOIN {$clients_table} c ON e.client_id = c.id
@@ -132,7 +125,7 @@ class ECWP_Expenses
                               LEFT JOIN {$attachments_table} a ON e.attachment_id = a.id
                               $where_sql";
 
-        $total_count = $wpdb->get_var($wpdb->prepare($total_count_query, ...$query_params));
+        $total_count = !empty($count_params) ? $wpdb->get_var($wpdb->prepare($total_count_query, ...$count_params)) : $wpdb->get_var($total_count_query);
 
         $settings = new \ECWP\Admin\Settings\ECWP_Settings();
         $format_date_response = $settings->get_format_date();
@@ -140,19 +133,24 @@ class ECWP_Expenses
 
         $total_pages = ceil($total_count / $per_page);
 
-        foreach ($results as &$result) {
-            if (isset($result->expense_date)) {
-                $result->expense_date = date_i18n($format_date, strtotime($result->expense_date));
-            }
-            if (!empty($result->filename)) {
-                $result->attachment_url = site_url() . '/wp-content/uploads/ecwp_expenses/download.php?file=' . urlencode($result->filename);
-            } else {
-                $result->attachment_url = null;
-            }
+        $data = [];
+        foreach ($results as $result) {
+            $data[] = [
+                'id' => $result->id,
+                'client_name' => $result->company_name ?: __('Unknown client', 'my-easy-compta'),
+                'category_name' => $result->name ?: __('Uncategorized', 'my-easy-compta'),
+                'expense_date' => $result->expense_date ? date_i18n($format_date, strtotime($result->expense_date)) : '-',
+                'date_raw' => $result->expense_date ?: '',
+                'total_amount' => isset($result->amount) ? (float) $result->amount : 0.00,
+                'attachment_url' => !empty($result->filename) ? site_url() . '/wp-content/uploads/ecwp_expenses/download.php?file=' . urlencode($result->filename) : null,
+                'category_id' => isset($result->category_id) ? (int) $result->category_id : 0,
+                'client_id' => isset($result->client_id) ? (int) $result->client_id : 0,
+                'notes' => $result->notes ?: ''
+            ];
         }
 
         $response = array(
-            'expenses' => $results,
+            'expenses' => $data,
             'total_count' => $total_count,
             'total_pages' => $total_pages,
             'page' => $page,
@@ -176,22 +174,22 @@ class ECWP_Expenses
         global $wpdb;
         $expense_id = absint($request->get_param('id'));
         $per_page = isset($request['per_page']) ? intval($request['per_page']) : 10;
-        
+
         if ($expense_id <= 0) {
             return new WP_Error('invalid_expense_id', __('Invalid expense ID.', 'my-easy-compta'), array('status' => 400));
         }
 
         $expenses_table = ECWP_TABLE_EXPENSES;
-        
+
         // Compter combien de dépenses ont un ID supérieur (triés par ID DESC)
         $count = $wpdb->get_var($wpdb->prepare(
             "SELECT COUNT(*) FROM {$expenses_table} WHERE id > %d",
             $expense_id
         ));
-        
+
         // La page est calculée en fonction de la position dans la liste triée
         $page = floor($count / $per_page) + 1;
-        
+
         return rest_ensure_response(array(
             'page' => $page,
             'per_page' => $per_page
@@ -216,6 +214,50 @@ class ECWP_Expenses
 
         return $categories;
     }
+    public function get_expenses_stats(\WP_REST_Request $request)
+    {
+        global $wpdb;
+        $expenses_table    = ECWP_TABLE_EXPENSES;
+        $categories_table  = ECWP_TABLE_EXPENSES_CATEGORIES;
+
+        $where_parts  = ['1=1'];
+        $where_params = [];
+
+        if (!empty($request['date_from']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $request['date_from'])) {
+            $where_parts[]  = 'e.expense_date >= %s';
+            $where_params[] = sanitize_text_field($request['date_from']);
+        }
+        if (!empty($request['date_to']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $request['date_to'])) {
+            $where_parts[]  = 'e.expense_date <= %s';
+            $where_params[] = sanitize_text_field($request['date_to']);
+        }
+
+        $where_sql = implode(' AND ', $where_parts);
+
+        $query = "SELECT COALESCE(cat.name, 'Sans catégorie') AS category, SUM(e.amount) AS total
+                  FROM {$expenses_table} AS e
+                  LEFT JOIN {$categories_table} AS cat ON e.category_id = cat.id
+                  WHERE {$where_sql}
+                  GROUP BY cat.id, cat.name
+                  ORDER BY total DESC";
+
+        $rows = !empty($where_params)
+            ? $wpdb->get_results($wpdb->prepare($query, ...$where_params), ARRAY_A)
+            : $wpdb->get_results($query, ARRAY_A);
+
+        $total_all = array_sum(array_column($rows ?: [], 'total'));
+
+        $result = array_map(function ($row) use ($total_all) {
+            return [
+                'category' => $row['category'],
+                'total'    => round((float) $row['total'], 2),
+                'percent'  => $total_all > 0 ? round(($row['total'] / $total_all) * 100, 1) : 0,
+            ];
+        }, $rows ?: []);
+
+        return rest_ensure_response(['stats' => $result, 'total' => round($total_all, 2)]);
+    }
+
     public function get_expenses_clients()
     {
         global $wpdb;
@@ -238,7 +280,7 @@ class ECWP_Expenses
         $expense_date_raw = sanitize_text_field($request->get_param('expense_date'));
         $client_id = absint($request->get_param('client_id'));
         $category_id = absint($request->get_param('category_id'));
-        $notes = sanitize_textarea_field($request->get_param('note'));
+        $notes = sanitize_textarea_field($request->get_param('notes'));
         $file_params = $request->get_file_params();
         $attachment = isset($file_params['attachment']) ? $file_params['attachment'] : null;
 
@@ -246,7 +288,7 @@ class ECWP_Expenses
             return new WP_Error('missing_data', 'Données manquantes', array('status' => 400));
         }
 
-        $expense_date = gmdate('Y-m-d', strtotime($expense_date_raw));
+        $expense_date = wp_date('Y-m-d', strtotime($expense_date_raw));
 
         $attachment_id = null;
         if ($attachment) {
@@ -287,7 +329,7 @@ class ECWP_Expenses
                 $attachment_id = $wpdb->insert_id;
 
                 if ($wpdb->last_error) {
-                    return new WP_Error('db_error', __('Database error when inserting attachment:', 'my-easy-compta') . $wpdb->last_error, array('status' => 500));
+                    return new WP_Error('db_error', __('Database error when inserting attachment.', 'my-easy-compta'), array('status' => 500));
                 }
             } else {
                 return new WP_Error('attachment_failed', __('File upload failed:', 'my-easy-compta') . $movefile['error'], array('status' => 500));
@@ -337,7 +379,7 @@ class ECWP_Expenses
         }
 
         if ($wpdb->last_error) {
-            return new WP_Error('db_error', 'Error database: ' . $wpdb->last_error, array('status' => 500));
+            return new WP_Error('db_error', __('Database error.', 'my-easy-compta'), array('status' => 500));
         }
 
         return new WP_REST_Response(array('success' => true, 'message' => __('Expense added successfully', 'my-easy-compta')), 200);
@@ -355,8 +397,10 @@ class ECWP_Expenses
 
         $expenses_table = ECWP_TABLE_EXPENSES;
         $expense_details = $wpdb->get_row(
-            $wpdb->prepare("SELECT p.* FROM {$expenses_table} p WHERE p.id = %d",
-                $expense_id),
+            $wpdb->prepare(
+                "SELECT p.* FROM {$expenses_table} p WHERE p.id = %d",
+                $expense_id
+            ),
             ARRAY_A
         );
 
@@ -378,9 +422,14 @@ class ECWP_Expenses
 
     public function update_expense(WP_REST_Request $request)
     {
+        $nonce = sanitize_text_field(wp_unslash($request->get_header('X-WP-Nonce')));
+        if (!wp_verify_nonce($nonce, 'wp_rest')) {
+            return new WP_Error('rest_nonce_invalid', __('Invalid nonce', 'my-easy-compta'), array('status' => 403));
+        }
+
         global $wpdb;
-        $expense_id = $request->get_param('id');
-        if (empty($expense_id) || !is_numeric($expense_id)) {
+        $expense_id = absint($request->get_param('id'));
+        if ($expense_id <= 0) {
             return new WP_Error('invalid_expense_id', 'ID expense invalid.', array('status' => 400));
         }
 
@@ -390,16 +439,18 @@ class ECWP_Expenses
         $category_id = absint($request->get_param('category_id'));
         $notes = sanitize_textarea_field($request->get_param('notes'));
         $expense_data = array(
-            'amount' => $amount,
+            'amount'       => $amount,
             'expense_date' => $expense_date,
-            'client_id' => $client_id,
-            'category_id' => $category_id,
-            'notes' => $notes,
+            'client_id'    => $client_id,
+            'category_id'  => $category_id,
+            'notes'        => $notes,
         );
         $result = $wpdb->update(
             ECWP_TABLE_EXPENSES,
             $expense_data,
-            array('id' => $expense_id)
+            array('id' => $expense_id),
+            array('%f', '%s', '%d', '%d', '%s'),
+            array('%d')
         );
 
         if ($result === false) {
@@ -410,7 +461,7 @@ class ECWP_Expenses
 
     public function delete_expense($request)
     {
-        $expense_id = $request['id'];
+        $expense_id = absint($request['id']);
         $nonce = sanitize_text_field(wp_unslash($request->get_header('X-WP-Nonce')));
         if (!wp_verify_nonce($nonce, 'wp_rest')) {
             return new WP_Error('rest_nonce_invalid', __('Invalid nonce', 'my-easy-compta'), array('status' => 403));
@@ -418,9 +469,30 @@ class ECWP_Expenses
 
         global $wpdb;
 
+        // Retrieve attachment before deleting the expense
+        $expense = $wpdb->get_row($wpdb->prepare(
+            "SELECT attachment_id FROM " . ECWP_TABLE_EXPENSES . " WHERE id = %d",
+            $expense_id
+        ));
+
         $result = $wpdb->delete(ECWP_TABLE_EXPENSES, array('id' => $expense_id));
 
         if ($result) {
+            // Cascade-delete attachment file and record
+            if ($expense && !empty($expense->attachment_id)) {
+                $attachment = $wpdb->get_row($wpdb->prepare(
+                    "SELECT filename FROM " . ECWP_TABLE_EXPENSES_ATTACHMENTS . " WHERE id = %d",
+                    $expense->attachment_id
+                ));
+                if ($attachment && !empty($attachment->filename)) {
+                    $file_path = WP_CONTENT_DIR . '/uploads/ecwp_expenses/' . basename($attachment->filename);
+                    if (file_exists($file_path)) {
+                        wp_delete_file($file_path);
+                    }
+                }
+                $wpdb->delete(ECWP_TABLE_EXPENSES_ATTACHMENTS, array('id' => $expense->attachment_id));
+            }
+
             return new WP_REST_Response(array('success' => true, 'message' => __('Expense deleted successfully', 'my-easy-compta')), 200);
         } else {
             return new WP_REST_Response(array('success' => false, 'message' => __('Failed to delete expense', 'my-easy-compta')), 500);
@@ -456,11 +528,10 @@ class ECWP_Expenses
         }
 
         $download_file = $upload_base . '/download.php';
-        if (!file_exists($download_file)) {
-            $download_php_content = "<?php
+        $download_php_content = "<?php
             require_once( \$_SERVER['DOCUMENT_ROOT'] . '/wp-load.php' );
 
-            if (!is_user_logged_in()) {
+            if (!current_user_can('manage_options')) {
                 wp_die('You do not have permission to access this file.');
             }
 
@@ -482,8 +553,8 @@ class ECWP_Expenses
                 wp_die('File not found.');
             }
             ?>";
-            file_put_contents($download_file, $download_php_content);
-        }
+        // Always write to ensure permission check is up to date
+        file_put_contents($download_file, $download_php_content);
 
     }
 

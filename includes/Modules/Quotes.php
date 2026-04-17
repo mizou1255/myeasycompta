@@ -15,36 +15,9 @@ class ECWP_Quotes
     public function __construct()
     {
         global $wpdb;
-        add_action('admin_menu', array($this, 'add_submenu_page'));
-        add_action('admin_enqueue_scripts', array($this, 'enqueue_scripts'));
-
+        // Plus de sous-menu WordPress - navigation SPA uniquement
         $this->routes = new Routes();
         $this->register_api_routes();
-    }
-
-    public function add_submenu_page()
-    {
-        add_submenu_page(
-            'my-easy-compta',
-            __('Quotes', 'my-easy-compta'),
-            __('Quotes', 'my-easy-compta'),
-            'manage_options',
-            'my-easy-compta-quotes',
-            array($this, 'render_page'),
-            3
-        );
-    }
-
-    public function enqueue_scripts($hook_suffix)
-    {
-        if ('myeasycompta_page_my-easy-compta-quotes' === $hook_suffix) {
-            wp_enqueue_script('my-easy-compta-quotes', ECWP_URL . '/assets/dist/quotes.min.js', array(), ECWP_VERSION, true);
-        }
-    }
-
-    public function render_page()
-    {
-        echo '<div id="my-easy-compta-quotes-app" class="ecwp-content"></div>';
     }
 
     private function register_api_routes()
@@ -103,7 +76,37 @@ class ECWP_Quotes
             return current_user_can('manage_options');
         });
 
-        $this->routes->add_route('/quotes/pdf/(?P<id>\d+)', 'GET', $this, 'generate_quote_pdf', function () {
+        $this->routes->add_route('/quotes/pdf/(?P<id>\d+)', 'GET', $this, 'generate_quote_pdf', function ($request) {
+            // Vérifier le nonce depuis le paramètre GET
+            $nonce = isset($_GET['_wpnonce']) ? sanitize_text_field($_GET['_wpnonce']) : '';
+            if (!empty($nonce) && wp_verify_nonce($nonce, 'wp_rest')) {
+                return current_user_can('manage_options');
+            }
+            return false;
+        });
+
+        // Alias version RESTful
+        $this->routes->add_route('/quotes/(?P<id>\d+)/pdf', 'GET', $this, 'generate_quote_pdf', function ($request) {
+            $nonce = isset($_GET['_wpnonce']) ? sanitize_text_field($_GET['_wpnonce']) : '';
+            if (!empty($nonce) && wp_verify_nonce($nonce, 'wp_rest')) {
+                return current_user_can('manage_options');
+            }
+            return false;
+        });
+
+        $this->routes->add_route('/quotes/bulk', 'POST', $this, 'bulk_action', function () {
+            return current_user_can('manage_options');
+        });
+
+        $this->routes->add_route('/quotes/(?P<id>\d+)/notes', 'POST', $this, 'save_quote_notes', function () {
+            return current_user_can('manage_options');
+        });
+
+        $this->routes->add_route('/quotes/templates', 'GET', $this, 'get_quote_templates', function () {
+            return current_user_can('manage_options');
+        });
+
+        $this->routes->add_route('/quotes/(?P<id>\d+)/save-as-template', 'POST', $this, 'save_quote_as_template', function () {
             return current_user_can('manage_options');
         });
 
@@ -117,13 +120,17 @@ class ECWP_Quotes
         $per_page = isset($request['per_page']) ? absint($request['per_page']) : 10;
         $offset = ($page - 1) * $per_page;
 
-        $where_clauses = [];
+        $where_clauses = ['(quotes.is_template IS NULL OR quotes.is_template = 0)'];
         $query_params = [];
 
+        // Recherche dans le numéro de devis OU le nom du client
         if (!empty($request['quote_number'])) {
-            $where_clauses[] = 'quotes.quote_number LIKE %s';
-            $query_params[] = '%' . $wpdb->esc_like($request['quote_number']) . '%';
+            $where_clauses[] = '(quotes.quote_number LIKE %s OR clients.company_name LIKE %s)';
+            $search_term = '%' . $wpdb->esc_like($request['quote_number']) . '%';
+            $query_params[] = $search_term;
+            $query_params[] = $search_term;
         }
+
         if (!empty($request['client'])) {
             $where_clauses[] = 'clients.company_name LIKE %s';
             $query_params[] = '%' . $wpdb->esc_like($request['client']) . '%';
@@ -145,6 +152,16 @@ class ECWP_Quotes
             $query_params[] = $request['created_at'];
         }
 
+        // Date range filter on created_at
+        if (!empty($request['date_from']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $request['date_from'])) {
+            $where_clauses[] = 'quotes.created_at >= %s';
+            $query_params[]  = sanitize_text_field($request['date_from']) . ' 00:00:00';
+        }
+        if (!empty($request['date_to']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $request['date_to'])) {
+            $where_clauses[] = 'quotes.created_at <= %s';
+            $query_params[]  = sanitize_text_field($request['date_to']) . ' 23:59:59';
+        }
+
         $where_sql = '';
         if (!empty($where_clauses)) {
             $where_sql = 'WHERE ' . implode(' AND ', $where_clauses);
@@ -162,53 +179,75 @@ class ECWP_Quotes
                      quotes.status,
                      quotes.due_date,
                      quotes.provisional_start_date,
-                     quotes.created_at
+                     quotes.created_at,
+                     quotes.converted
               FROM {$quotes_table} AS quotes
               LEFT JOIN {$clients_table} AS clients ON quotes.client_id = clients.id
               LEFT JOIN {$currencies_table} AS currencies ON clients.currency_id = currencies.id
               $where_sql
               ORDER BY quotes.id DESC
-              LIMIT %d, %d";
+              LIMIT %d OFFSET %d";
 
-        $query_params[] = $offset;
         $query_params[] = $per_page;
+        $query_params[] = $offset;
 
         $quotes = $wpdb->get_results(
             $wpdb->prepare($query, ...$query_params),
             OBJECT
         );
 
+        if ($wpdb->last_error) {
+            return new \WP_Error('db_error', $wpdb->last_error, array('status' => 500));
+        }
+
+        // Créer un array de paramètres pour le count (sans offset et limit)
+        $count_params = array_slice($query_params, 0, -2);
+
         $count_query = "SELECT COUNT(quotes.id)
                     FROM {$quotes_table} AS quotes
                     LEFT JOIN {$clients_table} AS clients ON quotes.client_id = clients.id
                     $where_sql";
 
-        $total_count = $wpdb->get_var($wpdb->prepare($count_query, ...$query_params));
+        $total_count = !empty($count_params) ? $wpdb->get_var($wpdb->prepare($count_query, ...$count_params)) : $wpdb->get_var($count_query);
         $total_pages = ceil($total_count / $per_page);
 
-        $settings = new \ECWP\Admin\Settings\ECWP_Settings();
-        $format_date_response = $settings->get_format_date();
+        if (empty($quotes)) {
+            return rest_ensure_response([
+                'quotes' => [],
+                'total_count' => 0,
+                'total_pages' => 0,
+                'page' => $page,
+                'per_page' => $per_page,
+            ]);
+        }
+
+        $settings_manager = new \ECWP\Admin\Settings\ECWP_Settings();
+        $format_date_response = $settings_manager->get_format_date();
         $format_date = isset($format_date_response->data) ? $format_date_response->data : 'Y-m-d';
 
         $data = [];
         foreach ($quotes as $quote) {
             $data[] = [
                 'id' => $quote->id,
-                'client_name' => $quote->company_name,
-                'client_currency' => $quote->currency_symbol,
+                'client_name' => $quote->company_name ?: 'Client Inconnu',
+                'client_currency' => $quote->currency_symbol ?: '€',
                 'quote_number' => $quote->quote_number,
                 'total_amount' => $quote->total_amount,
                 'status' => $quote->status,
-                'due_date' => date_i18n($format_date, strtotime($quote->due_date)),
-                'provisional_start_date' => date_i18n($format_date, strtotime($quote->provisional_start_date)),
-                'created' => date_i18n($format_date, strtotime($quote->created_at)),
+                'due_date' => $quote->due_date ? date_i18n($format_date, strtotime($quote->due_date)) : '-',
+                'due_date_raw' => $quote->due_date,
+                'provisional_start_date' => $quote->provisional_start_date ? date_i18n($format_date, strtotime($quote->provisional_start_date)) : '-',
+                'provisional_start_date_raw' => $quote->provisional_start_date,
+                'created' => $quote->created_at ? date_i18n($format_date, strtotime($quote->created_at)) : '-',
+                'created_raw' => $quote->created_at,
+                'converted' => $quote->converted,
             ];
         }
 
         return rest_ensure_response([
             'quotes' => $data,
-            'total_count' => $total_count,
-            'total_pages' => $total_pages,
+            'total_count' => intval($total_count),
+            'total_pages' => intval($total_pages),
             'page' => $page,
             'per_page' => $per_page,
         ]);
@@ -218,9 +257,11 @@ class ECWP_Quotes
     {
         global $wpdb;
         $params = $request->get_params();
-        $quote_id = $params['id'];
+        $quote_id = absint($params['id']);
         $quotes_table = ECWP_TABLE_QUOTES;
+        $clients_table = ECWP_TABLE_CLIENTS;
 
+        // Récupérer les détails du devis
         $quote_details = $wpdb->get_row(
             $wpdb->prepare("SELECT * FROM {$quotes_table} WHERE id = %d", $quote_id),
             ARRAY_A
@@ -230,7 +271,19 @@ class ECWP_Quotes
             return new WP_Error('quote_not_found', __('Quote not found.', 'my-easy-compta'), array('status' => 404));
         }
 
-        return rest_ensure_response($quote_details);
+        // Récupérer les informations du client
+        $client = null;
+        if (!empty($quote_details['client_id'])) {
+            $client = $wpdb->get_row(
+                $wpdb->prepare("SELECT * FROM {$clients_table} WHERE id = %d", $quote_details['client_id']),
+                ARRAY_A
+            );
+        }
+
+        return rest_ensure_response([
+            'quote' => $quote_details,
+            'client' => $client
+        ]);
     }
 
     public function add_quotes($request)
@@ -240,43 +293,51 @@ class ECWP_Quotes
         $has_permission = current_user_can('manage_options');
 
         if (!$valid_nonce) {
-            error_log('Invalid Nonce: ' . $nonce);
+            // Nonce invalid – no sensitive data logged.
             return new WP_Error('rest_nonce_invalid', __('Invalid nonce', 'my-easy-compta'), array('status' => 403));
         }
 
         if (!$has_permission) {
-            error_log('Permission Denied for User: ' . get_current_user_id());
+            // Permission denied.
             return new WP_Error('rest_forbidden', __('API access error', 'my-easy-compta'), array('status' => 403));
         }
         global $wpdb;
         $quotes_table = ECWP_TABLE_QUOTES;
         $settings_table = ECWP_TABLE_SETTINGS;
-        $last_quote_id = $wpdb->get_var("SELECT MAX(number) AS last_id FROM {$quotes_table}");
+
+        $wpdb->query('START TRANSACTION');
+
+        // Lock to prevent concurrent requests getting the same number.
+        $last_quote_id = $wpdb->get_var("SELECT MAX(number) FROM {$quotes_table} FOR UPDATE");
         if (empty($last_quote_id)) {
-            $last_quote_id = $wpdb->get_var($wpdb->prepare("SELECT meta_value FROM {$settings_table} WHERE meta_key = %s", 'quote_first'));
+            $last_quote_id = (int) $wpdb->get_var($wpdb->prepare("SELECT meta_value FROM {$settings_table} WHERE meta_key = %s", 'quote_first'));
         } else {
-            $last_quote_id = $last_quote_id + 1;
+            $last_quote_id = (int) $last_quote_id + 1;
         }
 
         $quote_prefix = $wpdb->get_var($wpdb->prepare("SELECT meta_value FROM {$settings_table} WHERE meta_key = %s", 'quote_prefix'));
-        $quote_prefix = $quote_prefix ? sanitize_text_field($quote_prefix) : 'INV';
-        $quote_number = $quote_prefix . '_' . str_pad($last_quote_id, 4, '0', STR_PAD_LEFT);
+        $quote_prefix = $quote_prefix ? sanitize_text_field($quote_prefix) : 'QUO';
+        $quote_number_format = $wpdb->get_var($wpdb->prepare("SELECT meta_value FROM {$settings_table} WHERE meta_key = %s", 'quote_number_format')) ?: 'prefix';
+        $quote_number = $this->generate_document_number($quote_prefix, $quote_number_format, $quotes_table, $last_quote_id);
 
         $quote_data = array(
             'number' => $last_quote_id,
             'quote_number' => $quote_number,
             'due_date' => sanitize_text_field($request['due_date']),
             'provisional_start_date' => sanitize_text_field($request['provisional_start_date']),
-            'client_id' => sanitize_text_field($request['client_id']),
+            'client_id' => absint($request['client_id']),
             'status' => sanitize_text_field($request['status']),
-            'created_at' => gmdate('Y-m-d'),
+            'created_at' => current_time('Y-m-d'),
         );
 
         $result = $wpdb->insert(ECWP_TABLE_QUOTES, $quote_data);
 
         if ($result === false) {
+            $wpdb->query('ROLLBACK');
             return new WP_Error('database_insert_error', __('Could not insert quote into database', 'my-easy-compta'), array('status' => 500));
         }
+
+        $wpdb->query('COMMIT');
 
         $quote_id = $wpdb->insert_id;
         if ($quote_id) {
@@ -299,12 +360,12 @@ class ECWP_Quotes
         $has_permission = current_user_can('manage_options');
 
         if (!$valid_nonce) {
-            error_log('Invalid Nonce: ' . $nonce);
+            // Nonce invalid – no sensitive data logged.
             return new WP_Error('rest_nonce_invalid', __('Invalid nonce', 'my-easy-compta'), array('status' => 403));
         }
 
         if (!$has_permission) {
-            error_log('Permission Denied for User: ' . get_current_user_id());
+            // Permission denied.
             return new WP_Error('rest_forbidden', __('Error API access', 'my-easy-compta'), array('status' => 403));
         }
 
@@ -339,7 +400,8 @@ class ECWP_Quotes
             'discount' => intval($params['discount']),
             'total_price' => floatval($params['total_price']),
             'total_amount' => floatval($params['total_amount']),
-            'item_order' => (int) ($wpdb->get_var($wpdb->prepare("SELECT MAX(item_order) FROM {$quote_elements_table} WHERE quote_id = %d", intval($params['quote_id']))) + 1),
+            'is_optional' => absint($params['is_optional'] ?? 0),
+            'item_order' => (int) ($wpdb->get_var($wpdb->prepare("SELECT MAX(item_order) FROM {$quote_elements_table} WHERE quote_id = %d", absint($params['quote_id']))) + 1),
         ];
 
         $result = $wpdb->insert(ECWP_TABLE_QUOTE_ELEMENTS, $data);
@@ -364,13 +426,12 @@ class ECWP_Quotes
             array('id' => $data['quote_id']),
             array(
                 '%f',
-                '%d',
                 '%f',
             ),
             array('%d')
         );
 
-        if ($result && $result_quote) {
+        if ($result !== false && $result_quote !== false) {
             return new WP_REST_Response(array('success' => true, 'message' => __('Quote item successfully added', 'my-easy-compta')), 200);
         } else {
             return new WP_REST_Response(array('success' => false, 'message' => __('Failed to add quote item', 'my-easy-compta')), 500);
@@ -380,8 +441,8 @@ class ECWP_Quotes
     public function get_quote_items($request)
     {
         global $wpdb;
-        $quote_id = $request['id'];
-        if (!isset($quote_id) || !is_numeric($quote_id)) {
+        $quote_id = absint($request['id']);
+        if ($quote_id <= 0) {
             return new WP_Error('invalid_quote_id', 'Invalid quote ID.', array('status' => 400));
         }
 
@@ -390,12 +451,13 @@ class ECWP_Quotes
         }
 
         $params = $request->get_params();
-        $quote_id = $params['id'];
+        $quote_id = absint($params['id']);
         $quote_elements_table = ECWP_TABLE_QUOTE_ELEMENTS;
         $articles_categories_table = ECWP_TABLE_ARTICLES_CATEGORIES;
 
         $items = $wpdb->get_results(
-            $wpdb->prepare("SELECT
+            $wpdb->prepare(
+                "SELECT
                 ie.id,
                 ie.item_name,
                 ie.item_ref,
@@ -408,7 +470,8 @@ class ECWP_Quotes
                 ie.discount,
                 ie.total_price,
                 ie.total_amount,
-                ie.item_order
+                ie.item_order,
+                ie.is_optional
             FROM
                 {$quote_elements_table} ie
             LEFT JOIN
@@ -419,7 +482,8 @@ class ECWP_Quotes
                 ie.quote_id = %d
             ORDER BY
                 ie.item_order ASC",
-                $quote_id),
+                $quote_id
+            ),
             ARRAY_A
         );
 
@@ -434,12 +498,14 @@ class ECWP_Quotes
     {
         global $wpdb;
         $params = $request->get_params();
-        $item_id = $params['id'];
+        $item_id = absint($params['id']);
 
         $quote_elements_table = ECWP_TABLE_QUOTE_ELEMENTS;
         $item_details = $wpdb->get_row(
-            $wpdb->prepare("SELECT id, item_name, item_ref, item_description, quantity, vat_rate, unit_price, discount, total_price, total_amount, item_order FROM {$quote_elements_table} WHERE id = %d ORDER BY item_order ASC",
-                $item_id),
+            $wpdb->prepare(
+                "SELECT id, item_name, item_ref, item_description, quantity, vat_rate, unit_price, discount, total_price, total_amount, item_order, is_optional FROM {$quote_elements_table} WHERE id = %d ORDER BY item_order ASC",
+                $item_id
+            ),
             ARRAY_A
         );
 
@@ -477,6 +543,52 @@ class ECWP_Quotes
         }
     }
 
+    public function bulk_action(WP_REST_Request $request)
+    {
+        $nonce = sanitize_text_field(wp_unslash($request->get_header('X-WP-Nonce')));
+        if (!wp_verify_nonce($nonce, 'wp_rest')) {
+            return new WP_Error('rest_nonce_invalid', __('Invalid nonce', 'my-easy-compta'), array('status' => 403));
+        }
+
+        $action  = sanitize_key($request->get_param('action'));
+        $raw_ids = $request->get_param('ids');
+
+        if ($action !== 'delete') {
+            return new WP_Error('invalid_action', __('Invalid bulk action.', 'my-easy-compta'), array('status' => 400));
+        }
+        if (!is_array($raw_ids) || empty($raw_ids)) {
+            return new WP_Error('invalid_ids', __('No IDs provided.', 'my-easy-compta'), array('status' => 400));
+        }
+
+        $ids  = array_filter(array_map('absint', $raw_ids));
+        if (empty($ids)) {
+            return new WP_Error('invalid_ids', __('No valid IDs provided.', 'my-easy-compta'), array('status' => 400));
+        }
+
+        global $wpdb;
+        $done    = 0;
+        $skipped = 0;
+
+        $wpdb->query('START TRANSACTION');
+        foreach ($ids as $id) {
+            $del_items = $wpdb->delete(ECWP_TABLE_QUOTE_ELEMENTS, array('quote_id' => $id));
+            $del_quote = $wpdb->delete(ECWP_TABLE_QUOTES, array('id' => $id));
+            if ($del_quote !== false) {
+                $done++;
+            } else {
+                $skipped++;
+            }
+        }
+        $wpdb->query('COMMIT');
+
+        return rest_ensure_response(array(
+            'success' => true,
+            'deleted' => $done,
+            'skipped' => $skipped,
+            'message' => sprintf(_n('%d quote deleted.', '%d quotes deleted.', $done, 'my-easy-compta'), $done),
+        ));
+    }
+
     public function duplicate_quote(WP_REST_Request $request)
     {
         $nonce = sanitize_text_field(wp_unslash($request->get_header('X-WP-Nonce')));
@@ -501,19 +613,54 @@ class ECWP_Quotes
         unset($original_quote['id']);
         $quotes_table = ECWP_TABLE_QUOTES;
         $settings_table = ECWP_TABLE_SETTINGS;
-        $last_quote_id = $wpdb->get_var("SELECT MAX(number) AS last_id FROM {$quotes_table}");
-        if (empty($last_quote_id)) {
-            $last_quote_id = $wpdb->get_var($wpdb->prepare("SELECT meta_value FROM {$settings_table} WHERE meta_key = %s", 'quote_first'));
+        $last_quote_id = (int) $wpdb->get_var("SELECT MAX(number) FROM {$quotes_table} FOR UPDATE");
+        if ($last_quote_id <= 0) {
+            $first = (int) $wpdb->get_var($wpdb->prepare("SELECT meta_value FROM {$settings_table} WHERE meta_key = %s", 'quote_first'));
+            $last_quote_id = $first > 0 ? $first : 1;
         } else {
             $last_quote_id = $last_quote_id + 1;
         }
 
         $quote_prefix = $wpdb->get_var($wpdb->prepare("SELECT meta_value FROM {$settings_table} WHERE meta_key = %s", 'quote_prefix'));
-        $quote_prefix = $quote_prefix ? sanitize_text_field($quote_prefix) : 'INV';
-        $quote_number = $quote_prefix . '_' . str_pad($last_quote_id, 4, '0', STR_PAD_LEFT);
+        $quote_prefix = $quote_prefix ? sanitize_text_field($quote_prefix) : 'QUO';
+        $quote_number_format = $wpdb->get_var($wpdb->prepare("SELECT meta_value FROM {$settings_table} WHERE meta_key = %s", 'quote_number_format')) ?: 'prefix';
+        $quote_number = $this->generate_document_number($quote_prefix, $quote_number_format, $quotes_table, $last_quote_id);
 
         $original_quote['number'] = $last_quote_id;
         $original_quote['quote_number'] = $quote_number;
+
+        // Reset state fields — the duplicate starts fresh
+        $original_quote['status']      = 'draft';
+        $original_quote['converted']   = 0;
+        $original_quote['signed']      = 0;
+        $original_quote['file_sign']   = null;
+        $original_quote['sent']        = 0;
+        $original_quote['is_template'] = 0;
+
+        // Mettre à jour les dates avec la date actuelle
+        $current_date = current_time('Y-m-d');
+        $current_datetime = current_time('Y-m-d H:i:s');
+
+        // Date de création = aujourd'hui
+        if (isset($original_quote['created'])) {
+            $original_quote['created'] = $current_date;
+        }
+        if (isset($original_quote['created_at'])) {
+            $original_quote['created_at'] = $current_datetime;
+        }
+        if (isset($original_quote['date_created'])) {
+            $original_quote['date_created'] = $current_datetime;
+        }
+
+        // Date de validité = aujourd'hui + 1 mois
+        $due_date = wp_date('Y-m-d', strtotime(current_time('Y-m-d') . ' +1 month'));
+        if (isset($original_quote['due_date'])) {
+            $original_quote['due_date'] = $due_date;
+        }
+        if (isset($original_quote['validity_date'])) {
+            $original_quote['validity_date'] = $due_date;
+        }
+
         $insert_quote = $wpdb->insert(ECWP_TABLE_QUOTES, $original_quote);
 
         if ($insert_quote === false) {
@@ -548,18 +695,18 @@ class ECWP_Quotes
         $has_permission = current_user_can('manage_options');
 
         if (!$valid_nonce) {
-            error_log('Invalid Nonce: ' . $nonce);
+            // Nonce invalid – no sensitive data logged.
             return new WP_Error('rest_nonce_invalid', __('Invalid nonce', 'my-easy-compta'), array('status' => 403));
         }
 
         if (!$has_permission) {
-            error_log('Permission Denied for User: ' . get_current_user_id());
+            // Permission denied.
             return new WP_Error('rest_forbidden', __('API access error', 'my-easy-compta'), array('status' => 403));
         }
 
-        $quote_id = $request->get_param('id');
+        $quote_id = absint($request->get_param('id'));
 
-        if (!$quote_id || !is_numeric($quote_id)) {
+        if ($quote_id <= 0) {
             return new WP_Error('invalid_quote_id', 'Invalid quote ID', array('status' => 400));
         }
 
@@ -567,7 +714,7 @@ class ECWP_Quotes
 
         $quote_date = sanitize_text_field($params['due_date']);
         $provisional_start_date = sanitize_text_field($params['provisional_start_date']);
-        $client_id = intval($params['client_id']);
+        $client_id = absint($params['client_id']);
         $status = sanitize_text_field($params['status']);
 
         global $wpdb;
@@ -598,43 +745,53 @@ class ECWP_Quotes
 
     public function edit_quote_item(WP_REST_Request $request)
     {
+        $nonce = sanitize_text_field(wp_unslash($request->get_header('X-WP-Nonce')));
+        if (!wp_verify_nonce($nonce, 'wp_rest')) {
+            return new WP_Error('rest_nonce_invalid', __('Invalid nonce', 'my-easy-compta'), array('status' => 403));
+        }
+
         global $wpdb;
-        $item_id = $request['id'];
-        if (empty($item_id) || !is_numeric($item_id)) {
+        $item_id = absint($request['id']);
+        if ($item_id <= 0) {
             return new WP_Error('invalid_Item_id', 'ID client invalid.', array('status' => 400));
         }
 
-        $item_name = sanitize_text_field($request['item_name']);
-        $item_ref = sanitize_text_field($request['item_ref']);
+        $item_name        = sanitize_text_field($request['item_name']);
+        $item_ref         = sanitize_text_field($request['item_ref']);
         $item_description = wp_kses_post($request['item_description']);
-        $quantity = sanitize_text_field($request['quantity']);
-        $vat_rate = absint($request['vat_rate']);
-        $unit_price = floatval($request['unit_price']);
-        $discount = absint($request['discount']);
-        $total = ($request['quantity'] * $request['unit_price']);
+        $quantity         = floatval($request['quantity']);
+        $vat_rate         = absint($request['vat_rate']);
+        $unit_price       = floatval($request['unit_price']);
+        $discount         = absint($request['discount']);
+        $total = $quantity * $unit_price;
         if ($discount) {
-            $total_price = ($total - ($total * $request['discount'] / 100));
+            $total_price = $total - ($total * $discount / 100);
         } else {
-            $total_price = ($request['quantity'] * $request['unit_price']);
+            $total_price = $total;
         }
 
         $vat_rate_total = ($total_price * $vat_rate) / 100;
         $total_amount = $vat_rate_total + $total_price;
 
+        $is_optional = absint($request['is_optional'] ?? 0);
+
         $result = $wpdb->update(
             ECWP_TABLE_QUOTE_ELEMENTS,
             array(
-                'item_name' => wp_kses_post($item_name),
-                'item_ref' => sanitize_text_field($item_ref),
-                'item_description' => wp_kses_post($item_description),
-                'quantity' => $quantity,
-                'vat_rate' => $vat_rate,
-                'total_price' => $total_price,
-                'total_amount' => $total_amount,
-                'unit_price' => $unit_price,
-                'discount' => $discount,
+                'item_name'        => $item_name,
+                'item_ref'         => $item_ref,
+                'item_description' => $item_description,
+                'quantity'         => $quantity,
+                'vat_rate'         => $vat_rate,
+                'total_price'      => $total_price,
+                'total_amount'     => $total_amount,
+                'unit_price'       => $unit_price,
+                'discount'         => $discount,
+                'is_optional'      => $is_optional,
             ),
-            array('id' => $item_id)
+            array('id' => $item_id),
+            array('%s', '%s', '%s', '%f', '%d', '%f', '%f', '%f', '%d', '%d'),
+            array('%d')
         );
 
         if ($result === false) {
@@ -654,7 +811,6 @@ class ECWP_Quotes
             array('id' => $quote_id),
             array(
                 '%f',
-                '%d',
                 '%f',
             ),
             array('%d')
@@ -697,7 +853,6 @@ class ECWP_Quotes
             array('id' => $quote_id),
             array(
                 '%f',
-                '%d',
                 '%f',
             ),
             array('%d')
@@ -736,12 +891,17 @@ class ECWP_Quotes
 
     public function update_quote_status(WP_REST_Request $request)
     {
+        $nonce = sanitize_text_field(wp_unslash($request->get_header('X-WP-Nonce')));
+        if (!wp_verify_nonce($nonce, 'wp_rest')) {
+            return new WP_Error('rest_nonce_invalid', __('Invalid nonce', 'my-easy-compta'), array('status' => 403));
+        }
+
         $id = $request->get_param('id');
         $status = $request->get_param('status');
         global $wpdb;
 
         // Validate the status
-        if (!in_array($status, ['pending', 'approved', 'rejected'])) {
+        if (!in_array($status, ['draft', 'pending', 'approved', 'rejected'])) {
             return new WP_Error('invalid_status', 'Invalid status provided', array('status' => 400));
         }
 
@@ -750,8 +910,9 @@ class ECWP_Quotes
             return new WP_Error('invalid_id', 'Invalid ID provided', array('status' => 400));
         }
 
+        $quotes_table = ECWP_TABLE_QUOTES;
         $result = $wpdb->update(
-            ECWP_TABLE_QUOTES,
+            $quotes_table,
             array('status' => $status),
             array('id' => $id),
             array('%s'),
@@ -760,6 +921,10 @@ class ECWP_Quotes
 
         if ($result === false) {
             return new WP_Error('update_failed', __('Failed to update quote status', 'my-easy-compta'), array('status' => 500));
+        }
+
+        if (in_array($status, ['approved', 'rejected'], true)) {
+            do_action('ecwp_quote_status_changed', absint($id), $status);
         }
 
         $total_amount = $wpdb->get_var(
@@ -784,14 +949,24 @@ class ECWP_Quotes
 
         $quotes_table = ECWP_TABLE_QUOTES;
         $quote = $wpdb->get_row(
-            $wpdb->prepare("SELECT * FROM {$quotes_table} WHERE id = %d", $quote_id), ARRAY_A);
+            $wpdb->prepare("SELECT * FROM {$quotes_table} WHERE id = %d", $quote_id),
+            ARRAY_A
+        );
 
         if (!$quote) {
             return new WP_Error('quote_not_found', __('Quote not found', 'my-easy-compta'), array('status' => 404));
         }
 
+        // Guard: prevent converting an already-converted quote.
+        if (!empty($quote['converted']) && (int) $quote['converted'] === 1) {
+            return new WP_Error('quote_already_converted', __('Ce devis a déjà été converti en facture.', 'my-easy-compta'), array('status' => 400));
+        }
+
+        $wpdb->query('START TRANSACTION');
+
         $invoices_table = ECWP_TABLE_INVOICES;
-        $last_invoice_id = $wpdb->get_var("SELECT MAX(number) AS last_id FROM {$invoices_table}");
+        // Lock to prevent concurrent invoice number conflicts.
+        $last_invoice_id = $wpdb->get_var("SELECT MAX(number) FROM {$invoices_table} FOR UPDATE");
         $padded_invoice_id = str_pad(intval($last_invoice_id + 1), 4, "0", STR_PAD_LEFT);
 
         $settings = new ECWP_Settings();
@@ -815,29 +990,40 @@ class ECWP_Quotes
         $invoice_id = $wpdb->insert_id;
 
         if (!$invoice_id) {
+            $wpdb->query('ROLLBACK');
             return new WP_Error('invoice_creation_failed', __('Failed to create invoice', 'my-easy-compta'), array('status' => 500));
         }
 
         $quote_elements_table = ECWP_TABLE_QUOTE_ELEMENTS;
         $quote_items = $wpdb->get_results(
-            $wpdb->prepare("SELECT * FROM {$quote_elements_table} WHERE quote_id = %d", $quote_id), ARRAY_A);
+            $wpdb->prepare("SELECT * FROM {$quote_elements_table} WHERE quote_id = %d", $quote_id),
+            ARRAY_A
+        );
 
         foreach ($quote_items as $item) {
             $item_data = array(
-                'invoice_id' => $invoice_id,
-                'item_name' => $encrypt->encrypt($item['item_name']),
-                'item_ref' => $encrypt->encrypt($item['item_ref']),
+                'invoice_id'       => $invoice_id,
+                'item_name'        => $encrypt->encrypt($item['item_name']),
+                'item_ref'         => $encrypt->encrypt($item['item_ref']),
                 'item_description' => $encrypt->encrypt($item['item_description']),
-                'item_category' => $item['item_category'],
-                'quantity' => $encrypt->encrypt($item['quantity']),
-                'vat_rate' => $encrypt->encrypt($item['vat_rate']),
-                'unit_price' => $encrypt->encrypt($item['unit_price']),
-                'discount' => $encrypt->encrypt($item['discount']),
-                'total_price' => $encrypt->encrypt($item['total_price']),
-                'total_amount' => $encrypt->encrypt($item['total_amount']),
-                'item_order' => $item['item_order'],
+                'item_category'    => $item['item_category'],
+                'quantity'         => $encrypt->encrypt($item['quantity']),
+                'vat_rate'         => $encrypt->encrypt($item['vat_rate']),
+                'unit_price'       => $encrypt->encrypt($item['unit_price']),
+                'discount'         => $encrypt->encrypt($item['discount']),
+                'total_price'      => $encrypt->encrypt($item['total_price']),
+                'total_amount'     => $encrypt->encrypt($item['total_amount']),
+                'item_order'       => $item['item_order'],
             );
-            $wpdb->insert(ECWP_TABLE_INVOICE_ELEMENTS, $item_data);
+            $inserted_item = $wpdb->insert(ECWP_TABLE_INVOICE_ELEMENTS, $item_data);
+            if ($inserted_item === false) {
+                $wpdb->query('ROLLBACK');
+                return new WP_Error(
+                    'item_copy_failed',
+                    __('Erreur lors de la copie des éléments du devis vers la facture.', 'my-easy-compta'),
+                    array('status' => 500)
+                );
+            }
         }
 
         $wpdb->update(
@@ -853,6 +1039,10 @@ class ECWP_Quotes
             ),
             array('%d')
         );
+
+        $wpdb->query('COMMIT');
+
+        do_action('ecwp_quote_converted', $quote_id, $invoice_id);
 
         return new WP_REST_Response(array('success' => true, 'message' => __('Quote converted to invoice successfully', 'my-easy-compta'), 'id' => $invoice_id), 200);
     }
@@ -874,11 +1064,139 @@ class ECWP_Quotes
 
     public function generate_quote_pdf(WP_REST_Request $request)
     {
+        // Vérifier les permissions
+        if (!current_user_can('manage_options')) {
+            return new WP_Error('rest_forbidden', __('Désolé, vous n\'avez pas l\'autorisation de faire cela.', 'my-easy-compta'), array('status' => 401));
+        }
+
         global $wpdb;
         $quote_id = $request->get_param('id');
 
+        if (!is_numeric($quote_id)) {
+            return new WP_Error('invalid_quote_id', __('Invalid quote ID.', 'my-easy-compta'), array('status' => 400));
+        }
+
         $pdfGenerator = new PDFGenerator($wpdb);
         $pdfGenerator->generateQuotePDF($quote_id);
+        exit; // Important pour éviter d'ajouter du contenu supplémentaire
+    }
+
+    private function generate_document_number(string $prefix, string $format, string $table_name, int $global_seq): string
+    {
+        global $wpdb;
+        $year  = (int) current_time('Y');
+        $month = (int) current_time('m');
+
+        switch ($format) {
+            case 'prefix_year':
+                $count = (int) $wpdb->get_var($wpdb->prepare(
+                    "SELECT COUNT(*) FROM {$table_name} WHERE YEAR(created_at) = %d",
+                    $year
+                ));
+                return $prefix . '-' . $year . '-' . str_pad($count + 1, 4, '0', STR_PAD_LEFT);
+
+            case 'prefix_year_month':
+                $count = (int) $wpdb->get_var($wpdb->prepare(
+                    "SELECT COUNT(*) FROM {$table_name} WHERE YEAR(created_at) = %d AND MONTH(created_at) = %d",
+                    $year, $month
+                ));
+                return $prefix . '-' . $year . '-' . str_pad($month, 2, '0', STR_PAD_LEFT) . '-' . str_pad($count + 1, 4, '0', STR_PAD_LEFT);
+
+            case 'year':
+                $count = (int) $wpdb->get_var($wpdb->prepare(
+                    "SELECT COUNT(*) FROM {$table_name} WHERE YEAR(created_at) = %d",
+                    $year
+                ));
+                return $year . '-' . str_pad($count + 1, 4, '0', STR_PAD_LEFT);
+
+            default: // 'prefix'
+                return $prefix . '-' . str_pad($global_seq, 4, '0', STR_PAD_LEFT);
+        }
+    }
+
+    /**
+     * Save internal notes on a quote (no lock check — notes are always editable).
+     */
+    public function save_quote_notes(WP_REST_Request $request)
+    {
+        $nonce = sanitize_text_field(wp_unslash($request->get_header('X-WP-Nonce')));
+        if (!wp_verify_nonce($nonce, 'wp_rest')) {
+            return new WP_Error('invalid_nonce', __('Nonce verification failed.', 'my-easy-compta'), array('status' => 403));
+        }
+
+        global $wpdb;
+        $quote_id       = absint($request->get_param('id'));
+        $internal_notes = sanitize_textarea_field($request->get_param('internal_notes') ?? '');
+
+        $updated = $wpdb->update(
+            ECWP_TABLE_QUOTES,
+            array('internal_notes' => $internal_notes),
+            array('id'             => $quote_id),
+            array('%s'),
+            array('%d')
+        );
+
+        if ($updated === false) {
+            return new WP_Error('db_update_error', __('Failed to save notes.', 'my-easy-compta'), array('status' => 500));
+        }
+
+        return new WP_REST_Response(array('success' => true), 200);
+    }
+
+    /**
+     * Return all quote templates (is_template = 1).
+     */
+    public function get_quote_templates(WP_REST_Request $request)
+    {
+        global $wpdb;
+        $encrypt = new \ECWP\Admin\Encrypt\ECWP_Encrypt();
+        $table   = ECWP_TABLE_QUOTES;
+
+        $rows = $wpdb->get_results(
+            "SELECT id, quote_number, created_at FROM {$table} WHERE is_template = 1 ORDER BY created_at DESC",
+            ARRAY_A
+        );
+
+        $templates = array_map(function ($r) use ($encrypt) {
+            $name = $encrypt->decrypt($r['quote_number']);
+            return [
+                'id'   => (int) $r['id'],
+                'name' => $name ?: 'Modèle #' . $r['id'],
+                'date' => $r['created_at'],
+            ];
+        }, $rows ?: []);
+
+        return rest_ensure_response(array('templates' => $templates));
+    }
+
+    /**
+     * Toggle is_template flag on a quote.
+     */
+    public function save_quote_as_template(WP_REST_Request $request)
+    {
+        $nonce = sanitize_text_field(wp_unslash($request->get_header('X-WP-Nonce')));
+        if (!wp_verify_nonce($nonce, 'wp_rest')) {
+            return new WP_Error('invalid_nonce', __('Nonce verification failed.', 'my-easy-compta'), array('status' => 403));
+        }
+
+        global $wpdb;
+        $quote_id    = absint($request->get_param('id'));
+        $is_template = (int) (bool) $request->get_param('is_template');
+        $table       = ECWP_TABLE_QUOTES;
+
+        $updated = $wpdb->update(
+            $table,
+            array('is_template' => $is_template),
+            array('id'          => $quote_id),
+            array('%d'),
+            array('%d')
+        );
+
+        if ($updated === false) {
+            return new WP_Error('db_update_error', __('Failed to update template status.', 'my-easy-compta'), array('status' => 500));
+        }
+
+        return new WP_REST_Response(array('success' => true, 'is_template' => $is_template), 200);
     }
 
 }
