@@ -270,9 +270,12 @@ const submitInvoice = async () => {
 
   loadingBtn.value = true;
   try {
+    const rawClientId = invoice.client_id;
     const payload = {
       ...invoice,
-      client_id: invoice.client_id.value,
+      client_id: (typeof rawClientId === 'object' && rawClientId !== null)
+        ? rawClientId.value
+        : rawClientId,
       due_date: invoice.due_date.toISOString().split('T')[0],
     };
 
@@ -351,7 +354,12 @@ const restoreDraft = () => {
     const saved = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null');
     if (!saved) return;
     if (saved.due_date)         invoice.due_date         = new Date(saved.due_date);
-    if (saved.client_id)        invoice.client_id        = saved.client_id;
+    if (saved.client_id) {
+      // Normalize: always store as {value, text} object for ModelSelect
+      invoice.client_id = (typeof saved.client_id === 'object' && saved.client_id !== null)
+        ? saved.client_id
+        : { value: String(saved.client_id), text: '' };
+    }
     if (saved.status)           invoice.status           = saved.status;
     if (saved.transaction_type) invoice.transaction_type = saved.transaction_type;
   } catch(e) { /* invalid JSON */ }

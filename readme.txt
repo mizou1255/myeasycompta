@@ -3,7 +3,7 @@ Tags: accounting, quotes, invoices, expenses, freelancers
 Requires at least: 6.2
 Tested up to: 6.9
 Requires PHP: 8.0
-Stable tag: 2.0.0
+Stable tag: 2.0.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -171,6 +171,9 @@ Submit a pull request on our [GitHub repository](https://github.com/mizou1255/my
 7. **Global Search** — Instant cross-module search with keyboard shortcut.
 
 == Changelog ==
+
+= 2.0.1 =
+* Fix: Client not saved on invoice creation — client_id was undefined when ModelSelect emitted a string instead of an object.
 
 = 2.0.0 =
 * New: Complete UI redesign — Vue 3 + Tailwind v3, dark mode, collapsible sidebar with animated tooltips.

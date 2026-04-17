@@ -2,7 +2,7 @@
 /**
  * Plugin Name: myEasyCompta
  * Description: Streamline your financial management with myEasyCompta, an all-in-one accounting plugin. Effortlessly handle quotes, invoices, expenses, and more, all within a sleek, user-friendly interface. Perfect for freelancers and small businesses looking to simplify their accounting processes.
- * Version: 2.0.0
+ * Version: 2.0.1
  * Author: MELIOZ.dev
  * Author URI: https://myeasycompta.com
  * Text Domain: my-easy-compta
@@ -36,7 +36,7 @@ final class ECWP_Easy_Compta
      *
      * @var string
      */
-    public $version = '2.0.0';
+    public $version = '2.0.1';
     private $version_migration_db = false;
 
     /**
