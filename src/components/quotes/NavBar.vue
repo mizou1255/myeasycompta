@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-white dark:bg-slate-900 rounded-3xl p-3 px-6 shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 mb-8 flex flex-col xl:flex-row items-center justify-between gap-4">
+  <div class="sticky top-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm rounded-3xl p-3 px-6 shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 mb-8 flex flex-col xl:flex-row items-center justify-between gap-4">
       
       <!-- Left Actions -->
       <div class="flex flex-wrap gap-2 justify-center xl:justify-start w-full xl:w-auto">

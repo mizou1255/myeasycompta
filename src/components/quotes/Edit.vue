@@ -2,7 +2,7 @@
   <MainLayout :title="translations.edit_quote" subtitle="Modifier les informations du devis">
     
     <!-- Toast -->
-    <div v-if="toast.visible" class="fixed top-4 right-4 z-50 animate-in fade-in slide-in-from-top-4 duration-300">
+    <div v-if="toast.visible" class="fixed bottom-8 left-1/2 -translate-x-1/2 z-[9999] toast-animate-in">
       <div :class="['flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl border backdrop-blur-md', toast.type === 'success' ? 'bg-emerald-500/90 text-white border-emerald-400/50' : 'bg-rose-500/90 text-white border-rose-400/50']">
         <component :is="toast.type === 'success' ? 'CheckCircle2' : 'AlertCircle'" class="w-6 h-6" />
         <span class="font-bold text-sm">{{ toast.message }}</span>

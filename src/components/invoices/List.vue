@@ -2,7 +2,7 @@
   <MainLayout :title="translations.invoices || 'Invoices'" :subtitle="translations.invoices_subtitle || 'Manage your invoices and tracking'">
     
     <!-- Toast -->
-    <div v-if="toast.visible" class="fixed bottom-8 right-8 z-[9999] animate-in fade-in slide-in-from-bottom-8 duration-300">
+    <div v-if="toast.visible" class="fixed bottom-8 left-1/2 -translate-x-1/2 z-[9999] toast-animate-in">
       <div :class="['flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl border backdrop-blur-md', toast.type === 'success' ? 'bg-emerald-500/90 text-white border-emerald-400/50' : 'bg-rose-500/90 text-white border-rose-400/50']">
         <component :is="toast.type === 'success' ? 'CheckCircle2' : 'AlertCircle'" class="w-6 h-6" />
         <span class="font-bold text-sm">{{ toast.message }}</span>
@@ -294,7 +294,7 @@
 
                                     <!-- Dupliquer -->
                                     <div class="h-px bg-slate-100 dark:bg-slate-800 my-1"></div>
-                                    <button @click="duplicateInvoice(invoice.id)" class="w-full text-left px-4 py-2.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2">
+                                    <button @click="confirmDuplicateInvoice(invoice)" class="w-full text-left px-4 py-2.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2">
                                         <Copy class="w-3.5 h-3.5" /> {{ translations.duplicate || 'Dupliquer' }}
                                     </button>
 
@@ -303,12 +303,7 @@
                                         <BookmarkPlus class="w-3.5 h-3.5" /> {{ translations.save_as_template || 'Sauvegarder comme modèle' }}
                                     </button>
 
-                                    <template v-if="canEditOrDelete(invoice)">
-                                        <div class="h-px bg-slate-100 dark:bg-slate-800 my-1"></div>
-                                        <button @click="confirmDelete(invoice)" class="w-full text-left px-4 py-2.5 text-xs font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2">
-                                            <Trash2 class="w-3.5 h-3.5" /> {{ translations.delete || 'Supprimer' }}
-                                        </button>
-                                    </template>
+                                    <!-- Suppression interdite par la loi (art. L.441-9 C.com) — utiliser un avoir -->
                                 </div>
                             </div>
                          </div>
@@ -361,9 +356,6 @@
         <button @click="bulkAction('mark_paid')" :disabled="bulkLoading" class="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs px-4 py-2 rounded-xl transition-colors disabled:opacity-50">
           <CheckCheck class="w-3.5 h-3.5" />{{ translations.mark_as_paid || 'Marquer payé' }}
         </button>
-        <button @click="bulkAction('delete')" :disabled="bulkLoading" class="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white font-black text-xs px-4 py-2 rounded-xl transition-colors disabled:opacity-50">
-          <Trash2 class="w-3.5 h-3.5" />{{ translations.delete || 'Supprimer' }}
-        </button>
         <button @click="clearSelection" class="p-2 rounded-xl hover:bg-white/10 dark:hover:bg-slate-100 transition-colors">
           <X class="w-4 h-4" />
         </button>
@@ -379,8 +371,19 @@
       @cancel="showRemoveModal = false"
     />
 
+    <!-- Confirm Duplicate Modal -->
+    <confirm-modal
+      :show-modal="showConfirmDuplicateModal"
+      :title="translations.are_you_sure || 'Confirmation'"
+      :message="translations.duplicate_invoice_confirm || 'Voulez-vous dupliquer cette facture ?'"
+      :confirm-text="translations.duplicate || 'Dupliquer'"
+      :cancel-text="translations.cancel || 'Annuler'"
+      @confirm="duplicateInvoice(selectedInvoice)"
+      @cancel="showConfirmDuplicateModal = false"
+    />
+
     <!-- Send Modal -->
-    <SendInvoiceModal 
+    <SendInvoiceModal
        v-if="showSendModal"
        :show-modal="showSendModal"
        modal-id="modal_send_invoice"
@@ -402,6 +405,7 @@ import { useRouter, useRoute } from 'vue-router';
 import MainLayout from '@/components/layout/MainLayout.vue';
 import { Plus, Download, Search, RefreshCcw, FileText, FileCheck, Eye, Pencil, MoreVertical, Send, Trash2, ChevronLeft, ChevronRight, BadgePercent, CheckCircle, Upload, X, CheckCircle2, AlertCircle, CheckSquare, Square, CheckCheck, Copy, BookmarkPlus, LayoutTemplate } from 'lucide-vue-next';
 import RemoveModal from "@/components/RemoveAlert.vue";
+import ConfirmModal from "@/components/ConfirmAlert.vue";
 import SendInvoiceModal from "@/components/invoices/Send.vue";
 import DateRangePicker from "@/components/DateRangePicker.vue";
 import FiscalStatusBadge from "@/components/invoices/FiscalStatusBadge.vue";
@@ -436,6 +440,7 @@ const filters = reactive({
 });
 const selectedInvoice = ref(null);
 const showRemoveModal = ref(false);
+const showConfirmDuplicateModal = ref(false);
 const showSendModal = ref(false);
 const selectedIds = ref(new Set());
 const bulkLoading = ref(false);
@@ -645,9 +650,15 @@ const isOverdue = (invoice) => {
     return new Date(invoice.due_date_raw) < new Date(new Date().toDateString());
 };
 
-const duplicateInvoice = async (id) => {
+const confirmDuplicateInvoice = (invoice) => {
+    selectedInvoice.value = invoice;
+    showConfirmDuplicateModal.value = true;
+};
+
+const duplicateInvoice = async (invoice) => {
+    showConfirmDuplicateModal.value = false;
     try {
-        const res = await fetch(`/wp-json/my-easy-compta/v1/invoices/${id}/duplicate`, {
+        const res = await fetch(`/wp-json/my-easy-compta/v1/invoices/${invoice.id}/duplicate`, {
             method: "POST",
             headers: { "X-WP-Nonce": window.myEasyComptaAdmin.nonce }
         });
@@ -655,10 +666,12 @@ const duplicateInvoice = async (id) => {
         if (!res.ok || data.code) {
             showToast(data.message || "Erreur lors de la duplication", "error");
         } else {
-            showToast(data.message || "Facture dupliquée", "success");
+            showToast(data.message || translations.value.invoice_duplicated || "Facture dupliquée avec succès", "success");
             fetchInvoices();
         }
-    } catch (e) {}
+    } catch (e) {
+        showToast("Erreur lors de la duplication", "error");
+    }
 };
 
 const validateInvoice = async (id) => {

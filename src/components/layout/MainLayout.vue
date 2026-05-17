@@ -183,15 +183,10 @@ onMounted(() => {
         document.documentElement.classList.add('dark');
     }
 
-    // Init Sidebar - Auto collapse on small screens
+    // Init Sidebar — collapsed by default unless user explicitly opened it
     const savedSidebar = localStorage.getItem('ecwp_sidebar_collapsed');
-    if (savedSidebar === 'true') {
+    if (savedSidebar !== 'false') {
         isCollapsed.value = true;
-    }
-    
-    // Check screen size
-    if (window.innerWidth < 1280) {
-       isCollapsed.value = true;
     }
 
     // Also check on mount for detail pages

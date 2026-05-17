@@ -52,10 +52,15 @@
                         <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">
                             Catégorie
                         </label>
-                        <select v-model="newItem.item_category" class="kloxy-input cursor-pointer">
-                            <option value="Type" disabled>Choisir un type</option>
-                            <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
-                        </select>
+                        <div class="flex gap-2">
+                            <select v-model="newItem.item_category" class="kloxy-input cursor-pointer flex-1">
+                                <option value="Type" disabled>Choisir un type</option>
+                                <option v-for="cat in localCategories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
+                            </select>
+                            <button type="button" @click="openAddCategory" class="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-2xl bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 hover:bg-purple-600 hover:text-white transition-all" :title="'Ajouter une catégorie'">
+                                <Plus class="w-5 h-5" />
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -142,6 +147,37 @@
         @select-article="onArticleFromLibrary"
       />
 
+      <!-- Sub-modal: Add Category -->
+      <dialog ref="categoryDialogRef" class="bg-transparent p-0 border-none shadow-none backdrop:bg-slate-900/70 backdrop:backdrop-blur-sm open:animate-in open:fade-in open:zoom-in-95 duration-200">
+        <div class="bg-white dark:bg-slate-900 rounded-[2rem] p-6 w-[90vw] max-w-sm shadow-2xl border border-slate-100 dark:border-slate-800 text-left">
+          <div class="flex items-center justify-between mb-5">
+            <h4 class="text-lg font-black text-slate-900 dark:text-white">Nouvelle catégorie</h4>
+            <button type="button" @click="closeAddCategory" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-xl transition-colors">
+              <X class="w-5 h-5" />
+            </button>
+          </div>
+          <div class="space-y-4">
+            <input
+              v-model="newCategoryName"
+              type="text"
+              class="kloxy-input"
+              placeholder="Nom de la catégorie"
+              @keydown.enter.prevent="submitCategory"
+            />
+            <div class="flex items-center justify-end gap-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+              <button type="button" @click="closeAddCategory" class="px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                Annuler
+              </button>
+              <button type="button" @click="submitCategory" :disabled="loadingCategory || !newCategoryName.trim()" class="bg-purple-600 text-white px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg shadow-purple-500/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+                <span v-if="loadingCategory" class="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                <Plus class="w-3.5 h-3.5" v-else />
+                Créer
+              </button>
+            </div>
+          </div>
+        </div>
+      </dialog>
+
       <form method="dialog" class="fixed inset-0 z-[-1] cursor-default bg-transparent w-full h-full outline-none" @click="closeModal"></form>
     </dialog>
 </template>
@@ -166,6 +202,42 @@ const emit = defineEmits(['close', 'itemAdded']);
 const { showModal, modalId } = toRefs(props);
 const loadingBtn = ref(false);
 const showArticlesLibrary = ref(false);
+
+// Local copy of categories so we can append new ones without mutating the prop
+const localCategories = ref([...(props.categories || [])]);
+watch(() => props.categories, (val) => { localCategories.value = [...(val || [])]; });
+
+// Sub-modal: add category
+const categoryDialogRef = ref(null);
+const newCategoryName = ref('');
+const loadingCategory = ref(false);
+
+const openAddCategory = () => {
+    newCategoryName.value = '';
+    categoryDialogRef.value?.showModal();
+};
+const closeAddCategory = () => {
+    categoryDialogRef.value?.close();
+};
+
+const submitCategory = async () => {
+    if (!newCategoryName.value.trim()) return;
+    loadingCategory.value = true;
+    try {
+        const res = await axios.post('/wp-json/my-easy-compta/v1/settings/categories-articles', { name: newCategoryName.value.trim() }, {
+            headers: { 'X-WP-Nonce': window.myEasyComptaAdmin.nonce }
+        });
+        if (res.data.success) {
+            const created = { id: res.data.id, name: newCategoryName.value.trim() };
+            localCategories.value.push(created);
+            newItem.item_category = created.id;
+            closeAddCategory();
+        }
+    } catch (e) {
+    } finally {
+        loadingCategory.value = false;
+    }
+};
 const suggestions = ref([]);
 const showSuggestions = ref(false);
 const activeSearchField = ref(''); // 'ref' or 'name'

@@ -8,13 +8,21 @@
           <Plus class="w-4 h-4" />
           {{ translations.add || 'Ajouter' }}
         </button>
-        <button 
+        <button
           v-if="exportAddonActive"
           @click="openExport"
           class="bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-100 dark:border-slate-700 px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
         >
            <Download class="w-4 h-4" />
            {{ translations.export || 'Export' }}
+        </button>
+        <button
+          @click="showMapModal = true"
+          class="bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-100 dark:border-slate-700 px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
+          :title="translations.clients_map || 'Carte des clients'"
+        >
+           <Map class="w-4 h-4" />
+           {{ translations.map || 'Carte' }}
         </button>
     </template>
 
@@ -242,14 +250,20 @@
       @cancel="showRemoveModal = false"
     />
 
+    <ClientMap
+      :show-modal="showMapModal"
+      :clients="allClients"
+      @close="showMapModal = false"
+    />
+
   </MainLayout>
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, onUnmounted } from 'vue';
+import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import MainLayout from '@/components/layout/MainLayout.vue';
-import { Plus, Download, Search, Mail, Phone, Eye, Pencil, Trash2, Users, ChevronLeft, ChevronRight, RefreshCcw, Archive, ArchiveRestore } from 'lucide-vue-next';
+import { Plus, Download, Search, Mail, Phone, Eye, Pencil, Trash2, Users, ChevronLeft, ChevronRight, RefreshCcw, Archive, ArchiveRestore, Map } from 'lucide-vue-next';
 import { generatePaginationButtons, showToast } from "@/utils/helpers"; // Keep generic helpers
 
 // Legacy Component Imports
@@ -257,6 +271,7 @@ import AddClientModal from "@/components/clients/Add.vue";
 import ClientDetailsModal from "@/components/clients/View.vue";
 import ClientEditModal from "@/components/clients/Edit.vue";
 import RemoveModal from "@/components/RemoveAlert.vue";
+import ClientMap from "@/components/clients/ClientMap.vue";
 import { fetchSettings } from "@/api/api"; // Ensure this path is correct
 
 const route = useRoute();
@@ -279,6 +294,8 @@ const paginationButtons = ref([]);
 // Refs (if needed, but using props preferred)
 
 const showArchived = ref(false);
+const showMapModal = ref(false);
+const allClients = ref([]);
 
 const filters = reactive({
     company_name: '',
@@ -450,6 +467,17 @@ const handleOpenClientModal = (event) => {
         showClientDetails({ id: clientId });
       }
 };
+
+watch(showMapModal, (val) => {
+    if (val && allClients.value.length === 0) {
+        fetch(`/wp-json/my-easy-compta/v1/clients?per_page=500&page=1`, {
+            headers: { "X-WP-Nonce": window.myEasyComptaAdmin?.nonce || '' }
+        })
+        .then(r => r.json())
+        .then(d => { allClients.value = d.clients || []; })
+        .catch(() => {});
+    }
+});
 
 onMounted(() => {
     fetchClients();

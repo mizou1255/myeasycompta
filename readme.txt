@@ -3,7 +3,7 @@ Tags: accounting, quotes, invoices, expenses, freelancers
 Requires at least: 6.2
 Tested up to: 6.9
 Requires PHP: 8.0
-Stable tag: 2.0.1
+Stable tag: 2.1.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -172,8 +172,20 @@ Submit a pull request on our [GitHub repository](https://github.com/mizou1255/my
 
 == Changelog ==
 
-= 2.0.1 =
-* Fix: Client not saved on invoice creation — client_id was undefined when ModelSelect emitted a string instead of an object.
+= 2.1.0 =
+* New: Tab "Documents PDF" dans les Paramètres — regroupe logo, affichage sur les documents (téléphone, e-mail, SIREN, n° TVA, filigrane) et mentions logo.
+* New: Aperçu du prochain numéro de facture/devis formaté en temps réel selon le format choisi (`next_invoice_number`, `next_quote_number`).
+* New: Détection des nouveaux addons : Webhooks & Zapier, Export FEC, Scan Reçus (OCR), Mobile.
+* New: Hook `ecwp_payment_created` déclenché après chaque enregistrement de paiement.
+* New: Hook `ecwp_expense_created` déclenché après chaque création de dépense.
+* New: Composants Vue pour les modules FEC et Webhooks.
+* New: Carte géographique clients (`ClientMap.vue`).
+* Enhance: Suppression de factures bloquée côté API — la loi française interdit la suppression de factures émises (art. L.441-9 C.com) ; utiliser un avoir.
+* Enhance: Numérotation documents refactorisée — séquence basée sur `MAX(number)+1` (garantit l'unicité même si le format change en cours d'année).
+* Enhance: Seed de paramètres enrichi avec toutes les valeurs par défaut manquantes (`credit_prefix`, `currency_position`, `date_format`, IBAN/BIC, couleurs, options PDF…).
+* Enhance: Injection `type="module"` sur les scripts — remplace correctement un attribut `type="text/javascript"` existant au lieu de le dupliquer.
+* Fix: Restauration d'un brouillon de facture — `client_id` normalisé pour éviter un crash si la valeur sauvegardée est un entier brut.
+* Fix: `build_number_preview()` — aperçu du numéro toujours cohérent avec le format de numérotation sélectionné.
 
 = 2.0.0 =
 * New: Complete UI redesign — Vue 3 + Tailwind v3, dark mode, collapsible sidebar with animated tooltips.

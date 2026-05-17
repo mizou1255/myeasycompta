@@ -2,7 +2,7 @@
   <MainLayout :title="quote.quote_number || 'Chargement...'" :subtitle="quote.created_at ? `${translations.created_at}: ${quote.created_at}` : ''">
     
     <!-- Toast -->
-    <div v-if="toast.visible" class="fixed bottom-8 right-8 z-[9999] animate-in fade-in slide-in-from-bottom-8 duration-300">
+    <div v-if="toast.visible" class="fixed bottom-8 left-1/2 -translate-x-1/2 z-[9999] toast-animate-in">
       <div :class="['flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl border backdrop-blur-md', toast.type === 'success' ? 'bg-emerald-500/90 text-white border-emerald-400/50' : 'bg-rose-500/90 text-white border-rose-400/50']">
         <component :is="toast.type === 'success' ? 'CheckCircle2' : 'AlertCircle'" class="w-6 h-6" />
         <span class="font-bold text-sm">{{ toast.message }}</span>
@@ -203,22 +203,20 @@
           <!-- Totals -->
           <div class="flex flex-col items-end relative z-10">
              <div class="w-full md:w-1/3 space-y-4 bg-slate-50 dark:bg-slate-950/50 rounded-3xl p-8 border border-slate-100 dark:border-slate-800">
-                  <div class="flex justify-between items-center text-slate-500 font-bold text-sm">
-                     <span>{{ translations.subtotal }}:</span>
-                     <span class="font-mono text-slate-900 dark:text-white">
-                        <span v-if="totalAmount !== totalAmountWithoutDiscount" class="line-through text-xs text-slate-300 mr-2">{{ totalAmountWithoutDiscount }}</span>
-                        {{ totalAmount }}
-                     </span>
-                 </div>
-                 
                  <template v-if="settings.vat_active == 1">
+                     <div class="flex justify-between items-center text-slate-500 font-bold text-sm">
+                         <span>{{ translations.subtotal }}:</span>
+                         <span class="font-mono text-slate-900 dark:text-white">
+                             <span v-if="totalAmount !== totalAmountWithoutDiscount" class="line-through text-xs text-slate-300 mr-2">{{ totalAmountWithoutDiscount }}</span>
+                             {{ totalAmount }}
+                         </span>
+                     </div>
                      <div v-for="rate in getUniqueVATRates()" :key="rate" class="flex justify-between items-center text-slate-500 font-bold text-sm">
                          <span>{{ translations.tax }} ({{ rate }}%):</span>
                          <span class="font-mono text-slate-900 dark:text-white">{{ calculateVATForRate(rate) }}</span>
                      </div>
+                     <div class="h-px bg-slate-200 dark:bg-slate-800 my-4"></div>
                  </template>
-
-                 <div class="h-px bg-slate-200 dark:bg-slate-800 my-4"></div>
 
                  <div class="flex justify-between items-center text-lg font-black text-slate-900 dark:text-white">
                      <span>{{ translations.total }}:</span>

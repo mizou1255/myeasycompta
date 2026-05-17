@@ -30,9 +30,9 @@ const props = defineProps({
     modalId: String,
     showModal: Boolean,
     title: { type: String, default: "Confirmation" },
-    message: { type: String, default: "Are you sure?" },
-    confirmText: { type: String, default: "Delete" },
-    cancelText: { type: String, default: "Cancel" }
+    message: { type: String, default: "Vous êtes sûr ?" },
+    confirmText: { type: String, default: "Supprimer" },
+    cancelText: { type: String, default: "Annuler" }
 });
 
 const emit = defineEmits(['confirm', 'cancel']);

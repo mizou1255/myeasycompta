@@ -1,0 +1,151 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "🚀 Deploy → Production",
+      "type": "shell",
+      "command": "bash '${workspaceFolder}/deploy/deploy.sh' ${input:deployTarget}",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true,
+        "focus": true,
+        "showReuseMessage": false
+      },
+      "problemMatcher": [],
+      "runOptions": {
+        "runOn": "default"
+      }
+    },
+    {
+      "label": "🎨 Deploy → Thème Landing",
+      "type": "shell",
+      "command": "bash '${workspaceFolder}/deploy/deploy.sh' theme",
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true,
+        "focus": true,
+        "showReuseMessage": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🔌 Deploy → Plugin Core",
+      "type": "shell",
+      "command": "bash '${workspaceFolder}/deploy/deploy.sh' core",
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true,
+        "focus": true,
+        "showReuseMessage": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🔑 Deploy → License Server",
+      "type": "shell",
+      "command": "bash '${workspaceFolder}/deploy/deploy.sh' license-server",
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true,
+        "focus": true,
+        "showReuseMessage": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "⚡ Deploy → Fichiers modifiés (git diff)",
+      "type": "shell",
+      "command": "bash '${workspaceFolder}/deploy/deploy.sh' modified",
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true,
+        "focus": true,
+        "showReuseMessage": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "📦 Deploy → Addon",
+      "type": "shell",
+      "command": "bash '${workspaceFolder}/deploy/deploy.sh' addon ${input:addonSlug}",
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true,
+        "focus": true,
+        "showReuseMessage": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🌍 Deploy → TOUT (thème + core + server)",
+      "type": "shell",
+      "command": "bash '${workspaceFolder}/deploy/deploy.sh' all",
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true,
+        "focus": true,
+        "showReuseMessage": false
+      },
+      "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    {
+      "id": "deployTarget",
+      "type": "pickString",
+      "description": "Que déployer en production ?",
+      "options": [
+        { "label": "🎨  Thème Landing",                       "value": "theme" },
+        { "label": "🔌  Plugin Core (my-easy-compta)",        "value": "core" },
+        { "label": "🔑  License Server",                      "value": "license-server" },
+        { "label": "⚡  Fichiers modifiés (git diff)",         "value": "modified" },
+        { "label": "📦  Addon : advance (Acomptes)",          "value": "addon advance" },
+        { "label": "📦  Addon : backup (Sauvegarde)",         "value": "addon backup" },
+        { "label": "📦  Addon : contracts (Contrats)",        "value": "addon contracts" },
+        { "label": "📦  Addon : delivery (Bons de livraison)","value": "addon delivery" },
+        { "label": "📦  Addon : email (Emails)",              "value": "addon email" },
+        { "label": "📦  Addon : export (Export CSV/Excel)",   "value": "addon export" },
+        { "label": "📦  Addon : fec (FEC)",                   "value": "addon fec" },
+        { "label": "📦  Addon : ocr (OCR)",                   "value": "addon ocr" },
+        { "label": "📦  Addon : online-quote (Devis en ligne)","value": "addon online-quote" },
+        { "label": "📦  Addon : payment (Stripe)",            "value": "addon payment" },
+        { "label": "📦  Addon : planning (Planning)",         "value": "addon planning" },
+        { "label": "📦  Addon : qrcode-stripe (QR Code)",     "value": "addon qrcode-stripe" },
+        { "label": "📦  Addon : recurring (Factures récurr.)","value": "addon recurring" },
+        { "label": "📦  Addon : signature (Signature élec.)", "value": "addon signature" },
+        { "label": "📦  Addon : siret (SIRET/SIREN)",         "value": "addon siret" },
+        { "label": "📦  Addon : sms (SMS)",                   "value": "addon sms" },
+        { "label": "📦  Addon : stats (Statistiques)",        "value": "addon stats" },
+        { "label": "📦  Addon : surecart (SureCart)",         "value": "addon surecart" },
+        { "label": "📦  Addon : timetracking (Suivi temps)",  "value": "addon timetracking" },
+        { "label": "📦  Addon : user (Espace client)",        "value": "addon user" },
+        { "label": "📦  Addon : webhooks (Webhooks)",         "value": "addon webhooks" },
+        { "label": "📦  Addon : woo (WooCommerce)",           "value": "addon woo" },
+        { "label": "🌍  TOUT déployer (thème + core + server)","value": "all" }
+      ]
+    },
+    {
+      "id": "addonSlug",
+      "type": "promptString",
+      "description": "Slug de l'addon (ex: payment, stats, advance)",
+      "default": ""
+    }
+  ]
+}

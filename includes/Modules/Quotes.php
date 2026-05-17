@@ -46,7 +46,7 @@ class ECWP_Quotes
             return current_user_can('manage_options');
         });
 
-        $this->routes->add_route('/quotes/duplicate/(?P<id>\d+)', 'POST', $this, 'duplicate_quote', function () {
+        $this->routes->add_route('/quotes/(?P<id>\d+)/duplicate', 'POST', $this, 'duplicate_quote', function () {
             return current_user_can('manage_options');
         });
 
@@ -308,15 +308,16 @@ class ECWP_Quotes
         $wpdb->query('START TRANSACTION');
 
         // Lock to prevent concurrent requests getting the same number.
-        $last_quote_id = $wpdb->get_var("SELECT MAX(number) FROM {$quotes_table} FOR UPDATE");
-        if (empty($last_quote_id)) {
-            $last_quote_id = (int) $wpdb->get_var($wpdb->prepare("SELECT meta_value FROM {$settings_table} WHERE meta_key = %s", 'quote_first'));
+        $max_number    = $wpdb->get_var("SELECT MAX(number) FROM {$quotes_table} FOR UPDATE");
+        if ($max_number === null) {
+            $configured_first = $wpdb->get_var($wpdb->prepare("SELECT meta_value FROM {$settings_table} WHERE meta_key = %s", 'quote_first'));
+            $last_quote_id    = max(1, (int) $configured_first);
         } else {
-            $last_quote_id = (int) $last_quote_id + 1;
+            $last_quote_id = (int) $max_number + 1;
         }
 
         $quote_prefix = $wpdb->get_var($wpdb->prepare("SELECT meta_value FROM {$settings_table} WHERE meta_key = %s", 'quote_prefix'));
-        $quote_prefix = $quote_prefix ? sanitize_text_field($quote_prefix) : 'QUO';
+        $quote_prefix = $quote_prefix ? sanitize_text_field($quote_prefix) : 'EST';
         $quote_number_format = $wpdb->get_var($wpdb->prepare("SELECT meta_value FROM {$settings_table} WHERE meta_key = %s", 'quote_number_format')) ?: 'prefix';
         $quote_number = $this->generate_document_number($quote_prefix, $quote_number_format, $quotes_table, $last_quote_id);
 
@@ -613,16 +614,16 @@ class ECWP_Quotes
         unset($original_quote['id']);
         $quotes_table = ECWP_TABLE_QUOTES;
         $settings_table = ECWP_TABLE_SETTINGS;
-        $last_quote_id = (int) $wpdb->get_var("SELECT MAX(number) FROM {$quotes_table} FOR UPDATE");
-        if ($last_quote_id <= 0) {
-            $first = (int) $wpdb->get_var($wpdb->prepare("SELECT meta_value FROM {$settings_table} WHERE meta_key = %s", 'quote_first'));
-            $last_quote_id = $first > 0 ? $first : 1;
+        $max_dup_q     = $wpdb->get_var("SELECT MAX(number) FROM {$quotes_table} FOR UPDATE");
+        if ($max_dup_q === null) {
+            $first         = (int) $wpdb->get_var($wpdb->prepare("SELECT meta_value FROM {$settings_table} WHERE meta_key = %s", 'quote_first'));
+            $last_quote_id = max(1, $first);
         } else {
-            $last_quote_id = $last_quote_id + 1;
+            $last_quote_id = (int) $max_dup_q + 1;
         }
 
         $quote_prefix = $wpdb->get_var($wpdb->prepare("SELECT meta_value FROM {$settings_table} WHERE meta_key = %s", 'quote_prefix'));
-        $quote_prefix = $quote_prefix ? sanitize_text_field($quote_prefix) : 'QUO';
+        $quote_prefix = $quote_prefix ? sanitize_text_field($quote_prefix) : 'EST';
         $quote_number_format = $wpdb->get_var($wpdb->prepare("SELECT meta_value FROM {$settings_table} WHERE meta_key = %s", 'quote_number_format')) ?: 'prefix';
         $quote_number = $this->generate_document_number($quote_prefix, $quote_number_format, $quotes_table, $last_quote_id);
 
@@ -632,10 +633,10 @@ class ECWP_Quotes
         // Reset state fields — the duplicate starts fresh
         $original_quote['status']      = 'draft';
         $original_quote['converted']   = 0;
-        $original_quote['signed']      = 0;
-        $original_quote['file_sign']   = null;
-        $original_quote['sent']        = 0;
         $original_quote['is_template'] = 0;
+
+        // Remove addon-specific columns that may not exist in the base table
+        unset($original_quote['signed'], $original_quote['file_sign'], $original_quote['sent']);
 
         // Mettre à jour les dates avec la date actuelle
         $current_date = current_time('Y-m-d');
@@ -685,7 +686,7 @@ class ECWP_Quotes
         }
         $wpdb->query('COMMIT');
 
-        return new WP_REST_Response(array('success' => true, 'message' => __('Quote and related items successfully duplicated.', 'easy-compta'), 'new_quote_id' => $new_quote_id), 200);
+        return new \WP_REST_Response(array('success' => true, 'message' => __('Devis dupliqué avec succès', 'my-easy-compta'), 'new_quote_id' => $new_quote_id), 200);
     }
 
     public function edit_quote(WP_REST_Request $request)
@@ -964,19 +965,27 @@ class ECWP_Quotes
 
         $wpdb->query('START TRANSACTION');
 
-        $invoices_table = ECWP_TABLE_INVOICES;
+        $invoices_table  = ECWP_TABLE_INVOICES;
+        $settings_table  = ECWP_TABLE_SETTINGS;
         // Lock to prevent concurrent invoice number conflicts.
-        $last_invoice_id = $wpdb->get_var("SELECT MAX(number) FROM {$invoices_table} FOR UPDATE");
-        $padded_invoice_id = str_pad(intval($last_invoice_id + 1), 4, "0", STR_PAD_LEFT);
+        $max_inv = $wpdb->get_var("SELECT MAX(number) FROM {$invoices_table} FOR UPDATE");
+        if ($max_inv === null) {
+            $configured_first = $wpdb->get_var($wpdb->prepare("SELECT meta_value FROM {$settings_table} WHERE meta_key = %s", 'invoice_first'));
+            $next_invoice_seq = max(1, (int) $configured_first);
+        } else {
+            $next_invoice_seq = (int) $max_inv + 1;
+        }
 
         $settings = new ECWP_Settings();
-        $invoice_prefix = $settings->get_setting('invoice_prefix');
+        $invoice_prefix        = $settings->get_setting('invoice_prefix') ?: 'INV';
+        $invoice_number_format = $settings->get_setting('invoice_number_format') ?: 'prefix';
+        $invoice_number_str    = $this->generate_document_number($invoice_prefix, $invoice_number_format, $invoices_table, $next_invoice_seq);
 
         $encrypt = new \ECWP\Admin\Encrypt\ECWP_Encrypt;
 
         $invoice_data = array(
-            'number' => $last_invoice_id + 1,
-            'invoice_number' => $encrypt->encrypt($invoice_prefix . '_' . $padded_invoice_id),
+            'number' => $next_invoice_seq,
+            'invoice_number' => $encrypt->encrypt($invoice_number_str),
             'client_id' => $quote['client_id'],
             'amount' => $encrypt->encrypt($quote['amount']),
             'total_amount' => $encrypt->encrypt($quote['total_amount']),
@@ -1081,36 +1090,21 @@ class ECWP_Quotes
         exit; // Important pour éviter d'ajouter du contenu supplémentaire
     }
 
-    private function generate_document_number(string $prefix, string $format, string $table_name, int $global_seq): string
+    private function generate_document_number(string $prefix, string $format, string $table, int $seq): string
     {
-        global $wpdb;
         $year  = (int) current_time('Y');
         $month = (int) current_time('m');
+        $num   = str_pad($seq, 4, '0', STR_PAD_LEFT);
 
         switch ($format) {
             case 'prefix_year':
-                $count = (int) $wpdb->get_var($wpdb->prepare(
-                    "SELECT COUNT(*) FROM {$table_name} WHERE YEAR(created_at) = %d",
-                    $year
-                ));
-                return $prefix . '-' . $year . '-' . str_pad($count + 1, 4, '0', STR_PAD_LEFT);
-
+                return $prefix . '-' . $year . '-' . $num;
             case 'prefix_year_month':
-                $count = (int) $wpdb->get_var($wpdb->prepare(
-                    "SELECT COUNT(*) FROM {$table_name} WHERE YEAR(created_at) = %d AND MONTH(created_at) = %d",
-                    $year, $month
-                ));
-                return $prefix . '-' . $year . '-' . str_pad($month, 2, '0', STR_PAD_LEFT) . '-' . str_pad($count + 1, 4, '0', STR_PAD_LEFT);
-
+                return $prefix . '-' . $year . '-' . str_pad($month, 2, '0', STR_PAD_LEFT) . '-' . $num;
             case 'year':
-                $count = (int) $wpdb->get_var($wpdb->prepare(
-                    "SELECT COUNT(*) FROM {$table_name} WHERE YEAR(created_at) = %d",
-                    $year
-                ));
-                return $year . '-' . str_pad($count + 1, 4, '0', STR_PAD_LEFT);
-
+                return $year . '-' . $num;
             default: // 'prefix'
-                return $prefix . '-' . str_pad($global_seq, 4, '0', STR_PAD_LEFT);
+                return $prefix . '-' . $num;
         }
     }
 

@@ -188,6 +188,7 @@ html, body, #wpwrap, #wpcontent, #wpbody, #wpbody-content {
                 'user'          => $this->is_addon_active_by_prefix('my-easy-compta-user'),
                 'woo'           => $this->is_addon_active_by_prefix('my-easy-compta-woo'),
                 'surecart'      => $this->is_addon_active_by_prefix('my-easy-compta-surecart'),
+                'mobile'        => $this->is_addon_active_by_prefix('my-easy-compta-mobile'),
                 'delivery'      => $this->is_addon_pro('my-easy-compta-delivery'),
                 'online_quote'  => $this->is_addon_active_by_prefix('my-easy-compta-online-quote'),
                 'sms'           => $this->is_addon_active_by_prefix('my-easy-compta-sms'),
@@ -195,6 +196,9 @@ html, body, #wpwrap, #wpcontent, #wpbody, #wpbody-content {
             'deliveryAddonActive'    => $this->is_addon_pro('my-easy-compta-delivery'),
             'onlineQuoteAddonActive' => $this->is_addon_active_by_prefix('my-easy-compta-online-quote'),
             'smsAddonActive'         => $this->is_addon_active_by_prefix('my-easy-compta-sms'),
+            'webhooksAddonActive'    => $this->is_addon_active_by_prefix('my-easy-compta-webhooks'),
+            'fecAddonActive'         => $this->is_addon_active_by_prefix('my-easy-compta-fec'),
+            'ocrAddonActive'         => $this->is_addon_active_by_prefix('my-easy-compta-ocr'),
             'pdpConfigured'          => $this->is_pdp_configured(),
         ));
     }
@@ -272,7 +276,15 @@ html, body, #wpwrap, #wpcontent, #wpbody, #wpbody-content {
         );
 
         if (in_array($handle, $scripts)) {
-            return str_replace(' src', ' type="module" src', $tag);
+            // Replace existing type attribute if present, otherwise add type="module" before src
+            if (str_contains($tag, "type='text/javascript'")) {
+                $tag = str_replace("type='text/javascript'", 'type="module"', $tag);
+            } elseif (str_contains($tag, 'type="text/javascript"')) {
+                $tag = str_replace('type="text/javascript"', 'type="module"', $tag);
+            } else {
+                $tag = str_replace(' src', ' type="module" src', $tag);
+            }
+            return $tag;
         }
 
         return $tag;

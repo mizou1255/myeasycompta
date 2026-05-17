@@ -482,11 +482,13 @@ class ECWP_Invoices
         $wpdb->query('START TRANSACTION');
 
         // Lock the table row to prevent concurrent inserts getting the same number.
-        $last_invoice_id = $wpdb->get_var("SELECT MAX(number) FROM {$invoices_table} FOR UPDATE");
-        if (empty($last_invoice_id)) {
-            $last_invoice_id = (int) $wpdb->get_var($wpdb->prepare("SELECT meta_value FROM {$settings_table} WHERE meta_key = %s", 'invoice_first'));
+        $max_number = $wpdb->get_var("SELECT MAX(number) FROM {$invoices_table} FOR UPDATE");
+        if ($max_number === null) {
+            // No invoice yet — use the configured starting number (default 1).
+            $configured_first = $wpdb->get_var($wpdb->prepare("SELECT meta_value FROM {$settings_table} WHERE meta_key = %s", 'invoice_first'));
+            $last_invoice_id  = max(1, (int) $configured_first);
         } else {
-            $last_invoice_id = (int) $last_invoice_id + 1;
+            $last_invoice_id = (int) $max_number + 1;
         }
 
         $invoice_prefix = $wpdb->get_var($wpdb->prepare("SELECT meta_value FROM {$settings_table} WHERE meta_key = %s", 'invoice_prefix'));
@@ -821,43 +823,13 @@ class ECWP_Invoices
 
     public function delete_invoice(\WP_REST_Request $request)
     {
-        // Verify nonce
-        $nonce = sanitize_text_field(wp_unslash($request->get_header('X-WP-Nonce')));
-        if (!wp_verify_nonce($nonce, 'wp_rest')) {
-            return new \WP_Error('rest_nonce_invalid', __('Invalid nonce', 'my-easy-compta'), array('status' => 403));
-        }
-
-        // Validate ID
-        $invoice_id = $request->get_param('id');
-        if (!is_numeric($invoice_id)) {
-            return new \WP_Error('invalid_invoice_id', __('Invalid invoice ID.', 'my-easy-compta'), array('status' => 400));
-        }
-
-        // Vérification immutabilité
-        $immutable = $this->check_immutability($invoice_id);
-        if (is_wp_error($immutable)) {
-            return $immutable;
-        }
-
-        global $wpdb;
-
-        try {
-            $wpdb->query('START TRANSACTION');
-
-            $wpdb->delete(ECWP_TABLE_INVOICE_ELEMENTS, array('invoice_id' => $invoice_id));
-            $wpdb->delete(ECWP_TABLE_PAYMENTS, array('invoice_id' => $invoice_id));
-            $delete_invoice = $wpdb->delete(ECWP_TABLE_INVOICES, array('id' => $invoice_id));
-
-            if ($delete_invoice === false) {
-                throw new \Exception('Delete operation failed');
-            }
-
-            $wpdb->query('COMMIT');
-            return new \WP_REST_Response(array('success' => true, 'message' => __('Invoice and related items successfully deleted', 'my-easy-compta')), 200);
-        } catch (\Exception $e) {
-            $wpdb->query('ROLLBACK');
-            return new \WP_Error('delete_failed', __('Failure to delete invoice and/or associated items', 'my-easy-compta'), array('status' => 500));
-        }
+        // La suppression de factures est interdite par la loi française (art. L. 441-9 C.com)
+        // Utiliser un avoir pour annuler une facture émise.
+        return new \WP_Error(
+            'invoice_deletion_forbidden',
+            __('La suppression de factures est interdite par la loi. Pour annuler une facture, créez un avoir.', 'my-easy-compta'),
+            array('status' => 403)
+        );
     }
     public function bulk_action(\WP_REST_Request $request)
     {
@@ -869,7 +841,14 @@ class ECWP_Invoices
         $action  = sanitize_key($request->get_param('action'));
         $raw_ids = $request->get_param('ids');
 
-        if (!in_array($action, ['delete', 'mark_paid'], true)) {
+        if ( $action === 'delete' ) {
+            return new \WP_Error(
+                'invoice_deletion_forbidden',
+                __('La suppression de factures est interdite par la loi. Pour annuler une facture, créez un avoir.', 'my-easy-compta'),
+                array('status' => 403)
+            );
+        }
+        if (!in_array($action, ['mark_paid'], true)) {
             return new \WP_Error('invalid_action', __('Invalid bulk action.', 'my-easy-compta'), array('status' => 400));
         }
         if (!is_array($raw_ids) || empty($raw_ids)) {
@@ -1490,6 +1469,8 @@ class ECWP_Invoices
                 if ($result === false) {
                     return new \WP_Error('rest_db_insert_error', __('Failed to add payment to database', 'my-easy-compta'), array('status' => 500));
                 }
+
+                do_action('ecwp_payment_created', $wpdb->insert_id, $id, $amount_to_insert);
             }
         }
 
@@ -2376,42 +2357,34 @@ class ECWP_Invoices
     /**
      * Build a document number string based on the chosen format.
      *
-     * @param string $prefix      The text prefix (e.g. 'INV').
-     * @param string $format      One of: prefix | prefix_year | prefix_year_month | year.
-     * @param string $table_name  Fully-qualified table name (used for date-based counts).
-     * @param int    $global_seq  Next global sequential number (used by the 'prefix' format).
+     * The sequential part is ALWAYS the global $seq (MAX(number)+1), regardless of format.
+     * This guarantees uniqueness and no-gap numbering even when the format is changed
+     * mid-year, which is required by French commercial law (art. L.441-9 C.com).
+     *
+     * @param string $prefix  The text prefix (e.g. 'INV').
+     * @param string $format  One of: prefix | prefix_year | prefix_year_month | year.
+     * @param string $table   Unused — kept for signature compatibility.
+     * @param int    $seq     Next global sequential number (MAX(number)+1).
      * @return string
      */
-    private function generate_document_number(string $prefix, string $format, string $table_name, int $global_seq): string
+    private function generate_document_number(string $prefix, string $format, string $table, int $seq): string
     {
-        global $wpdb;
         $year  = (int) current_time('Y');
         $month = (int) current_time('m');
+        $num   = str_pad($seq, 4, '0', STR_PAD_LEFT);
 
         switch ($format) {
             case 'prefix_year':
-                $count = (int) $wpdb->get_var($wpdb->prepare(
-                    "SELECT COUNT(*) FROM {$table_name} WHERE YEAR(created_at) = %d",
-                    $year
-                ));
-                return $prefix . '-' . $year . '-' . str_pad($count + 1, 4, '0', STR_PAD_LEFT);
+                return $prefix . '-' . $year . '-' . $num;
 
             case 'prefix_year_month':
-                $count = (int) $wpdb->get_var($wpdb->prepare(
-                    "SELECT COUNT(*) FROM {$table_name} WHERE YEAR(created_at) = %d AND MONTH(created_at) = %d",
-                    $year, $month
-                ));
-                return $prefix . '-' . $year . '-' . str_pad($month, 2, '0', STR_PAD_LEFT) . '-' . str_pad($count + 1, 4, '0', STR_PAD_LEFT);
+                return $prefix . '-' . $year . '-' . str_pad($month, 2, '0', STR_PAD_LEFT) . '-' . $num;
 
             case 'year':
-                $count = (int) $wpdb->get_var($wpdb->prepare(
-                    "SELECT COUNT(*) FROM {$table_name} WHERE YEAR(created_at) = %d",
-                    $year
-                ));
-                return $year . '-' . str_pad($count + 1, 4, '0', STR_PAD_LEFT);
+                return $year . '-' . $num;
 
             default: // 'prefix'
-                return $prefix . '-' . str_pad($global_seq, 4, '0', STR_PAD_LEFT);
+                return $prefix . '-' . $num;
         }
     }
 
@@ -2443,12 +2416,12 @@ class ECWP_Invoices
         unset($original['id']);
 
         // New invoice number
-        $last_seq = (int) $wpdb->get_var("SELECT MAX(number) FROM {$invoices_table} FOR UPDATE");
-        if ($last_seq <= 0) {
-            $first = (int) $wpdb->get_var($wpdb->prepare("SELECT meta_value FROM {$settings_table} WHERE meta_key = %s", 'invoice_first'));
-            $last_seq = $first > 0 ? $first : 1;
+        $max_dup = $wpdb->get_var("SELECT MAX(number) FROM {$invoices_table} FOR UPDATE");
+        if ($max_dup === null) {
+            $first    = (int) $wpdb->get_var($wpdb->prepare("SELECT meta_value FROM {$settings_table} WHERE meta_key = %s", 'invoice_first'));
+            $last_seq = max(1, $first);
         } else {
-            $last_seq = $last_seq + 1;
+            $last_seq = (int) $max_dup + 1;
         }
 
         $invoice_prefix        = $wpdb->get_var($wpdb->prepare("SELECT meta_value FROM {$settings_table} WHERE meta_key = %s", 'invoice_prefix')) ?: 'INV';
@@ -2501,9 +2474,9 @@ class ECWP_Invoices
 
         $wpdb->query('COMMIT');
 
-        return new WP_REST_Response(array(
+        return new \WP_REST_Response(array(
             'success'        => true,
-            'message'        => __('Invoice duplicated successfully.', 'my-easy-compta'),
+            'message'        => __('Facture dupliquée avec succès', 'my-easy-compta'),
             'new_invoice_id' => $new_invoice_id,
         ), 200);
     }

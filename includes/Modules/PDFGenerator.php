@@ -291,7 +291,7 @@ class PDFGenerator
         if ($this->show_watermark == 1) {
             if ($this->show_watermark_only_paid == 1) {
                 if ($invoice_status == 'paid') {
-                    $mpdf->SetWatermarkText(__('PAID', 'my-easy-compta'), 0.1);
+                    $mpdf->SetWatermarkText(__('PAYÉE', 'my-easy-compta'), 0.1);
                     $mpdf->showWatermarkText = true;
                     $mpdf->watermarkTextAlpha = 0.1;
                 }
@@ -299,7 +299,7 @@ class PDFGenerator
                 if ($invoice_status == 'draft') {
                     $invoice_status = __('DRAFT', 'my-easy-compta');
                 } else if ($invoice_status == 'unpaid') {
-                    $invoice_status = __('UNPAID', 'my-easy-compta');
+                    $invoice_status = __('NON PAYÉE', 'my-easy-compta');
                 }
                 $mpdf->SetWatermarkText($invoice_status, 0.1);
                 $mpdf->showWatermarkText = true;
@@ -812,7 +812,10 @@ ie.item_order ASC",
                         ' . nl2br($item_category) . '</div>
                     <div style="margin-bottom:6px; font-weight:bold; color: #111111; vertical-align: top;">' .
                 nl2br($item_name) . '</div>
-                    ' . nl2br($item_description) . '
+                    ' . (function($d) {
+                        $d = preg_replace('/<(p|div|h\d|ul|ol|blockquote)(\s[^>]*)?>/', '', $d);
+                        return nl2br(trim(preg_replace('/<\/(p|div|h\d|ul|ol|blockquote)>/', "\n", $d)));
+                    })($item_description) . '
                 </td>
                 <td width="10%"
                     style="text-align: center;border: 0.2mm solid #ffffff; background-color: #F5F5F5; vertical-align: top;">
@@ -1437,8 +1440,11 @@ ie.item_order ASC",
             $html .= '<div style="font-weight: bold; color: #0f172a; font-size: 9pt;">' . nl2br(htmlspecialchars($item_name)) . '</div>';
             if ($item_ref)
                 $html .= '<div style="font-size: 7.5pt; color: #94a3b8; margin-top: 3px;">Ref : ' . nl2br(htmlspecialchars($item_ref)) . '</div>';
-            if ($item_description)
-                $html .= '<div style="font-size: 8pt; color: #64748b; margin-top: 4px; line-height: 1.5;">' . nl2br(htmlspecialchars($item_description)) . '</div>';
+            if ($item_description) {
+                $desc = preg_replace('/<(p|div|h\d|ul|ol|blockquote)(\s[^>]*)?>/', '', $item_description);
+                $desc = nl2br(trim(preg_replace('/<\/(p|div|h\d|ul|ol|blockquote)>/', "\n", $desc)));
+                $html .= '<div style="font-size: 8pt; color: #64748b; margin-top: 4px; line-height: 1.5;">' . $desc . '</div>';
+            }
             $html .= '</td>';
             $html .= '<td style="' . $td0 . ' text-align: center; color: #334155;">' . htmlspecialchars((string) $quantity) . '</td>';
             $html .= '<td style="' . $td0 . ' text-align: right; color: #334155;">' . $this->positionCurrency($this->formatAmount($unit_price), $default_currency_symbol->symbol) . '</td>';
@@ -1495,11 +1501,13 @@ ie.item_order ASC",
         $html .= '<table width="100%" cellspacing="0" cellpadding="0">';
         $sr = 'border: none; border-bottom: 1px solid #f0f4f8; padding: 12px 14px;';
 
-        $html .= '<tr>';
-        $html .= '<td style="' . $sr . ' color: #64748b; font-size: 9pt;">' . __('Subtotal', 'my-easy-compta') . ' HT</td>';
-        $html .= '<td style="' . $sr . ' font-weight: bold; text-align: right; font-size: 9pt; color: #334155;">'
-            . $this->positionCurrency($this->formatAmount($sub_total), $default_currency_symbol->symbol) . '</td>';
-        $html .= '</tr>';
+        if ($has_vat) {
+            $html .= '<tr>';
+            $html .= '<td style="' . $sr . ' color: #64748b; font-size: 9pt;">' . __('Subtotal', 'my-easy-compta') . ' HT</td>';
+            $html .= '<td style="' . $sr . ' font-weight: bold; text-align: right; font-size: 9pt; color: #334155;">'
+                . $this->positionCurrency($this->formatAmount($sub_total), $default_currency_symbol->symbol) . '</td>';
+            $html .= '</tr>';
+        }
 
         if ($has_discount) {
             $html .= '<tr>';
@@ -1519,8 +1527,9 @@ ie.item_order ASC",
             }
         }
 
+        $total_label = $has_vat ? 'Total TTC' : __('Total', 'my-easy-compta');
         $html .= '<tr>';
-        $html .= '<td style="border: none; background-color: ' . $primary_color . '; padding: 14px; font-size: 10pt; font-weight: bold; color: #ffffff; text-transform: uppercase; letter-spacing: 0.5px;">Total TTC</td>';
+        $html .= '<td style="border: none; background-color: ' . $primary_color . '; padding: 14px; font-size: 10pt; font-weight: bold; color: #ffffff; text-transform: uppercase; letter-spacing: 0.5px;">' . $total_label . '</td>';
         $html .= '<td style="border: none; background-color: ' . $primary_color . '; padding: 14px; font-size: 15pt; font-weight: bold; color: #ffffff; text-align: right;">'
             . $this->positionCurrency($this->formatAmount($balance_due), $default_currency_symbol->symbol) . '</td>';
         $html .= '</tr>';

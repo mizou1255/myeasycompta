@@ -376,6 +376,7 @@ class ECWP_Expenses
                 )
             );
             $expense_id = $wpdb->insert_id;
+            do_action('ecwp_expense_created', $expense_id, $expense_data);
         }
 
         if ($wpdb->last_error) {

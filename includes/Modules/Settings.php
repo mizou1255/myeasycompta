@@ -540,22 +540,22 @@ class ECWP_Settings
         $results = $wpdb->get_results("SELECT meta_key, meta_value FROM {$settings_table}", OBJECT_K);
 
         $invoices_table = ECWP_TABLE_INVOICES;
-        $quotes_table = ECWP_TABLE_QUOTES;
-        $last_invoice_id = $wpdb->get_var("SELECT MAX(number) AS last_id FROM {$invoices_table}");
-        $last_quote_id = $wpdb->get_var("SELECT MAX(number) AS last_id FROM {$quotes_table}");
+        $quotes_table   = ECWP_TABLE_QUOTES;
 
-        if (empty($last_invoice_id)) {
-            $settings_table = ECWP_TABLE_SETTINGS;
-            $last_invoice_id = $wpdb->get_var($wpdb->prepare("SELECT meta_value FROM {$settings_table} WHERE meta_key = %s", 'invoice_first'));
+        $max_inv = $wpdb->get_var("SELECT MAX(number) FROM {$invoices_table}");
+        if ($max_inv === null) {
+            $inv_first       = $wpdb->get_var($wpdb->prepare("SELECT meta_value FROM {$settings_table} WHERE meta_key = %s", 'invoice_first'));
+            $next_invoice_id = max(1, (int) $inv_first);
         } else {
-            $last_invoice_id += 1;
+            $next_invoice_id = (int) $max_inv + 1;
         }
 
-        if (empty($last_quote_id)) {
-            $settings_table = ECWP_TABLE_SETTINGS;
-            $last_quote_id = $wpdb->get_var($wpdb->prepare("SELECT meta_value FROM {$settings_table} WHERE meta_key = %s", 'quote_first'));
+        $max_quo = $wpdb->get_var("SELECT MAX(number) FROM {$quotes_table}");
+        if ($max_quo === null) {
+            $quo_first      = $wpdb->get_var($wpdb->prepare("SELECT meta_value FROM {$settings_table} WHERE meta_key = %s", 'quote_first'));
+            $next_quote_id  = max(1, (int) $quo_first);
         } else {
-            $last_quote_id += 1;
+            $next_quote_id = (int) $max_quo + 1;
         }
 
         $email_defaults = [
@@ -588,10 +588,33 @@ class ECWP_Settings
             }
         }
 
-        $settings['last_quote_id'] = $last_quote_id;
-        $settings['last_invoice_id'] = $last_invoice_id;
+        // Legacy fields kept for backward compat
+        $settings['last_invoice_id'] = $next_invoice_id;
+        $settings['last_quote_id']   = $next_quote_id;
+
+        // Formatted preview numbers for the New Invoice / New Quote forms
+        $inv_prefix  = $settings['invoice_prefix'] ?? 'INV';
+        $inv_format  = $settings['invoice_number_format'] ?? 'prefix';
+        $quo_prefix  = $settings['quote_prefix'] ?? 'EST';
+        $quo_format  = $settings['quote_number_format'] ?? 'prefix';
+
+        $settings['next_invoice_number'] = $this->build_number_preview($inv_prefix, $inv_format, $next_invoice_id);
+        $settings['next_quote_number']   = $this->build_number_preview($quo_prefix, $quo_format, $next_quote_id);
 
         return rest_ensure_response($settings);
+    }
+
+    private function build_number_preview(string $prefix, string $format, int $seq): string
+    {
+        $year  = (int) current_time('Y');
+        $month = (int) current_time('m');
+        $num   = str_pad($seq, 4, '0', STR_PAD_LEFT);
+        switch ($format) {
+            case 'prefix_year':        return $prefix . '-' . $year . '-' . $num;
+            case 'prefix_year_month':  return $prefix . '-' . $year . '-' . str_pad($month, 2, '0', STR_PAD_LEFT) . '-' . $num;
+            case 'year':               return $year . '-' . $num;
+            default:                   return $prefix . '-' . $num;
+        }
     }
 
     /**
@@ -1540,6 +1563,10 @@ class ECWP_Settings
         'user'           => ['name' => 'myEC Espace Client',     'plugin' => 'my-easy-compta-user'],
         'woo'            => ['name' => 'myEC WooCommerce',       'plugin' => 'my-easy-compta-woo'],
         'surecart'       => ['name' => 'myEC SureCart',          'plugin' => 'my-easy-compta-surecart'],
+        'fluentcart'     => ['name' => 'myEC FluentCart',         'plugin' => 'my-easy-compta-fluentcart'],
+        'webhooks'       => ['name' => 'myEC Webhooks & Zapier', 'plugin' => 'my-easy-compta-webhooks'],
+        'fec'            => ['name' => 'myEC Export FEC',         'plugin' => 'my-easy-compta-fec'],
+        'ocr'            => ['name' => 'myEC Scan Reçus (OCR)',   'plugin' => 'my-easy-compta-ocr'],
         'online-quote'   => ['name' => 'myEC Devis en ligne',    'plugin' => 'my-easy-compta-online-quote'],
     ];
 

@@ -1,7 +1,7 @@
 <template>
   <div>
     <!-- Toast Notification -->
-    <div v-if="toast.visible" class="fixed bottom-8 right-8 z-[9999] animate-in fade-in slide-in-from-bottom-8 duration-300">
+    <div v-if="toast.visible" class="fixed bottom-8 left-1/2 -translate-x-1/2 z-[9999] toast-animate-in">
       <div :class="['flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl border backdrop-blur-md', toast.type === 'alert-success' ? 'bg-emerald-500/90 text-white border-emerald-400/50' : 'bg-rose-500/90 text-white border-rose-400/50']">
         <component :is="toast.type === 'alert-success' ? 'CheckCircle2' : 'AlertCircle'" class="w-6 h-6" />
         <span class="font-bold text-sm">{{ toast.message }}</span>
@@ -16,9 +16,34 @@
         <!-- Header -->
         <div class="flex items-center justify-between mb-8">
             <h3 class="text-2xl font-black text-slate-900 dark:text-white">{{ translations.add }}</h3>
-            <button @click="closeModal" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors p-2 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl">
-                <X class="w-6 h-6" />
-            </button>
+            <div class="flex items-center gap-2">
+                <!-- OCR scan button (only if addon active) -->
+                <button
+                    v-if="ocrAddonActive"
+                    type="button"
+                    @click="triggerOcrInput"
+                    :disabled="ocrLoading"
+                    class="flex items-center gap-2 px-4 py-2 rounded-xl font-black text-xs uppercase tracking-widest bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-400 hover:bg-violet-100 dark:hover:bg-violet-900/40 transition-colors disabled:opacity-50"
+                    :title="'Scanner un reçu (OCR)'"
+                >
+                    <span v-if="ocrLoading" class="w-4 h-4 border-2 border-violet-400/30 border-t-violet-500 rounded-full animate-spin"></span>
+                    <ScanLine v-else class="w-4 h-4" />
+                    <span class="hidden sm:inline">Scanner</span>
+                </button>
+                <input ref="ocrFileInput" type="file" accept="image/*,.pdf" class="hidden" @change="handleOcrFile" />
+                <button @click="closeModal" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors p-2 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl">
+                    <X class="w-6 h-6" />
+                </button>
+            </div>
+        </div>
+
+        <!-- OCR result banner -->
+        <div v-if="ocrResult" class="flex items-start gap-3 p-4 bg-violet-50 dark:bg-violet-900/20 rounded-2xl border border-violet-100 dark:border-violet-800 mb-2">
+            <ScanLine class="w-4 h-4 text-violet-500 mt-0.5 shrink-0" />
+            <div class="flex-1 text-xs font-bold text-violet-700 dark:text-violet-300">
+                Reçu scanné — champs pré-remplis. Vérifiez et corrigez si nécessaire.
+            </div>
+            <button type="button" @click="ocrResult = null" class="text-violet-400 hover:text-violet-600"><X class="w-3.5 h-3.5" /></button>
         </div>
 
         <form @submit.prevent="submitForm" class="space-y-6">
@@ -102,7 +127,7 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue';
-import { X, CheckCircle2, AlertCircle, ChevronDown, UploadCloud, Plus } from 'lucide-vue-next';
+import { X, CheckCircle2, AlertCircle, ChevronDown, UploadCloud, Plus, ScanLine } from 'lucide-vue-next';
 
 const emit = defineEmits(['expenseAdded']);
 
@@ -117,11 +142,15 @@ const formData = reactive({
 const attachmentFile = ref(null);
 const fileName = ref('');
 const attachmentInput = ref(null);
+const ocrFileInput = ref(null);
+const ocrLoading = ref(false);
+const ocrResult = ref(null);
 const options = reactive({ clients: [], categories: [] });
 const loadingBtn = ref(false);
 const toast = reactive({ visible: false, message: "", type: "alert-success" });
 
 const translations = computed(() => window.myEasyComptaAdmin?.easyComptaTranslations || {});
+const ocrAddonActive = computed(() => !!window.myEasyComptaAdmin?.ocrAddonActive);
 
 // Methods
 const showToast = (message, type) => {
@@ -137,6 +166,42 @@ const handleFileChange = (e) => {
        attachmentFile.value = file;
        fileName.value = file.name;
    }
+};
+
+const triggerOcrInput = () => ocrFileInput.value?.click();
+
+const handleOcrFile = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    ocrLoading.value = true;
+    ocrResult.value = null;
+    try {
+        const fd = new FormData();
+        fd.append('file', file);
+        const res = await fetch('/wp-json/my-easy-compta/v1/ocr/scan', {
+            method: 'POST',
+            headers: { 'X-WP-Nonce': window.myEasyComptaAdmin.nonce },
+            body: fd,
+        });
+        const data = await res.json();
+        if (res.ok && data.success && data.extracted) {
+            const { amount, date, vendor } = data.extracted;
+            if (amount)  formData.amount       = amount;
+            if (date)    formData.expense_date = date;
+            if (vendor)  formData.note         = vendor + (formData.note ? '\n' + formData.note : '');
+            ocrResult.value = data.extracted;
+            // Also pre-attach the scanned file
+            attachmentFile.value = file;
+            fileName.value = file.name;
+        } else {
+            showToast(data.message || 'OCR : aucun résultat', 'alert-error');
+        }
+    } catch {
+        showToast('Erreur lors du scan', 'alert-error');
+    } finally {
+        ocrLoading.value = false;
+        if (ocrFileInput.value) ocrFileInput.value.value = '';
+    }
 };
 
 const fetchOptions = async () => {
@@ -166,6 +231,7 @@ const resetForm = () => {
     Object.assign(formData, { amount: "", expense_date: "", client_id: "", category_id: "", note: "" });
     attachmentFile.value = null;
     fileName.value = '';
+    ocrResult.value = null;
     if(attachmentInput.value) attachmentInput.value.value = '';
 };
 

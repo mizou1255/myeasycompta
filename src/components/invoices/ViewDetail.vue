@@ -2,7 +2,7 @@
   <MainLayout :title="invoice.invoice_number || (translations.loading || 'Loading...')" :subtitle="invoice.created_at ? `${translations.created_at}: ${invoice.created_at}` : ''">
     
     <!-- Toast -->
-    <div v-if="toast.visible" class="fixed bottom-8 right-8 z-[9999] animate-in fade-in slide-in-from-bottom-8 duration-300">
+    <div v-if="toast.visible" class="fixed bottom-8 left-1/2 -translate-x-1/2 z-[9999] toast-animate-in">
       <div :class="['flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl border backdrop-blur-md', toast.type === 'success' ? 'bg-emerald-500/90 text-white border-emerald-400/50' : 'bg-rose-500/90 text-white border-rose-400/50']">
         <component :is="toast.type === 'success' ? 'CheckCircle2' : 'AlertCircle'" class="w-6 h-6" />
         <span class="font-bold text-sm">{{ toast.message }}</span>
@@ -180,7 +180,7 @@
                          <th class="p-4">{{ translations.description }}</th>
                          <th class="p-4 text-center">{{ translations.quantity }}</th>
                          <th class="p-4 text-right">{{ translations.unit_price }}</th>
-                         <th class="p-4 text-center">{{ translations.tax }}</th>
+                         <th v-if="settings.vat_active == 1" class="p-4 text-center">{{ translations.tax }}</th>
                          <th class="p-4 text-right">{{ translations.total }}</th>
                          <th class="p-4 text-center w-24">{{ translations.actions }}</th>
                      </tr>
@@ -190,10 +190,10 @@
                          <td class="p-4 text-center text-slate-300 cursor-move drag-handle group-hover:text-slate-500"><GripVertical v-if="!isLocked" class="w-4 h-4" /></td>
                           <td class="p-4 text-sm font-bold text-slate-600 dark:text-slate-300">{{ item.item_ref }}</td>
                           <td class="p-4 text-sm font-bold text-slate-900 dark:text-white">{{ item.item_name }}</td>
-                          <td class="p-4 text-sm text-slate-500 dark:text-slate-400 max-w-xs truncate" :title="item.description"><div class="truncate">{{ item.description }}</div></td>
+                          <td class="p-4 text-sm text-slate-500 dark:text-slate-400 max-w-xs" :title="item.item_description ? item.item_description.replace(/<[^>]*>/g, '') : ''"><div class="truncate">{{ item.item_description ? item.item_description.replace(/<[^>]*>/g, '') : '' }}</div></td>
                           <td class="p-4 text-sm font-bold text-center text-slate-900 dark:text-white">{{ item.quantity }}</td>
                           <td class="p-4 text-sm font-mono text-right text-slate-600 dark:text-slate-300">{{ formatCurrency(item.unit_price).replace(clientCurrency.value || defaultCurrency.value, '') }}</td>
-                          <td class="p-4 text-sm text-center text-slate-500">{{ item.vat_rate }}%</td>
+                          <td v-if="settings.vat_active == 1" class="p-4 text-sm text-center text-slate-500">{{ item.vat_rate }}%</td>
                           <td class="p-4 text-sm font-bold font-mono text-right text-slate-900 dark:text-white">{{ formatCurrency(item.total_amount) }}</td>
                          <td class="p-4 text-center">
                              <div 
@@ -230,15 +230,17 @@
          <!-- Totals -->
          <div class="flex flex-col items-end">
              <div class="w-full md:w-1/3 space-y-4 bg-slate-50 dark:bg-slate-950/50 rounded-3xl p-8 border border-slate-100 dark:border-slate-800">
-                 <div class="flex justify-between items-center text-slate-500 font-bold text-sm">
-                     <span>{{ translations.subtotal }}:</span>
-                     <span class="font-mono text-slate-900 dark:text-white">{{ formatCurrency(invoice.subtotal) }}</span>
-                 </div>
-                  <div class="flex justify-between items-center text-slate-500 font-bold text-sm">
-                     <span>{{ translations.tax }}:</span>
-                     <span class="font-mono text-slate-900 dark:text-white">{{ formatCurrency(invoice.tax) }}</span>
-                 </div>
-                 <div class="h-px bg-slate-200 dark:bg-slate-800 my-4"></div>
+                 <template v-if="settings.vat_active == 1">
+                     <div class="flex justify-between items-center text-slate-500 font-bold text-sm">
+                         <span>{{ translations.subtotal }}:</span>
+                         <span class="font-mono text-slate-900 dark:text-white">{{ formatCurrency(invoice.subtotal) }}</span>
+                     </div>
+                     <div class="flex justify-between items-center text-slate-500 font-bold text-sm">
+                         <span>{{ translations.tax }}:</span>
+                         <span class="font-mono text-slate-900 dark:text-white">{{ formatCurrency(invoice.tax) }}</span>
+                     </div>
+                     <div class="h-px bg-slate-200 dark:bg-slate-800 my-4"></div>
+                 </template>
                  <div class="flex justify-between items-center text-lg font-black text-slate-900 dark:text-white">
                      <span>{{ translations.total }}:</span>
                      <span class="text-purple-600 font-mono">{{ formatCurrency(invoice.total_amount) }}</span>

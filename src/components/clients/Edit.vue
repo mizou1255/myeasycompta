@@ -1,9 +1,9 @@
 <template>
   <dialog :open="showModal" :class="['fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 w-full h-full border-none m-0 max-w-none max-h-none', showModal ? 'block' : 'hidden']">
     <div class="bg-white dark:bg-slate-900 rounded-[2.5rem] p-8 w-full max-w-2xl shadow-2xl border border-slate-100 dark:border-slate-800 text-left relative max-h-[90vh] overflow-y-auto">
-      
+
       <!-- Toast Notification -->
-      <div v-if="toast.visible" class="fixed bottom-8 right-8 z-[9999] animate-in fade-in slide-in-from-bottom-8 duration-300">
+      <div v-if="toast.visible" class="fixed bottom-8 left-1/2 -translate-x-1/2 z-[9999] toast-animate-in">
         <div :class="['flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl border backdrop-blur-md', toast.type === 'alert-success' ? 'bg-emerald-500/90 text-white border-emerald-400/50' : 'bg-rose-500/90 text-white border-rose-400/50']">
           <component :is="toast.type === 'alert-success' ? 'CheckCircle2' : 'AlertCircle'" class="w-6 h-6" />
           <span class="font-bold text-sm">{{ toast.message }}</span>
@@ -54,6 +54,66 @@
                </div>
           </div>
 
+          <!-- Address Block with Autocomplete -->
+          <div class="border-t border-slate-100 dark:border-slate-800 pt-6">
+              <h4 class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2">
+                  <MapPin class="w-3.5 h-3.5" /> {{ translations.address || 'Adresse' }}
+              </h4>
+              <div class="space-y-4">
+                  <!-- Address with autocomplete -->
+                  <div class="space-y-2 relative">
+                      <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">
+                          {{ translations.address || 'Adresse' }}
+                      </label>
+                      <input
+                          type="text"
+                          v-model="editedClient.address"
+                          @input="onAddressInput"
+                          @blur="hideSuggestionsDelayed"
+                          :placeholder="translations.address || 'Adresse'"
+                          class="kloxy-input"
+                          autocomplete="off"
+                      />
+                      <!-- Suggestions dropdown -->
+                      <ul v-if="suggestions.length > 0" class="absolute z-50 left-0 right-0 mt-1 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-700 overflow-hidden">
+                          <li
+                              v-for="(s, i) in suggestions"
+                              :key="i"
+                              @mousedown.prevent="selectSuggestion(s)"
+                              class="flex items-start gap-3 px-5 py-3 cursor-pointer hover:bg-purple-50 dark:hover:bg-slate-700 transition-colors"
+                          >
+                              <MapPin class="w-4 h-4 text-purple-400 mt-0.5 shrink-0" />
+                              <div>
+                                  <p class="text-sm font-bold text-slate-900 dark:text-white">{{ s.label }}</p>
+                                  <p class="text-xs text-slate-400">{{ s.context }}</p>
+                              </div>
+                          </li>
+                      </ul>
+                  </div>
+
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div class="space-y-2">
+                          <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">
+                              {{ translations.city || 'Ville' }}
+                          </label>
+                          <input type="text" v-model="editedClient.city" :placeholder="translations.city || 'Ville'" class="kloxy-input" />
+                      </div>
+                      <div class="space-y-2">
+                          <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">
+                              {{ translations.postal_code || 'Code postal' }}
+                          </label>
+                          <input type="text" v-model="editedClient.postal_code" :placeholder="translations.postal_code || 'Code postal'" class="kloxy-input" />
+                      </div>
+                      <div class="space-y-2">
+                          <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">
+                              {{ translations.country || 'Pays' }}
+                          </label>
+                          <input type="text" v-model="editedClient.country" :placeholder="translations.country || 'Pays'" class="kloxy-input" />
+                      </div>
+                  </div>
+              </div>
+          </div>
+
            <div class="space-y-2">
               <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">{{ translations.note }}</label>
               <textarea v-model="editedClient.note" class="kloxy-input min-h-[100px]" :placeholder="translations.note"></textarea>
@@ -76,7 +136,7 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted, watch } from 'vue';
-import { X, CheckCircle2, AlertCircle, ChevronDown, Pencil, Check } from 'lucide-vue-next';
+import { X, CheckCircle2, AlertCircle, ChevronDown, Pencil, Check, MapPin } from 'lucide-vue-next';
 
 const props = defineProps({
     loading: Boolean,
@@ -92,6 +152,8 @@ const editedClient = ref({ ...props.client });
 const currencyOptions = ref([]);
 const loadingBtn = ref(false);
 const toast = reactive({ visible: false, message: "", type: "alert-success" });
+const suggestions = ref([]);
+let suggestTimer = null;
 
 const translations = computed(() => window.myEasyComptaAdmin?.easyComptaTranslations || {});
 
@@ -104,14 +166,11 @@ const fields = computed(() => ({
     phone: { label: translations.value.phone, type: "tel" },
     mobile_phone: { label: translations.value.mobile, type: "tel" },
     website: { label: translations.value.website, type: "url" },
-    address: { label: translations.value.address },
-    city: { label: translations.value.city },
-    postal_code: { label: translations.value.postal_code },
-    country: { label: translations.value.country },
 }));
 
 watch(() => props.client, (newVal) => {
     editedClient.value = { ...newVal };
+    suggestions.value = [];
 }, { deep: true, immediate: true });
 
 const showToast = (message, type) => {
@@ -121,7 +180,46 @@ const showToast = (message, type) => {
     setTimeout(() => toast.visible = false, 3000);
 };
 
-const closeModal = () => emit('close');
+const closeModal = () => {
+    suggestions.value = [];
+    emit('close');
+};
+
+const onAddressInput = () => {
+    clearTimeout(suggestTimer);
+    const q = editedClient.value?.address?.trim();
+    if (!q || q.length < 3) { suggestions.value = []; return; }
+    suggestTimer = setTimeout(() => fetchSuggestions(q), 300);
+};
+
+const fetchSuggestions = async (q) => {
+    try {
+        const res = await fetch(`https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(q)}&limit=5`);
+        if (!res.ok) return;
+        const data = await res.json();
+        suggestions.value = (data.features || []).map(f => ({
+            label: f.properties.name || f.properties.label,
+            city: f.properties.city || '',
+            postcode: f.properties.postcode || '',
+            country: 'France',
+            context: f.properties.context || '',
+        }));
+    } catch {
+        suggestions.value = [];
+    }
+};
+
+const selectSuggestion = (s) => {
+    editedClient.value.address = s.label;
+    editedClient.value.city = s.city;
+    editedClient.value.postal_code = s.postcode;
+    editedClient.value.country = s.country;
+    suggestions.value = [];
+};
+
+const hideSuggestionsDelayed = () => {
+    setTimeout(() => { suggestions.value = []; }, 200);
+};
 
 const fetchOptions = async () => {
     try {

@@ -2,7 +2,7 @@
 /**
  * Plugin Name: myEasyCompta
  * Description: Streamline your financial management with myEasyCompta, an all-in-one accounting plugin. Effortlessly handle quotes, invoices, expenses, and more, all within a sleek, user-friendly interface. Perfect for freelancers and small businesses looking to simplify their accounting processes.
- * Version: 2.0.1
+ * Version: 2.1.1
  * Author: MELIOZ.dev
  * Author URI: https://myeasycompta.com
  * Text Domain: my-easy-compta
@@ -21,7 +21,7 @@
  * A comprehensive accounting plugin using Vue.js and TailwindCSS. Manage your quotes, invoices, expenses, and more with ease.
  *
  * @package myEasyCompta
- * @since 1.5.0
+ * @since 2.1.1
  */
 
 if (!defined('ABSPATH')) {
@@ -36,7 +36,7 @@ final class ECWP_Easy_Compta
      *
      * @var string
      */
-    public $version = '2.0.1';
+    public $version = '2.1.1';
     private $version_migration_db = false;
 
     /**
@@ -130,18 +130,9 @@ final class ECWP_Easy_Compta
         // Actual data encryption uses the per-installation key in wp_option 'ecwp_encryption_key'.
         define('ECWP_SECRET_KEY', 'c9a8b2d6eef97d2a98170fbc99b5218e');
 
-        // Détection automatique de l'environnement local pour l'URL de licence
-        $current_domain = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : (isset($_SERVER['SERVER_NAME']) ? $_SERVER['SERVER_NAME'] : '');
-        $is_local = (
-            strpos($current_domain, '.local') !== false ||
-            strpos($current_domain, 'localhost') !== false ||
-            strpos($current_domain, '127.0.0.1') !== false
-        );
-
-        if ($is_local) {
-            define('ECWP_URL_LICENSE', 'http://myeasycompta.local');
-        } else {
-            define('ECWP_URL_LICENSE', 'https://myeasycompta.com');
+        // Pour le dev local, définir ECWP_URL_LICENSE dans wp-config.php avant l'activation du plugin
+        if ( ! defined( 'ECWP_URL_LICENSE' ) ) {
+            define( 'ECWP_URL_LICENSE', 'https://myeasycompta.com' );
         }
 
         define('ECWP_TABLE_SETTINGS', ECWP_PREFIX . 'ecwp_settings');
@@ -331,21 +322,7 @@ final class ECWP_Easy_Compta
 
     public function install_configuration()
     {
-        // Sur nouvelle install, on crée au moins les tables pour éviter un plugin "cassé"
-        // si l'utilisateur quitte le wizard (permaliens, etc.).
-        try {
-            if (isset($this->container['tables']) && is_object($this->container['tables'])) {
-                $this->container['tables']->create_tables();
-            } else {
-                // fallback (au cas où)
-                $tables = new \ECWP\Admin\ECWP_Tables();
-                $tables->create_tables();
-            }
-        } catch (\Throwable $e) {
-            // Ne pas bloquer l'activation, mais laisser le wizard gérer.
-            error_log('ECWP - install_configuration: erreur création tables: ' . $e->getMessage());
-        }
-
+        // Les tables sont créées par le wizard (Step 1) — pas ici.
         // Laisser un délai confortable : le setup est une page cachée, on veut pouvoir y revenir.
         set_transient('ecwp_activation_redirect', true, DAY_IN_SECONDS);
     }
@@ -405,6 +382,13 @@ final class ECWP_Easy_Compta
 
     public function maybe_run_migration()
     {
+        // Ne jamais migrer si les tables de base n'existent pas encore (install propre avant wizard).
+        global $wpdb;
+        $settings_table = defined('ECWP_TABLE_SETTINGS') ? ECWP_TABLE_SETTINGS : $wpdb->prefix . 'ecwp_settings';
+        if ($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $settings_table)) !== $settings_table) {
+            return;
+        }
+
         if (isset($_POST['run_migration_now']) && check_admin_referer('run_migration_action', 'run_migration_nonce')) {
             $this->run_migrations();
             add_action('admin_notices', function () {

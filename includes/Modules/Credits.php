@@ -257,36 +257,21 @@ class ECWP_Credits
         $pdfGenerator->generateCreditPDF($credit_id, $currency_id);
     }
 
-    private function generate_document_number(string $prefix, string $format, string $table_name, int $global_seq): string
+    private function generate_document_number(string $prefix, string $format, string $table, int $seq): string
     {
-        global $wpdb;
         $year  = (int) current_time('Y');
         $month = (int) current_time('m');
+        $num   = str_pad($seq, 4, '0', STR_PAD_LEFT);
 
         switch ($format) {
             case 'prefix_year':
-                $count = (int) $wpdb->get_var($wpdb->prepare(
-                    "SELECT COUNT(*) FROM {$table_name} WHERE YEAR(created_at) = %d",
-                    $year
-                ));
-                return $prefix . '-' . $year . '-' . str_pad($count + 1, 4, '0', STR_PAD_LEFT);
-
+                return $prefix . '-' . $year . '-' . $num;
             case 'prefix_year_month':
-                $count = (int) $wpdb->get_var($wpdb->prepare(
-                    "SELECT COUNT(*) FROM {$table_name} WHERE YEAR(created_at) = %d AND MONTH(created_at) = %d",
-                    $year, $month
-                ));
-                return $prefix . '-' . $year . '-' . str_pad($month, 2, '0', STR_PAD_LEFT) . '-' . str_pad($count + 1, 4, '0', STR_PAD_LEFT);
-
+                return $prefix . '-' . $year . '-' . str_pad($month, 2, '0', STR_PAD_LEFT) . '-' . $num;
             case 'year':
-                $count = (int) $wpdb->get_var($wpdb->prepare(
-                    "SELECT COUNT(*) FROM {$table_name} WHERE YEAR(created_at) = %d",
-                    $year
-                ));
-                return $year . '-' . str_pad($count + 1, 4, '0', STR_PAD_LEFT);
-
+                return $year . '-' . $num;
             default: // 'prefix'
-                return $prefix . '-' . str_pad($global_seq, 4, '0', STR_PAD_LEFT);
+                return $prefix . '-' . $num;
         }
     }
 

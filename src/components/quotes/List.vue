@@ -2,7 +2,7 @@
   <MainLayout :title="translations.quotes || 'Quotes'" :subtitle="translations.quotes_subtitle || 'Manage all your client quotes'">
     
     <!-- Toast -->
-    <div v-if="toast.visible" class="fixed bottom-8 right-8 z-[9999] animate-in fade-in slide-in-from-bottom-8 duration-300">
+    <div v-if="toast.visible" class="fixed bottom-8 left-1/2 -translate-x-1/2 z-[9999] toast-animate-in">
       <div :class="['flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl border backdrop-blur-md', toast.type === 'success' ? 'bg-emerald-500/90 text-white border-emerald-400/50' : 'bg-rose-500/90 text-white border-rose-400/50']">
         <component :is="toast.type === 'success' ? 'CheckCircle2' : 'AlertCircle'" class="w-6 h-6" />
         <span class="font-bold text-sm">{{ toast.message }}</span>
@@ -326,8 +326,10 @@
     
     <confirm-modal
       :show-modal="showConfirmModal"
-      :title="translations.are_you_sure"
-      :message="translations.duplicate_quote_confirm"
+      :title="translations.are_you_sure || 'Confirmation'"
+      :message="translations.duplicate_quote_confirm || 'Voulez-vous dupliquer ce devis ?'"
+      :confirm-text="translations.duplicate || 'Dupliquer'"
+      :cancel-text="translations.cancel || 'Annuler'"
       @confirm="duplicateQuote(selectedQuote)"
       @cancel="showConfirmModal = false"
     />
@@ -538,15 +540,22 @@ const confirmDuplicate = (quote) => {
 };
 
 const duplicateQuote = async (quote) => {
-     showConfirmModal.value = false;
-     try {
-        await fetch(`/wp-json/my-easy-compta/v1/quotes/${quote.id}/duplicate`, {
+    showConfirmModal.value = false;
+    try {
+        const res = await fetch(`/wp-json/my-easy-compta/v1/quotes/${quote.id}/duplicate`, {
             method: "POST",
-             headers: { "X-WP-Nonce": window.myEasyComptaAdmin.nonce }
+            headers: { "X-WP-Nonce": window.myEasyComptaAdmin.nonce }
         });
-        showToast("Devis dupliqué", "success");
-        fetchQuotes();
-     } catch (e) {}
+        const data = await res.json();
+        if (!res.ok || data.code) {
+            showToast(data.message || "Erreur lors de la duplication", "error");
+        } else {
+            showToast(data.message || translations.value.quote_duplicated || "Devis dupliqué avec succès", "success");
+            fetchQuotes();
+        }
+    } catch (e) {
+        showToast("Erreur lors de la duplication", "error");
+    }
 };
 
 const downloadPDF = (quote) => {

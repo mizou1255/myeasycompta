@@ -2,7 +2,7 @@
   <MainLayout title="Paramètres" subtitle="Gérez les paramètres de votre application">
     
     <!-- Toast -->
-    <div v-if="toast.visible" class="fixed bottom-8 right-8 z-[9999] animate-in fade-in slide-in-from-bottom-8 duration-300">
+    <div v-if="toast.visible" class="fixed bottom-8 left-1/2 -translate-x-1/2 z-[9999] toast-animate-in">
       <div :class="['flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl border backdrop-blur-md', toast.type === 'success' ? 'bg-emerald-500/90 text-white border-emerald-400/50' : 'bg-rose-500/90 text-white border-rose-400/50']">
         <component :is="toast.type === 'success' ? 'CheckCircle2' : 'AlertCircle'" class="w-6 h-6" />
         <span class="font-bold text-sm">{{ toast.message }}</span>
@@ -22,7 +22,7 @@
     <div class="flex flex-col xl:flex-row gap-6 items-start">
       <!-- Sidebar -->
       <aside class="w-full xl:w-60 shrink-0">
-        <div class="bg-white dark:bg-slate-900 rounded-[2rem] p-3 shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 sticky top-6">
+        <div class="bg-white dark:bg-slate-900 rounded-[2rem] p-3 shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 sticky top-6 max-h-[calc(100vh-3rem)] overflow-y-auto settings-sidebar-scroll">
           <template v-for="(group, gi) in tabGroups" :key="gi">
             <!-- Group separator + label -->
             <div :class="['px-2 pt-3 pb-1.5 flex items-center gap-2', gi > 0 ? 'mt-1 border-t border-slate-100 dark:border-slate-800' : '']">
@@ -67,7 +67,7 @@
                  <p class="text-[11px] text-slate-400 font-medium leading-tight">{{ getCurrentTabDesc }}</p>
                </div>
              </div>
-             <button v-if="isTableTab" @click="openAddModal" class="kloxy-btn-primary">
+             <button v-if="isTableTab && selectedTab !== 7" @click="openAddModal" class="kloxy-btn-primary">
                  <Plus class="w-4 h-4 mr-2" /> {{ translations.add || 'Ajouter' }}
              </button>
          </div>
@@ -76,7 +76,7 @@
          <div class="p-8">
 
          <!-- General / System Forms -->
-         <form v-if="[1, 2, 4, 5, 6, 10, 11, 12, 13, 14, 15, 22, 23, 24, 25].includes(selectedTab)" @submit.prevent="handleSubmit" class="space-y-6">
+         <form v-if="[1, 4, 5, 6, 10, 11, 12, 13, 14, 15, 20, 22, 23, 24, 25, 30].includes(selectedTab)" @submit.prevent="handleSubmit" class="space-y-6">
 
             
             <!-- Tab 1: General -->
@@ -117,64 +117,142 @@
                      <label class="kloxy-label">{{ translations.phone || 'Téléphone' }}</label>
                      <input type="tel" v-model="form.company_phone" class="kloxy-input" />
                   </div>
+                  <div class="space-y-2 md:col-span-2 border-t border-slate-100 dark:border-slate-800 pt-4"></div>
+                  <div class="space-y-2">
+                     <label class="kloxy-label">{{ translations.default_currency || 'Devise par défaut' }}</label>
+                     <select v-model="form.default_currency" class="kloxy-input appearance-none">
+                        <option v-for="c in currencies" :key="c.id" :value="c.id">{{ c.name }} ({{ c.symbol }})</option>
+                     </select>
+                  </div>
+                  <div class="space-y-2">
+                     <label class="kloxy-label">{{ translations.currency_position || 'Position de la devise' }}</label>
+                     <select v-model="form.currency_position" class="kloxy-input appearance-none">
+                        <option value="before">{{ translations.before_amount || 'Avant' }}</option>
+                        <option value="after">{{ translations.after_amount || 'Après' }}</option>
+                     </select>
+                  </div>
+                  <div class="space-y-2">
+                     <label class="kloxy-label">{{ translations.format_date || 'Format Date' }}</label>
+                     <select v-model="form.date_format" class="kloxy-input appearance-none">
+                        <option value="DD-MM-YYYY">DD-MM-YYYY</option>
+                        <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+                        <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+                     </select>
+                  </div>
             </div>
 
-            <!-- Tab 2: System -->
-            <div v-if="selectedTab === 2" class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                 <div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
-                    <span class="font-bold text-slate-700 dark:text-slate-300">{{ translations.activate_logo_mentions || 'Activer mentions logo' }}</span>
-                    <button 
-                        type="button"
-                        class="kloxy-toggle"
-                        :aria-checked="(form.logo_mentions_active == 1).toString()"
-                        @click="form.logo_mentions_active = (form.logo_mentions_active == 1 ? 0 : 1)"
-                    >
-                        <span class="kloxy-toggle-thumb"></span>
-                    </button>
-                 </div>
-               
-                 <div v-if="form.logo_mentions_active == 1" class="space-y-2 animate-in fade-in slide-in-from-top-2">
-                    <label class="kloxy-label">{{ translations.logo_mentions || 'Mentions Logo' }}</label>
-                    <input type="text" v-model="form.logo_mentions" class="kloxy-input" />
-                 </div>
+            <!-- Tab 20: Documents PDF (settings communs à tous les documents) -->
+            <div v-if="selectedTab === 20" class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
-                 <div class="space-y-2">
-                     <label class="kloxy-label">{{ translations.company_logo || 'Logo de l\'entreprise' }}</label>
-                     <div class="flex items-center gap-4">
+                <!-- Logo -->
+                <div class="space-y-3">
+                    <p class="text-xs font-black uppercase tracking-widest text-slate-400">Logo</p>
+                    <div class="flex items-center gap-4">
                         <div v-if="logoPreviewUrl || form.logo_url" class="w-24 h-24 rounded-2xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center border border-slate-200 dark:border-slate-700 p-2">
-                           <img :src="logoPreviewUrl || form.logo_url" class="max-w-full max-h-full object-contain" />
+                            <img :src="logoPreviewUrl || form.logo_url" class="max-w-full max-h-full object-contain" />
                         </div>
                         <label class="cursor-pointer kloxy-btn-secondary">
-                           <Upload class="w-4 h-4 mr-2" /> {{ translations.select || 'Sélectionner' }}
-                           <input type="file" @change="handleLogoUpload" accept="image/*" class="hidden" />
+                            <Upload class="w-4 h-4 mr-2" /> {{ translations.select || 'Sélectionner' }}
+                            <input type="file" @change="handleLogoUpload" accept="image/*" class="hidden" />
                         </label>
-                     </div>
-                     <input v-if="logoPreviewUrl || form.logo_url" type="range" min="50" max="400" v-model="form.logo_width" class="w-full mt-4 accent-purple-600 cursor-pointer" />
-                 </div>
+                    </div>
+                    <input v-if="logoPreviewUrl || form.logo_url" type="range" min="50" max="400" v-model="form.logo_width" class="w-full accent-purple-600 cursor-pointer" />
+                </div>
 
-                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="space-y-2">
-                       <label class="kloxy-label">{{ translations.default_currency || 'Devise par défaut' }}</label>
-                       <select v-model="form.default_currency" class="kloxy-input appearance-none">
-                          <option v-for="c in currencies" :key="c.id" :value="c.id">{{ c.name }} ({{ c.symbol }})</option>
-                       </select>
+                <!-- Affichage sur les documents PDF -->
+                <div class="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-4">
+                    <p class="text-xs font-black uppercase tracking-widest text-slate-400">Affichage sur les documents PDF</p>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div v-for="opt in pdfDisplayOptions" :key="opt.key"
+                            class="flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-colors"
+                            :class="form[opt.key] == '1' ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20' : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:border-purple-400'"
+                            @click="form[opt.key] = form[opt.key] == '1' ? '0' : '1'">
+                            <span class="w-4 h-4 rounded flex-shrink-0 flex items-center justify-center border-2 transition-colors"
+                                :class="form[opt.key] == '1' ? 'bg-purple-600 border-purple-600' : 'border-slate-300 dark:border-slate-600'">
+                                <svg v-if="form[opt.key] == '1'" viewBox="0 0 12 12" class="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1.5 6 4.5 9 10.5 3"/></svg>
+                            </span>
+                            <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">{{ opt.label }}</span>
+                        </div>
                     </div>
-                    <div class="space-y-2">
-                       <label class="kloxy-label">{{ translations.currency_position || 'Position de la devise' }}</label>
-                       <select v-model="form.currency_position" class="kloxy-input appearance-none">
-                          <option value="before">{{ translations.before_amount || 'Avant' }}</option>
-                          <option value="after">{{ translations.after_amount || 'Après' }}</option>
-                       </select>
+                </div>
+
+                <!-- Filigrane -->
+                <div class="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-3">
+                    <p class="text-xs font-black uppercase tracking-widest text-slate-400">Filigrane</p>
+                    <div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
+                        <div>
+                            <span class="font-bold text-slate-700 dark:text-slate-300">Afficher le filigrane</span>
+                            <p class="text-xs text-slate-400 mt-0.5">Affiche le statut en filigrane sur les PDFs</p>
+                        </div>
+                        <button type="button"
+                            :class="['relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200', form.show_watermark == '1' ? 'bg-purple-600' : 'bg-slate-200 dark:bg-slate-700']"
+                            @click="form.show_watermark = form.show_watermark == '1' ? '0' : '1'">
+                            <span :class="['pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out', form.show_watermark == '1' ? 'translate-x-5' : 'translate-x-0']"></span>
+                        </button>
                     </div>
-                     <div class="space-y-2">
-                       <label class="kloxy-label">{{ translations.format_date || 'Format Date' }}</label>
-                       <select v-model="form.date_format" class="kloxy-input appearance-none">
-                          <option value="DD-MM-YYYY">DD-MM-YYYY</option>
-                          <option value="YYYY-MM-DD">YYYY-MM-DD</option>
-                          <option value="DD/MM/YYYY">DD/MM/YYYY</option>
-                       </select>
+                    <div v-if="form.show_watermark == '1'" class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl animate-in fade-in slide-in-from-top-2">
+                        <div>
+                            <span class="font-bold text-slate-700 dark:text-slate-300">Filigrane uniquement sur les payées</span>
+                            <p class="text-xs text-slate-400 mt-0.5">N'affiche le filigrane que sur les factures payées</p>
+                        </div>
+                        <button type="button"
+                            :class="['relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200', form.show_watermark_only_paid == '1' ? 'bg-purple-600' : 'bg-slate-200 dark:bg-slate-700']"
+                            @click="form.show_watermark_only_paid = form.show_watermark_only_paid == '1' ? '0' : '1'">
+                            <span :class="['pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out', form.show_watermark_only_paid == '1' ? 'translate-x-5' : 'translate-x-0']"></span>
+                        </button>
                     </div>
-                 </div>
+                </div>
+
+                <!-- Mentions légales -->
+                <div class="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-3">
+                    <p class="text-xs font-black uppercase tracking-widest text-slate-400">Mentions légales</p>
+                    <div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
+                        <div>
+                            <span class="font-bold text-slate-700 dark:text-slate-300">Afficher les mentions légales sur les PDF</span>
+                            <p class="text-xs text-slate-400 mt-0.5">Statut juridique, exonération TVA, etc.</p>
+                        </div>
+                        <button type="button"
+                            :class="['relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200', form.logo_mentions_active == '1' ? 'bg-purple-600' : 'bg-slate-200 dark:bg-slate-700']"
+                            @click="form.logo_mentions_active = form.logo_mentions_active == '1' ? '0' : '1'">
+                            <span :class="['pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out', form.logo_mentions_active == '1' ? 'translate-x-5' : 'translate-x-0']"></span>
+                        </button>
+                    </div>
+                    <div v-if="form.logo_mentions_active == '1'" class="space-y-2 animate-in fade-in slide-in-from-top-2">
+                        <label class="kloxy-label">Texte des mentions</label>
+                        <textarea v-model="form.logo_mentions" class="kloxy-input" rows="3" placeholder="EI - Entrepreneur Individuel&#10;TVA non applicable, art. 293 B du CGI"></textarea>
+                    </div>
+                </div>
+
+                <!-- Paiement par défaut -->
+                <div class="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-4">
+                    <p class="text-xs font-black uppercase tracking-widest text-slate-400">Paiement par défaut</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="space-y-2">
+                            <label class="kloxy-label">Mode de paiement</label>
+                            <input type="text" v-model="form.payment_mode" class="kloxy-input" placeholder="Virement bancaire" />
+                        </div>
+                        <div class="space-y-2">
+                            <label class="kloxy-label">Conditions de paiement</label>
+                            <input type="text" v-model="form.payment_conditions" class="kloxy-input" placeholder="30 jours" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Coordonnées bancaires -->
+                <div class="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-4">
+                    <p class="text-xs font-black uppercase tracking-widest text-slate-400">Coordonnées bancaires</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="space-y-2">
+                            <label class="kloxy-label">IBAN</label>
+                            <input type="text" v-model="form.invoice_iban" class="kloxy-input" placeholder="FR76 3000 6000 0112 3456 7890 189" />
+                        </div>
+                        <div class="space-y-2">
+                            <label class="kloxy-label">BIC / SWIFT</label>
+                            <input type="text" v-model="form.invoice_bic" class="kloxy-input" placeholder="BNPAFRPPXXX" />
+                        </div>
+                    </div>
+                </div>
+
             </div>
 
             <!-- Tab 4: Invoices Settings -->
@@ -239,17 +317,6 @@
                     <label class="kloxy-label">{{ translations.invoice_terms || 'Conditions' }}</label>
                     <VueEditor v-model="form.invoice_terms" />
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="space-y-2">
-                        <label class="kloxy-label">IBAN</label>
-                        <input type="text" v-model="form.invoice_iban" class="kloxy-input" />
-                    </div>
-                    <div class="space-y-2">
-                        <label class="kloxy-label">BIC</label>
-                        <input type="text" v-model="form.invoice_bic" class="kloxy-input" />
-                    </div>
-                </div>
-
                 <!-- Preview area for Invoices -->
                 <div class="mt-8 p-6 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-100 dark:border-slate-800">
                     <h3 class="font-bold text-slate-900 dark:text-white mb-4">Aperçu du style (Facture)</h3>
@@ -982,6 +1049,286 @@
                 </div>
             </div>
 
+            <!-- Tab 30: Application Mobile -->
+            <div v-if="selectedTab === 30" class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div class="bg-indigo-50 dark:bg-indigo-900/20 p-6 rounded-[2rem] border border-indigo-100 dark:border-indigo-800">
+                    <div class="flex items-center gap-4 mb-2">
+                        <QrCode class="w-8 h-8 text-indigo-600 dark:text-indigo-300" />
+                        <h3 class="text-xl font-black text-indigo-900 dark:text-indigo-100">Application mobile</h3>
+                    </div>
+                    <p class="text-slate-600 dark:text-slate-400 font-medium text-sm">
+                        Générez des tokens d'accès pour connecter l'app iOS/Android à votre instance WordPress.
+                        Chaque token est un <span class="font-bold">Bearer token</span> (à garder secret).
+                    </p>
+                </div>
+
+                <div v-if="mobileError" class="p-4 bg-red-50 dark:bg-red-900/20 rounded-2xl border border-red-200 dark:border-red-800 text-red-700 dark:text-red-200 text-sm">
+                    {{ mobileError }}
+                </div>
+
+                <!-- Sub-tabs -->
+                <div class="flex flex-wrap gap-2">
+                    <button
+                        type="button"
+                        @click="mobileSubTab = 'tokens'"
+                        :class="[
+                            'px-4 py-2 rounded-2xl text-sm font-black border transition-colors',
+                            mobileSubTab === 'tokens'
+                                ? 'bg-indigo-600 text-white border-indigo-600'
+                                : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-700'
+                        ]"
+                    >
+                        Tokens d’accès
+                    </button>
+                    <button
+                        type="button"
+                        @click="mobileSubTab = 'guide'"
+                        :class="[
+                            'px-4 py-2 rounded-2xl text-sm font-black border transition-colors',
+                            mobileSubTab === 'guide'
+                                ? 'bg-indigo-600 text-white border-indigo-600'
+                                : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-700'
+                        ]"
+                    >
+                        Guide de connexion
+                    </button>
+                </div>
+
+                <div v-if="mobileSubTab === 'tokens'" class="space-y-6">
+                <!-- Create token -->
+                <div class="rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+                    <div class="flex items-center gap-3 px-5 py-3 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-700">
+                        <div class="w-7 h-7 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
+                            <Plus class="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-300" />
+                        </div>
+                        <span class="font-black text-xs uppercase tracking-widest text-slate-600 dark:text-slate-300">Créer un token</span>
+                    </div>
+                    <div class="p-5 bg-white dark:bg-slate-900">
+                        <div class="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 items-end">
+                            <div class="space-y-2">
+                                <label class="kloxy-label">Nom du token</label>
+                                <input type="text" v-model="mobileTokenName" class="kloxy-input" placeholder="Ex: iPhone Moez / iPad Bureau / Android test…" />
+                                <p class="text-[11px] text-slate-400 ml-1">Astuce : crée un token par appareil. Tu peux révoquer un token à tout moment.</p>
+                            </div>
+                            <button
+                                type="button"
+                                @click="createMobileToken"
+                                :disabled="mobileCreating"
+                                class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                            >
+                                <Loader2 v-if="mobileCreating" class="w-4 h-4 animate-spin" />
+                                <Plus v-else class="w-4 h-4" />
+                                Générer
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- QR / last created token -->
+                <div v-if="mobileCreatedToken" class="rounded-2xl border border-emerald-200 dark:border-emerald-800 overflow-hidden bg-emerald-50/60 dark:bg-emerald-900/15">
+                    <div class="flex items-center gap-3 px-5 py-3 border-b border-emerald-200/60 dark:border-emerald-800/60">
+                        <div class="w-7 h-7 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                            <CheckCircle2 class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-300" />
+                        </div>
+                        <span class="font-black text-xs uppercase tracking-widest text-emerald-700 dark:text-emerald-200">Token créé</span>
+                    </div>
+                    <div class="p-5 grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6">
+                        <div class="flex flex-col items-center justify-center">
+                            <div v-if="!mobileQrImageUrl" class="w-[220px] h-[220px] rounded-2xl border border-emerald-200 dark:border-emerald-800 bg-white flex items-center justify-center">
+                                <Loader2 class="w-8 h-8 animate-spin text-emerald-600 dark:text-emerald-300" />
+                            </div>
+                            <img v-else :src="mobileQrImageUrl" alt="QR code" class="w-[220px] h-[220px] rounded-2xl border border-emerald-200 dark:border-emerald-800 bg-white" />
+                            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-3 text-center">
+                                Scanne ce QR code depuis l’écran de connexion de l’app.
+                            </p>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="p-4 rounded-2xl bg-white/80 dark:bg-slate-900/60 border border-emerald-200 dark:border-emerald-800">
+                                <p class="text-[10px] font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-300 mb-2">Données scannées</p>
+                                <pre class="text-[12px] leading-5 whitespace-pre-wrap break-all text-slate-800 dark:text-slate-100 font-mono">{{ mobileQrPayload }}</pre>
+                                <div class="flex flex-wrap gap-2 mt-3">
+                                    <button type="button" @click="copyToClipboard(mobileQrPayload)" class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs">
+                                        <Copy class="w-3.5 h-3.5" /> Copier
+                                    </button>
+                                    <button type="button" @click="copyToClipboard(mobileCreatedToken.token)" class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-900/80 hover:bg-slate-900 text-white font-bold text-xs">
+                                        <Eye class="w-3.5 h-3.5" /> Copier le token
+                                    </button>
+                                    <button type="button" @click="mobileCreatedToken = null" class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-white/70 dark:bg-slate-900/50 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-200 font-bold text-xs">
+                                        <X class="w-3.5 h-3.5" /> Masquer
+                                    </button>
+                                </div>
+                                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-3">
+                                    Important : ce token ne sera plus affiché ensuite. Garde-le en lieu sûr.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tokens list -->
+                <div class="rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+                    <div class="flex items-center justify-between gap-3 px-5 py-3 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-700">
+                        <div class="flex items-center gap-3">
+                            <div class="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-900/30 flex items-center justify-center">
+                                <Shield class="w-3.5 h-3.5 text-slate-600 dark:text-slate-300" />
+                            </div>
+                            <span class="font-black text-xs uppercase tracking-widest text-slate-600 dark:text-slate-300">Tokens existants</span>
+                        </div>
+                        <button type="button" @click="loadMobileTokens" class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold">
+                            <RefreshCcw class="w-3.5 h-3.5" /> Rafraîchir
+                        </button>
+                    </div>
+                    <div class="p-0 bg-white dark:bg-slate-900">
+                        <div v-if="mobileLoading" class="p-5 flex items-center gap-3 text-slate-500">
+                            <Loader2 class="w-4 h-4 animate-spin" />
+                            Chargement…
+                        </div>
+                        <div v-else-if="mobileTokens.length === 0" class="p-5 text-slate-500 text-sm">
+                            Aucun token pour le moment.
+                        </div>
+                        <div v-else class="divide-y divide-slate-100 dark:divide-slate-800">
+                            <div v-for="t in mobileTokens" :key="t.id" class="p-5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                                <div class="min-w-0">
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <span class="font-black text-slate-900 dark:text-slate-100">{{ t.name }}</span>
+                                        <span v-if="t.is_active" class="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-200 text-[11px] font-black">Actif</span>
+                                        <span v-else class="px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[11px] font-black">Révoqué</span>
+                                    </div>
+                                    <div class="mt-1 text-[12px] text-slate-500 dark:text-slate-400 font-mono break-all">
+                                        {{ t.token_prefix }}
+                                    </div>
+                                    <div class="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
+                                        Créé : <span class="font-bold">{{ t.created_at || '—' }}</span>
+                                        <span class="mx-2">·</span>
+                                        Dernier usage : <span class="font-bold">{{ t.last_used_at || '—' }}</span>
+                                    </div>
+                                </div>
+                                <div class="flex flex-wrap gap-2 justify-start lg:justify-end">
+                                    <button v-if="t.is_active" type="button" @click="revokeMobileToken(t.id)" class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-200 text-xs font-bold">
+                                        <ShieldOffIcon class="w-3.5 h-3.5" /> Révoquer
+                                    </button>
+                                    <button type="button" @click="deleteMobileToken(t.id)" class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-200 text-xs font-bold">
+                                        <Trash2 class="w-3.5 h-3.5" /> Supprimer
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                </div>
+
+                <!-- Guide -->
+                <div v-else class="space-y-6">
+                    <div class="rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden bg-white dark:bg-slate-900">
+                        <div class="px-6 py-5 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60">
+                            <h4 class="font-black text-slate-900 dark:text-white">Comment connecter l’application mobile</h4>
+                            <p class="text-[12px] text-slate-500 dark:text-slate-400 mt-1">Suivez ces étapes, puis scannez un QR code ou renseignez les infos manuellement.</p>
+                        </div>
+                        <div class="p-6 space-y-5">
+                            <div class="flex items-start gap-4">
+                                <div class="w-8 h-8 rounded-full bg-indigo-600 text-white font-black flex items-center justify-center flex-shrink-0">1</div>
+                                <div class="min-w-0">
+                                    <p class="font-black text-slate-900 dark:text-white">Téléchargez l’application</p>
+                                    <p class="text-[12px] text-slate-500 dark:text-slate-400 mt-1">App Store / Google Play, ou Expo Go pendant le développement.</p>
+                                    <div class="flex flex-wrap gap-2 mt-3">
+                                        <span class="px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-black">🍎 App Store</span>
+                                        <span class="px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-black">🤖 Google Play</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-4">
+                                <div class="w-8 h-8 rounded-full bg-indigo-600 text-white font-black flex items-center justify-center flex-shrink-0">2</div>
+                                <div class="min-w-0">
+                                    <p class="font-black text-slate-900 dark:text-white">Créez un token d’accès</p>
+                                    <p class="text-[12px] text-slate-500 dark:text-slate-400 mt-1">Dans l’onglet <span class="font-bold">Tokens d’accès</span>, cliquez sur <span class="font-bold">Générer</span> puis copiez le token.</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-4">
+                                <div class="w-8 h-8 rounded-full bg-indigo-600 text-white font-black flex items-center justify-center flex-shrink-0">3</div>
+                                <div class="min-w-0">
+                                    <p class="font-black text-slate-900 dark:text-white">Connectez-vous via QR code ou manuellement</p>
+                                    <p class="text-[12px] text-slate-500 dark:text-slate-400 mt-1">Renseignez l’URL du site + le token dans l’app, ou scannez le QR code ci-dessous.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden bg-slate-50 dark:bg-slate-800/40">
+                        <div class="px-6 py-5 border-b border-slate-200 dark:border-slate-700">
+                            <h4 class="font-black text-slate-900 dark:text-white">QR code de connexion rapide</h4>
+                            <p class="text-[12px] text-slate-500 dark:text-slate-400 mt-1">Sélectionnez un token actif, collez le token complet, puis scannez.</p>
+                        </div>
+                        <div class="p-6 space-y-4">
+                            <div class="space-y-2 max-w-lg">
+                                <label class="kloxy-label">Choisir un token</label>
+                                <select v-model="mobileGuideTokenId" class="kloxy-input appearance-none">
+                                    <option value="">— Sélectionner un token —</option>
+                                    <option v-for="t in mobileActiveTokens" :key="t.id" :value="String(t.id)">{{ t.name }}</option>
+                                </select>
+                                <div v-if="mobileActiveTokens.length === 0" class="p-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-200 text-[12px] font-semibold">
+                                    Aucun token actif. Créez d’abord un token dans l’onglet <span class="font-black">Tokens d’accès</span>.
+                                </div>
+                                <div v-else class="p-3 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 text-indigo-800 dark:text-indigo-200 text-[12px] font-semibold">
+                                    Le token complet n’est affiché qu’à la création. Collez-le ici pour générer le QR code.
+                                </div>
+                            </div>
+
+                            <div v-if="mobileGuideTokenId" class="space-y-2 max-w-lg">
+                                <label class="kloxy-label">Token complet (commence par <span class="font-black">mec_</span>)</label>
+                                <input v-model="mobileGuideFullToken" type="text" class="kloxy-input font-mono" placeholder="mec_..." />
+                                <div v-if="mobileGuideFullToken && !mobileGuideFullToken.trim().startsWith('mec_')" class="text-[12px] text-red-700 dark:text-red-200 font-semibold">
+                                    Token invalide. Il doit commencer par <span class="font-black">mec_</span>.
+                                </div>
+                            </div>
+
+                            <div v-if="mobileGuideQrImageUrl" class="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6 items-start">
+                                <div class="flex flex-col items-center justify-center">
+                                    <div v-if="!mobileGuideQrImageUrl" class="w-[220px] h-[220px] rounded-2xl border border-slate-200 dark:border-slate-700 bg-white flex items-center justify-center">
+                                        <Loader2 class="w-8 h-8 animate-spin text-slate-400" />
+                                    </div>
+                                    <img v-else :src="mobileGuideQrImageUrl" alt="QR code" class="w-[220px] h-[220px] rounded-2xl border border-slate-200 dark:border-slate-700 bg-white" />
+                                    <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-3 text-center">
+                                        Scanne ce QR code depuis l’écran de connexion de l’app.
+                                    </p>
+                                </div>
+                                <div class="space-y-3">
+                                    <div class="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
+                                        <p class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Données scannées</p>
+                                        <pre class="text-[12px] leading-5 whitespace-pre-wrap break-all text-slate-800 dark:text-slate-100 font-mono">{{ mobileGuideQrPayload }}</pre>
+                                        <div class="flex flex-wrap gap-2 mt-3">
+                                            <button type="button" @click="copyToClipboard(mobileGuideQrPayload)" class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs">
+                                                <Copy class="w-3.5 h-3.5" /> Copier
+                                            </button>
+                                            <button type="button" @click="copyToClipboard(mobileGuideFullToken.trim())" class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-900/80 hover:bg-slate-900 text-white font-bold text-xs">
+                                                <Eye class="w-3.5 h-3.5" /> Copier le token
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="rounded-2xl overflow-hidden bg-slate-900 border border-slate-800">
+                        <div class="px-6 py-5 border-b border-slate-800">
+                            <h4 class="font-black text-slate-100">Informations de connexion manuelle</h4>
+                            <p class="text-[12px] text-slate-400 mt-1">Clique pour copier.</p>
+                        </div>
+                        <div class="p-6 space-y-3">
+                            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                                <span class="text-[12px] text-slate-400 font-black uppercase tracking-widest">URL du site</span>
+                                <code class="text-[12px] text-sky-200 bg-white/5 px-3 py-2 rounded-xl cursor-pointer break-all" @click="copyToClipboard(mobileSiteUrl)">{{ mobileSiteUrl }}</code>
+                            </div>
+                            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                                <span class="text-[12px] text-slate-400 font-black uppercase tracking-widest">Endpoint API</span>
+                                <code class="text-[12px] text-sky-200 bg-white/5 px-3 py-2 rounded-xl cursor-pointer break-all" @click="copyToClipboard(mobileApiVerifyUrl)">{{ mobileApiVerifyUrl }}</code>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Tab 22: Contracts template -->
             <div v-if="selectedTab === 22" class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div class="bg-purple-50 dark:bg-purple-900/20 p-6 rounded-[2rem] border border-purple-100 dark:border-purple-800">
@@ -1293,6 +1640,95 @@
                      </div>
                  </div>
              </template>
+         </div>
+
+         <!-- Tab 27: Webhooks & Zapier -->
+         <div v-if="selectedTab === 27" class="animate-in fade-in slide-in-from-bottom-4 duration-500">
+           <Webhooks />
+         </div>
+
+         <!-- Tab 28: Export FEC -->
+         <div v-if="selectedTab === 28" class="animate-in fade-in slide-in-from-bottom-4 duration-500">
+           <FEC />
+         </div>
+
+         <!-- Tab 29: Scan Reçus (OCR) -->
+         <div v-if="selectedTab === 29" class="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8">
+           <!-- OCR API Key settings -->
+           <div class="bg-gradient-to-br from-violet-50 to-fuchsia-50 dark:from-violet-950/30 dark:to-fuchsia-950/30 rounded-[2rem] p-8 border border-violet-100 dark:border-violet-900/40">
+             <div class="flex items-start gap-5">
+               <div class="w-14 h-14 bg-violet-600 rounded-2xl flex items-center justify-center shadow-lg shadow-violet-500/30 shrink-0">
+                 <ScanLine class="w-7 h-7 text-white" />
+               </div>
+               <div>
+                 <h2 class="text-xl font-black text-slate-900 dark:text-white">Scan de Reçus (OCR)</h2>
+                 <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">
+                   Photographiez ou uploadez un reçu pour pré-remplir automatiquement vos dépenses. Propulsé par OCR.space.
+                 </p>
+               </div>
+             </div>
+           </div>
+
+           <div class="bg-white dark:bg-slate-900 rounded-[2rem] p-8 border border-slate-100 dark:border-slate-800 space-y-6">
+             <h3 class="text-sm font-black uppercase tracking-widest text-slate-400">Configuration API</h3>
+
+             <div class="space-y-2">
+               <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Clé API OCR.space</label>
+               <input
+                 type="text"
+                 v-model="ocrApiKey"
+                 placeholder="Votre clé API (optionnel – une clé gratuite suffit)"
+                 class="kloxy-input"
+               />
+               <p class="text-xs text-slate-400 ml-2 mt-1">
+                 Créez une clé gratuite sur <a href="https://ocr.space/ocrapi" target="_blank" class="text-violet-500 hover:underline">ocr.space</a>.
+                 Sans clé, la démo publique est utilisée (limites strictes).
+               </p>
+             </div>
+
+             <div class="space-y-2">
+               <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Langue par défaut</label>
+               <div class="relative">
+                 <select v-model="ocrLanguage" class="kloxy-select-native">
+                   <option value="fre">Français</option>
+                   <option value="eng">Anglais</option>
+                   <option value="ger">Allemand</option>
+                   <option value="spa">Espagnol</option>
+                   <option value="ita">Italien</option>
+                   <option value="por">Portugais</option>
+                 </select>
+                 <ChevronDown class="w-4 h-4 text-slate-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+               </div>
+             </div>
+
+             <div class="flex justify-end pt-2">
+               <button @click="saveOcrSettings" :disabled="savingOcr" class="flex items-center gap-2 px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest bg-violet-600 text-white hover:scale-105 active:scale-95 transition-all shadow-lg shadow-violet-500/30 disabled:opacity-50">
+                 <span v-if="savingOcr" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                 <Save v-else class="w-4 h-4" />
+                 Enregistrer
+               </button>
+             </div>
+           </div>
+
+           <div class="bg-slate-50 dark:bg-slate-900/50 rounded-[2rem] p-6 border border-slate-100 dark:border-slate-800">
+             <h4 class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2">
+               <ScanLine class="w-3.5 h-3.5" /> Comment utiliser
+             </h4>
+             <ol class="space-y-3 text-sm text-slate-600 dark:text-slate-400">
+               <li class="flex items-start gap-3">
+                 <span class="w-6 h-6 bg-violet-100 dark:bg-violet-900/40 text-violet-600 rounded-lg flex items-center justify-center font-black text-xs shrink-0">1</span>
+                 Allez dans <strong>Dépenses</strong> et cliquez sur <strong>"Scanner un reçu"</strong> pour ouvrir le formulaire d'ajout.
+               </li>
+               <li class="flex items-start gap-3">
+                 <span class="w-6 h-6 bg-violet-100 dark:bg-violet-900/40 text-violet-600 rounded-lg flex items-center justify-center font-black text-xs shrink-0">2</span>
+                 Uploadez une photo du reçu (JPG, PNG, PDF) — l'OCR extrait automatiquement le montant, la date et le fournisseur.
+               </li>
+               <li class="flex items-start gap-3">
+                 <span class="w-6 h-6 bg-violet-100 dark:bg-violet-900/40 text-violet-600 rounded-lg flex items-center justify-center font-black text-xs shrink-0">3</span>
+                 Vérifiez et complétez les champs pré-remplis, puis enregistrez la dépense.
+               </li>
+             </ol>
+           </div>
          </div>
 
          <!-- Tab 16: License Management -->
@@ -1746,10 +2182,81 @@
 
          <!-- Generic Tables -->
          <div v-if="isTableTab" class="space-y-12">
+
+             <!-- Tab 7: TVA block (settings + taux) -->
+             <div v-if="selectedTab === 7" class="rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+                 <!-- Header -->
+                 <div class="flex items-center justify-between px-5 py-3 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-700">
+                     <div class="flex items-center gap-3">
+                         <div class="w-7 h-7 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                             <Receipt class="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                         </div>
+                         <span class="font-black text-xs uppercase tracking-widest text-slate-600 dark:text-slate-300">TVA</span>
+                     </div>
+                     <button @click="openAddVATModal" class="kloxy-btn-secondary py-2 px-4 shadow-none">
+                         <Plus class="w-3 h-3 mr-2" /> {{ translations.add || 'Ajouter' }}
+                     </button>
+                 </div>
+                 <!-- Settings -->
+                 <div class="p-5 bg-white dark:bg-slate-900 space-y-5">
+                     <div class="flex items-center justify-between">
+                         <div>
+                             <p class="text-sm font-semibold text-slate-700 dark:text-slate-200">Activer la gestion de TVA</p>
+                             <p class="text-xs text-slate-400 mt-0.5">Affiche les colonnes TVA sur les factures, devis et avoirs.</p>
+                         </div>
+                         <button type="button" @click="form.vat_active = form.vat_active == 1 ? 0 : 1"
+                             :class="['relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none', form.vat_active == 1 ? 'bg-blue-600' : 'bg-slate-200 dark:bg-slate-700']">
+                             <span :class="['pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out', form.vat_active == 1 ? 'translate-x-5' : 'translate-x-0']"></span>
+                         </button>
+                     </div>
+                     <div v-if="form.vat_active == 1" class="space-y-1.5">
+                         <label class="kloxy-label">Taux TVA par défaut</label>
+                         <select v-model="form.default_vat" class="kloxy-input cursor-pointer">
+                             <option value="0">Aucun (0%)</option>
+                             <option v-for="v in vats" :key="v.id" :value="v.rate">{{ v.rate }}% — {{ v.description }}</option>
+                         </select>
+                         <p class="text-[11px] text-slate-400 ml-1">Pré-sélectionné à l'ajout d'un article sur une nouvelle facture ou devis.</p>
+                     </div>
+                 </div>
+                 <!-- Taux table -->
+                 <div class="px-5 pb-2 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
+                     <table class="w-full border-separate border-spacing-y-2">
+                         <thead>
+                             <tr class="text-xs font-black uppercase tracking-widest text-slate-400 text-left">
+                                 <th class="px-6 pb-2">Taux (%)</th>
+                                 <th class="px-6 pb-2">Description</th>
+                                 <th class="px-6 pb-2 text-right">Actions</th>
+                             </tr>
+                         </thead>
+                         <tbody>
+                             <tr v-for="v in vats" :key="v.id" class="bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors group">
+                                 <td class="px-6 py-4 font-bold text-slate-900 dark:text-white rounded-l-2xl">{{ v.rate }}%</td>
+                                 <td class="px-6 py-4 text-slate-600 dark:text-slate-400">{{ v.description }}</td>
+                                 <td class="px-6 py-4 rounded-r-2xl text-right">
+                                     <div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                         <button @click="editVAT(v)" class="p-2 text-slate-400 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-slate-900 rounded-lg transition-colors"><Pencil class="w-4 h-4" /></button>
+                                         <button @click="deleteItem('vat', v.id)" class="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-slate-900 rounded-lg transition-colors"><Trash2 class="w-4 h-4" /></button>
+                                     </div>
+                                 </td>
+                             </tr>
+                         </tbody>
+                     </table>
+                 </div>
+                 <!-- Footer save -->
+                 <div class="flex justify-end px-5 py-4 bg-slate-50 dark:bg-slate-800/60 border-t border-slate-200 dark:border-slate-700">
+                     <button type="button" @click="handleSubmit" class="kloxy-btn-primary">
+                         <Save class="w-4 h-4 mr-2" /> {{ translations.save || 'Enregistrer' }}
+                     </button>
+                 </div>
+             </div>
+
              <!-- Primary Table -->
              <div class="overflow-x-auto">
                  <div v-if="selectedTab === 7" class="mb-4 flex items-center justify-between">
                      <h3 class="text-lg font-bold text-slate-800 dark:text-slate-200">Devises</h3>
+                     <button @click="openAddModal" class="kloxy-btn-secondary py-2 px-4 shadow-none">
+                         <Plus class="w-3 h-3 mr-2" /> {{ translations.add || 'Ajouter' }}
+                     </button>
                  </div>
                  <table class="w-full border-separate border-spacing-y-2">
                     <thead>
@@ -1808,36 +2315,6 @@
                  </table>
              </div>
 
-             <!-- Secondary Table for VATs in Tab 7 -->
-             <div v-if="selectedTab === 7" class="overflow-x-auto pt-8 border-t border-slate-100 dark:border-slate-800">
-                 <div class="mb-4 flex items-center justify-between">
-                     <h3 class="text-lg font-bold text-slate-800 dark:text-slate-200">TVA</h3>
-                     <button @click="openAddVATModal" class="kloxy-btn-secondary py-2 px-4 shadow-none">
-                         <Plus class="w-3 h-3 mr-2" /> {{ translations.add || 'Ajouter' }}
-                     </button>
-                 </div>
-                 <table class="w-full border-separate border-spacing-y-2">
-                    <thead>
-                       <tr class="text-xs font-black uppercase tracking-widest text-slate-400 text-left">
-                          <th class="px-6 pb-2">Taux (%)</th>
-                          <th class="px-6 pb-2">Description</th>
-                          <th class="px-6 pb-2 text-right">Actions</th>
-                       </tr>
-                    </thead>
-                    <tbody>
-                       <tr v-for="v in vats" :key="v.id" class="bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors group">
-                          <td class="px-6 py-4 font-bold text-slate-900 dark:text-white rounded-l-2xl">{{ v.rate }}%</td>
-                          <td class="px-6 py-4 text-slate-600 dark:text-slate-400">{{ v.description }}</td>
-                          <td class="px-6 py-4 rounded-r-2xl text-right">
-                             <div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button @click="editVAT(v)" class="p-2 text-slate-400 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-slate-900 rounded-lg transition-colors"><Pencil class="w-4 h-4" /></button>
-                                <button @click="deleteItem('vat', v.id)" class="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-slate-900 rounded-lg transition-colors"><Trash2 class="w-4 h-4" /></button>
-                             </div>
-                          </td>
-                       </tr>
-                    </tbody>
-                 </table>
-             </div>
          </div>
 
          <!-- Save button for Planning tab (tab 10) — shown after the categories table -->
@@ -2107,10 +2584,13 @@
 import { ref, reactive, computed, onMounted, watch } from 'vue';
 import { VueEditor } from "vue3-editor";
 import axios from 'axios';
+import QRCode from 'qrcode';
 import MainLayout from '@/components/layout/MainLayout.vue';
 import RemoveModal from "@/components/RemoveAlert.vue";
 import Entities from "@/components/Entities.vue";
-import { Home, Settings, FileText, Receipt, Undo, HelpCircle, DollarSign, CreditCard, ShoppingBag, Calendar, Mail, Bell, User, BarChart, QrCode, BadgeCheck, Save, Upload, Plus, Pencil, Trash2, X, CheckCircle2, AlertCircle, Zap, RefreshCcw, Loader2, Download, Building2, Globe, Plug, Wifi, WifiOff, ChevronDown, ChevronUp, Shield, FileInput, Headphones, Heart, ExternalLink, Send, Users, ScrollText, Clock, Truck, MessageSquare, Eye, Copy, Star, ShieldCheck } from 'lucide-vue-next';
+import Webhooks from "@/components/Webhooks.vue";
+import FEC from "@/components/FEC.vue";
+import { Home, FileText, FileImage, Receipt, Undo, HelpCircle, DollarSign, CreditCard, ShoppingBag, Calendar, Mail, Bell, User, BarChart, QrCode, BadgeCheck, Save, Upload, Plus, Pencil, Trash2, X, CheckCircle2, AlertCircle, Zap, RefreshCcw, Loader2, Download, Building2, Globe, Plug, Wifi, WifiOff, ChevronDown, ChevronUp, Shield, ShieldOff as ShieldOffIcon, FileInput, Headphones, Heart, ExternalLink, Send, Users, ScrollText, Clock, Truck, MessageSquare, Eye, Copy, Star, ShieldCheck, FileDown, ScanLine } from 'lucide-vue-next';
 
 // State
 const selectedTab = ref(1);
@@ -2120,6 +2600,9 @@ const showRemoveModal = ref(false);
 const deleteType = ref(null);
 const selectedId = ref(null);
 const logoPreviewUrl = ref(null);
+const ocrApiKey  = ref('');
+const ocrLanguage = ref('fre');
+const savingOcr   = ref(false);
 const settingsModalRef = ref(null);
 
 // VAT Management
@@ -2146,7 +2629,10 @@ const processingAddon = ref(null);
 
 const form = reactive({
     company_code: '', tax_number: '', company_name: '', company_email: '', company_address: '', postal_code: '', city: '', country: '', company_phone: '', mobile_phone: '', fax: '', date_format: 'DD-MM-YYYY',
-    logo_mentions_active: 0, logo_mentions: '', logo_width: 150,
+    logo_mentions_active: '0', logo_mentions: '', logo_width: 150,
+    show_phone: '1', show_email: '1', show_siren: '1', show_vat: '1',
+    show_watermark: '0', show_watermark_only_paid: '0',
+    payment_mode: 'Virement bancaire', payment_conditions: '30 jours',
     default_currency: '', currency_position: 'after', vat_active: 0, default_vat: 0,
     invoice_prefix: 'INV', invoice_first: 1, invoice_color: '#7c3aed', invoice_footer: '', invoice_terms: '', invoice_iban: '', invoice_bic: '',
     credit_prefix: 'AVR', credit_color: '#f59e0b', credit_footer: '', credit_terms: '',
@@ -2320,12 +2806,12 @@ const visibleTabs = computed(() => {
     const f = form;
     const tabs = [
         { id: 1, label: t.general_settings || 'Général', icon: Home },
-        { id: 2, label: t.system_settings || 'Système', icon: Settings },
+        { id: 20, label: 'Documents PDF', icon: FileImage },
         { id: 3, label: t.articles_settings || 'Articles', icon: FileText },
         { id: 4, label: translations.invoices || 'Factures', icon: FileText },
         { id: 5, label: translations.credits || 'Avoirs', icon: Undo },
         { id: 6, label: translations.quotes || 'Devis', icon: HelpCircle },
-        { id: 7, label: translations.vats || 'TVA', icon: Receipt },
+        { id: 7, label: translations.vats || 'TVA & Devises', icon: Receipt },
         { id: 8, label: t.payments_settings || 'Paiements', icon: CreditCard },
         { id: 9, label: t.expenses_settings || 'Dépenses', icon: ShoppingBag },
     ];
@@ -2336,6 +2822,7 @@ const visibleTabs = computed(() => {
     const hasS = checkSlug('myeasycompta-payment');
     const hasSt = checkSlug('myeasycompta-stats');
     const hasQ = checkSlug('myeasycompta-qrcode-stripe');
+    const hasMobile = checkSlug('my-easy-compta-mobile') || !!window.myEasyComptaAdmin?.addonsStatus?.mobile;
 
     if(hasP || f.easy_compta_planning_addon_active == 1) tabs.push({ id: 10, label: t.planning_settings || 'Planning', icon: Calendar });
     tabs.push({ id: 11, label: t.email_settings || 'Emails', icon: Mail }); // Always visible — notification settings available without addon
@@ -2343,11 +2830,15 @@ const visibleTabs = computed(() => {
     if(hasS || f.easy_compta_payment_addon_active == 1) tabs.push({ id: 13, label: t.stripe_settings || 'Stripe', icon: CreditCard });
     if(hasSt || f.easy_compta_stats_addon_active == 1) tabs.push({ id: 14, label: t.stats_settings || 'Stats', icon: BarChart });
     if(hasQ || f.easy_compta_qrcode_addon_active == 1) tabs.push({ id: 15, label: 'QR Code', icon: QrCode });
+    if (hasMobile) tabs.push({ id: 30, label: 'App Mobile', icon: QrCode });
     if(window.myEasyComptaAdmin?.contractsAddonActive)    tabs.push({ id: 22, label: 'Contrats',     icon: ScrollText });
     if(window.myEasyComptaAdmin?.timetrackingAddonActive) tabs.push({ id: 23, label: 'Temps & Fact.', icon: Clock });
     if(window.myEasyComptaAdmin?.deliveryAddonActive)     tabs.push({ id: 24, label: 'Livraisons',    icon: Truck });
     if(window.myEasyComptaAdmin?.onlineQuoteAddonActive)  tabs.push({ id: 25, label: 'Devis en ligne', icon: Globe });
     if(window.myEasyComptaAdmin?.smsAddonActive)          tabs.push({ id: 26, label: 'SMS',           icon: MessageSquare });
+    if(window.myEasyComptaAdmin?.webhooksAddonActive)     tabs.push({ id: 27, label: 'Webhooks',       icon: Zap });
+    if(window.myEasyComptaAdmin?.fecAddonActive)          tabs.push({ id: 28, label: 'Export FEC',      icon: FileDown });
+    if(window.myEasyComptaAdmin?.ocrAddonActive)          tabs.push({ id: 29, label: 'Scan Reçus',      icon: ScanLine });
 
     tabs.push({ id: 17, label: 'Fact. Électronique', icon: FileInput });
     tabs.push({ id: 16, label: t.license_settings || 'Licence', icon: BadgeCheck });
@@ -2362,14 +2853,15 @@ const tabGroups = computed(() => {
     const allTabs = visibleTabs.value;
     const find = (id) => allTabs.find(t => t.id === id);
     const groups = [
-        { label: 'Général', tabs: [find(1), find(2)].filter(Boolean) },
-        { label: 'Documents', tabs: [find(4), find(5), find(6)].filter(Boolean) },
+        { label: 'Général', tabs: [find(1)].filter(Boolean) },
+        { label: 'Documents', tabs: [find(20), find(4), find(5), find(6)].filter(Boolean) },
         { label: 'Références', tabs: [find(3), find(7), find(8), find(9)].filter(Boolean) },
     ];
-    const addonIds = [10, 11, 12, 13, 14, 15, 22, 23, 24, 25, 26];
+    const addonIds = [10, 11, 12, 13, 14, 15, 22, 23, 24, 25, 26, 27, 28, 29];
+    if (find(30)) addonIds.push(30);
     const addonTabs = addonIds.map(id => find(id)).filter(Boolean);
     if (addonTabs.length > 0) groups.push({ label: 'Add-ons', tabs: addonTabs });
-    const advTabs = [find(17), find(16), find(18), find(19), find(20)].filter(Boolean);
+    const advTabs = [find(17), find(16), find(18), find(19)].filter(Boolean);
     if (advTabs.length > 0) groups.push({ label: 'Avancé', tabs: advTabs });
     return groups;
 });
@@ -2378,13 +2870,12 @@ const currentTabIcon = computed(() => visibleTabs.value.find(t => t.id === selec
 
 const getCurrentTabDesc = computed(() => {
     const descs = {
-        1: 'Informations de votre entreprise, coordonnées et logo',
-        2: 'Devise, TVA par défaut et apparence PDF',
+        1: 'Informations de votre entreprise, coordonnées, devise et format de date',
         3: 'Catalogue d\'articles et catégories d\'articles',
         4: 'Numérotation, couleur et pieds de page des factures',
         5: 'Numérotation, couleur et pieds de page des avoirs',
         6: 'Numérotation, couleur et pieds de page des devis',
-        7: 'Devises disponibles et taux de TVA',
+        7: 'Gestion de la TVA et devises disponibles',
         8: 'Méthodes de paiement acceptées',
         9: 'Catégories de dépenses',
         10: 'Catégories de l\'agenda et vue calendrier',
@@ -2397,13 +2888,15 @@ const getCurrentTabDesc = computed(() => {
         17: 'Conformité EN 16931 / Factur-X et connecteurs PDP',
         18: 'Documentation, contact et assistance technique',
         19: 'Rejoindre le programme d\'affiliation myEasyCompta',
-        20: 'Rappels automatiques pour les factures impayées',
+        20: 'Logo, filigrane, mentions légales et coordonnées bancaires',
         21: 'Gérez plusieurs entités légales depuis la même interface',
         22: 'Modèle de contrat pré-rempli proposé à la création',
         23: 'Taux horaire par défaut et options du suivi de temps',
         24: 'Préfixe des bons de livraison et texte de pied de page',
         25: 'Durée d\'expiration des liens et message aux clients',
         26: 'Fournisseur SMS, clés API et événements à notifier',
+        27: 'Endpoints HTTP, événements déclencheurs et logs de livraison',
+        30: 'Connexion de l’application mobile : génération de tokens et QR code',
     };
     return descs[selectedTab.value] || '';
 });
@@ -2411,11 +2904,18 @@ const getCurrentTabDesc = computed(() => {
 const isTableTab = computed(() => [3, 7, 8, 9, 10].includes(selectedTab.value));
 
 // ── Number format helpers ────────────────────────────────────────────────────
+const pdfDisplayOptions = [
+    { key: 'show_phone',  label: 'Téléphone' },
+    { key: 'show_email',  label: 'E-mail' },
+    { key: 'show_siren',  label: 'SIRET' },
+    { key: 'show_vat',    label: 'N° TVA' },
+];
+
 const numberFormatOptions = [
     { value: 'prefix',            label: 'Préfixe — Numéro',                   note: null },
-    { value: 'prefix_year',       label: 'Préfixe — Année — Numéro',           note: 'Compteur remis à 0 chaque 1ᵉʳ janvier' },
-    { value: 'prefix_year_month', label: 'Préfixe — Année — Mois — Numéro',   note: 'Compteur remis à 0 chaque 1ᵉʳ du mois' },
-    { value: 'year',              label: 'Année — Numéro (sans préfixe)',       note: 'Compteur remis à 0 chaque 1ᵉʳ janvier' },
+    { value: 'prefix_year',       label: 'Préfixe — Année — Numéro',           note: 'La numérotation reste continue même en changeant de format.' },
+    { value: 'prefix_year_month', label: 'Préfixe — Année — Mois — Numéro',   note: 'La numérotation reste continue même en changeant de format.' },
+    { value: 'year',              label: 'Année — Numéro (sans préfixe)',       note: 'La numérotation reste continue même en changeant de format.' },
 ];
 
 function buildNumberPreview(prefix, format, startNum) {
@@ -2831,6 +3331,176 @@ const smsTesting   = ref(false);
 const smsTestPhone = ref('');
 const smsTestResult = ref('');
 
+// ── App Mobile (tab 30) ───────────────────────────────────────────────────────
+const mobileTokens = ref([]);
+const mobileLoading = ref(false);
+const mobileCreating = ref(false);
+const mobileError = ref('');
+const mobileTokenName = ref('');
+const mobileCreatedToken = ref(null);
+const mobileSubTab = ref('tokens'); // 'tokens' | 'guide'
+
+const mobileGuideTokenId = ref('');
+const mobileGuideFullToken = ref('');
+
+const mobileSiteUrl = computed(() => {
+    return window.myEasyComptaAdmin?.site_url || window.location.origin;
+});
+
+const mobileApiVerifyUrl = computed(() => {
+    // L'app mobile utilise l'API du plugin mobile; on affiche l'endpoint "verify" à titre indicatif.
+    return (window.myEasyComptaAdmin?.rest_url || (window.location.origin + '/wp-json')) + '/my-easy-compta/v1/mobile/auth/verify';
+});
+
+const mobileActiveTokens = computed(() => {
+    return (mobileTokens.value || []).filter(t => !!t.is_active);
+});
+
+const mobileQrPayload = computed(() => {
+    if (!mobileCreatedToken.value) return '';
+    return JSON.stringify({ url: mobileSiteUrl.value, token: mobileCreatedToken.value.token });
+});
+
+const MOBILE_QR_SIZE = 220;
+
+const mobileQrImageUrl = ref('');
+const mobileGuideQrImageUrl = ref('');
+
+async function setLocalQrDataUrl(targetRef, text) {
+    if (!text) {
+        targetRef.value = '';
+        return;
+    }
+    try {
+        targetRef.value = await QRCode.toDataURL(text, {
+            width: MOBILE_QR_SIZE,
+            margin: 1,
+            errorCorrectionLevel: 'M',
+        });
+    } catch (_) {
+        targetRef.value = '';
+    }
+}
+
+watch(mobileQrPayload, (payload) => {
+    setLocalQrDataUrl(mobileQrImageUrl, payload);
+}, { immediate: true });
+
+const mobileGuideQrPayload = computed(() => {
+    const token = (mobileGuideFullToken.value || '').trim();
+    if (!mobileGuideTokenId.value || !token || !token.startsWith('mec_')) return '';
+    return JSON.stringify({ url: mobileSiteUrl.value, token });
+});
+
+watch(mobileGuideQrPayload, (payload) => {
+    setLocalQrDataUrl(mobileGuideQrImageUrl, payload);
+}, { immediate: true });
+
+watch(mobileGuideTokenId, () => {
+    mobileGuideFullToken.value = '';
+});
+
+async function loadMobileTokens() {
+    mobileError.value = '';
+    mobileLoading.value = true;
+    try {
+        const res = await fetch('/wp-json/my-easy-compta/v1/mobile-tokens', {
+            headers: { 'X-WP-Nonce': window.myEasyComptaAdmin.nonce },
+        });
+        const data = await res.json();
+        if (Array.isArray(data)) {
+            mobileTokens.value = data;
+        } else if (data && data.data && Array.isArray(data.data)) {
+            mobileTokens.value = data.data;
+        } else {
+            throw new Error(data?.message || 'Erreur de chargement');
+        }
+    } catch (_) {
+        mobileError.value = 'Impossible de charger les tokens. Vérifiez que le plugin “Application Mobile” est activé.';
+    } finally {
+        mobileLoading.value = false;
+    }
+}
+
+async function createMobileToken() {
+    const name = (mobileTokenName.value || '').trim();
+    if (!name) {
+        mobileError.value = 'Veuillez saisir un nom de token.';
+        return;
+    }
+    mobileError.value = '';
+    mobileCreating.value = true;
+    try {
+        const res = await fetch('/wp-json/my-easy-compta/v1/mobile-tokens', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': window.myEasyComptaAdmin.nonce },
+            body: JSON.stringify({ name }),
+        });
+        const data = await res.json();
+        if (data?.token) {
+            mobileCreatedToken.value = data;
+            mobileTokenName.value = '';
+            await loadMobileTokens();
+            showToast('Token créé', 'success');
+        } else {
+            throw new Error(data?.message || 'Erreur de création');
+        }
+    } catch (_) {
+        mobileError.value = 'Impossible de créer le token.';
+    } finally {
+        mobileCreating.value = false;
+    }
+}
+
+async function revokeMobileToken(id) {
+    if (!confirm('Révoquer ce token ? L’app connectée ne pourra plus accéder à l’API.')) return;
+    mobileError.value = '';
+    try {
+        const res = await fetch(`/wp-json/my-easy-compta/v1/mobile-tokens/${id}/revoke`, {
+            method: 'POST',
+            headers: { 'X-WP-Nonce': window.myEasyComptaAdmin.nonce },
+        });
+        const data = await res.json();
+        if (data?.success) {
+            await loadMobileTokens();
+            showToast('Token révoqué', 'success');
+        } else {
+            throw new Error(data?.message || 'Erreur');
+        }
+    } catch (_) {
+        mobileError.value = 'Impossible de révoquer le token.';
+    }
+}
+
+async function deleteMobileToken(id) {
+    if (!confirm('Supprimer ce token ? Cette action est irréversible.')) return;
+    mobileError.value = '';
+    try {
+        const res = await fetch(`/wp-json/my-easy-compta/v1/mobile-tokens/${id}`, {
+            method: 'DELETE',
+            headers: { 'X-WP-Nonce': window.myEasyComptaAdmin.nonce },
+        });
+        const data = await res.json();
+        if (data?.success) {
+            await loadMobileTokens();
+            showToast('Token supprimé', 'success');
+        } else {
+            throw new Error(data?.message || 'Erreur');
+        }
+    } catch (_) {
+        mobileError.value = 'Impossible de supprimer le token.';
+    }
+}
+
+function copyToClipboard(text) {
+    try {
+        navigator.clipboard?.writeText(String(text || ''));
+        showToast('Copié', 'success');
+    } catch (_) {
+        showToast('Copie impossible', 'error');
+    }
+}
+
 const smsEvents = [
     { key: 'invoice_sent',      label: 'Facture envoyée',            desc: 'Quand une facture est envoyée au client',           defaultTemplate: 'Bonjour {CLIENT_NAME}, votre facture {INVOICE_NUMBER} de {AMOUNT} vous a été envoyée.' },
     { key: 'payment_received',  label: 'Paiement reçu',              desc: 'Quand un paiement est enregistré',                  defaultTemplate: 'Bonjour {CLIENT_NAME}, votre paiement de {AMOUNT} a bien été reçu. Merci !' },
@@ -2853,6 +3523,34 @@ async function loadSmsSettings() {
         if (!smsSettings.events) smsSettings.events = {};
     } catch (_) {}
     smsLoading.value = false;
+}
+
+async function loadOcrSettings() {
+    try {
+        const res = await fetch('/wp-json/my-easy-compta/v1/ocr/settings', {
+            headers: { 'X-WP-Nonce': window.myEasyComptaAdmin.nonce },
+        });
+        if (res.ok) {
+            const data = await res.json();
+            ocrApiKey.value   = data.ocr_api_key  || '';
+            ocrLanguage.value = data.ocr_language || 'fre';
+        }
+    } catch (_) {}
+}
+
+async function saveOcrSettings() {
+    savingOcr.value = true;
+    try {
+        const res = await fetch('/wp-json/my-easy-compta/v1/ocr/settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': window.myEasyComptaAdmin.nonce },
+            body: JSON.stringify({ ocr_api_key: ocrApiKey.value, ocr_language: ocrLanguage.value }),
+        });
+        const data = await res.json();
+        if (data.success) showToast(translations.value.saved_successfully || 'Enregistré', 'success');
+        else throw new Error('Error');
+    } catch (_) { showToast('Erreur lors de l\'enregistrement', 'error'); }
+    savingOcr.value = false;
 }
 
 async function saveSmsSettings() {
@@ -2886,7 +3584,11 @@ async function sendSmsTest() {
 }
 
 // Load SMS settings when switching to tab 26
-watch(selectedTab, (val) => { if (val === 26) loadSmsSettings(); });
+watch(selectedTab, (val) => {
+    if (val === 26) loadSmsSettings();
+    if (val === 29) loadOcrSettings();
+    if (val === 30) loadMobileTokens();
+});
 
 onMounted(() => {
     loadData();
@@ -3168,5 +3870,6 @@ const saveVAT = async () => {
 </script>
 
 <style scoped>
-/* No more @apply needed here as they are in main.css */
+.settings-sidebar-scroll::-webkit-scrollbar { display: none; }
+.settings-sidebar-scroll { scrollbar-width: none; }
 </style>

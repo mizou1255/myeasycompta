@@ -1,6 +1,6 @@
 {
     "name": "my-easy-compta",
-    "version": "2.0.1",
+    "version": "2.1.0",
     "scripts": {
         "dev": "vite",
         "build": "vite build",
@@ -19,6 +19,8 @@
         "axios": "^1.7.2",
         "chart.js": "^4.5.1",
         "cssnano": "^7.0.1",
+        "leaflet": "^1.9.4",
+        "qrcode": "^1.5.4",
         "save": "^2.9.0",
         "sortablejs": "^1.15.2",
         "vue-chartjs": "^5.3.3",

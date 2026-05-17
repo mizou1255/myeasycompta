@@ -4,6 +4,7 @@ import path from "path";
 import obfuscator from "rollup-plugin-obfuscator";
 
 export default defineConfig({
+  base: './',
   define: {
     'process.env.NODE_ENV': JSON.stringify('production'),
     'process.env': '({})',
@@ -14,6 +15,8 @@ export default defineConfig({
     postcss: "./postcss.config.js",
   },
   build: {
+    outDir: "assets/dist",
+    emptyOutDir: true,
     chunkSizeWarningLimit: 600,
     rollupOptions: {
       input: {
@@ -37,7 +40,6 @@ export default defineConfig({
           }
           return "[name][extname]";
         },
-        dir: "assets/dist",
         format: "es",
         manualChunks(id) {
           if (id.includes("node_modules/vue/") || id.includes("node_modules/@vue/")) {
@@ -73,6 +75,11 @@ export default defineConfig({
           // ES module resolution at runtime (browser can't resolve encoded chunk paths)
           stringArray: false,
           unicodeEscapeSequence: false,
+          // Protect cross-chunk export names — obfuscating these independently per
+          // chunk breaks ES module import/export binding across files (e.g. the Vue
+          // export helper always exports `_`; renaming it to `o` in one chunk and
+          // leaving the consumers importing `_` causes a runtime SyntaxError).
+          reservedNames: ['^_$', '^__vccOpts$'],
         }),
       ],
     },
